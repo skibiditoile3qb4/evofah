@@ -1296,39 +1296,97 @@ if (gamePlayTime > 0) {
     }
 }
 
-function tryLoadingGame(game, attemptNumber) {
-    if (attemptNumber > 9) {
-        alert(`Could not find ${formatGameName(game)}. It may have been removed or moved.`);
-        backToMain();
-        return;
+let gameUrlCache = {};
+
+try {
+    const cached = localStorage.getItem('_gameUrlCache');
+    if (cached) {
+        gameUrlCache = JSON.parse(cached);
     }
-    
+} catch(e) {}
+
+function saveUrlCache() {
+    try {
+        localStorage.setItem('_gameUrlCache', JSON.stringify(gameUrlCache));
+    } catch(e) {}
+}
+
+async function tryLoadingGame(game, startAttempt = 0) {
     const baseUrl = 'https://lnahtml.github.io/';
-    const testUrl = `${baseUrl}a${attemptNumber}/${game}`;
     const frame = document.getElementById('gameFrame');
     
-    const checkLoad = () => {
-        try {
-            const iframeDoc = frame.contentDocument || frame.contentWindow.document;
-            const h1 = iframeDoc.querySelector('h1');
-            
-            // Check if h1 contains "404"
-            if (h1 && h1.textContent.includes('404')) {
-                // This is a 404, try next number
-                frame.removeEventListener('load', checkLoad);
-                tryLoadingGame(game, attemptNumber + 1);
-            } else {
-                // Success! Game loaded
-                frame.removeEventListener('load', checkLoad);
+    // Show loading
+    frame.srcdoc = `
+        <style>
+            body { 
+                margin: 0; 
+                background: #0a0a0a; 
+                color: #fff; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                height: 100vh; 
+                font-family: Arial;
             }
-        } catch (e) {
-            // Cross-origin error means the page loaded successfully
-            frame.removeEventListener('load', checkLoad);
-        }
-    };
+            .spinner {
+                border: 3px solid #333;
+                border-top: 3px solid #d69e2e;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin-bottom: 20px;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <div>Loading ${formatGameName(game)}...</div>
+        </div>
+    `;
     
-    frame.addEventListener('load', checkLoad);
-    frame.src = testUrl;
+    // Try all URLs from startAttempt to 9
+    for (let i = startAttempt; i <= 9; i++) {
+        const testUrl = `${baseUrl}a${i}/${game}`;
+        
+        // Test if the actual game directory exists by trying to load index.html
+        const isValid = await testGameUrl(testUrl);
+        
+        if (isValid) {
+            // Found it!
+            gameUrlCache[game] = i;
+            saveUrlCache();
+            frame.src = testUrl;
+            console.log(`✅ Found ${game} at a${i}`);
+            return;
+        }
+    }
+    
+    // Nothing found
+    alert(`Could not find ${formatGameName(game)}. It may have been removed.`);
+    backToMain();
+}
+
+// Test if a game URL is valid by checking response text
+async function testGameUrl(url) {
+    try {
+        const response = await fetch(url);
+        const text = await response.text();
+        
+        // Check if it's a 404 page (GitHub's 404 page contains specific text)
+        if (text.includes("There isn't a GitHub Pages site here") || 
+            text.includes("404") && text.includes("GitHub Pages")) {
+            return false;
+        }
+        
+        // If it's actual HTML content (not a 404), it's valid
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 function backToMain() {
