@@ -1352,11 +1352,12 @@ async function tryLoadingGame(game, startAttempt = 0) {
     for (let i = startAttempt; i <= 9; i++) {
         const testUrl = `${baseUrl}a${i}/${game}`;
         
-        // Test if the actual game directory exists by trying to load index.html
+        // Test if the actual game directory exists
         const isValid = await testGameUrl(testUrl);
         
         if (isValid) {
-            // Found it!
+            // Found it! Clear srcdoc and load the game
+            frame.srcdoc = ''; // CLEAR THE LOADING SCREEN
             gameUrlCache[game] = i;
             saveUrlCache();
             frame.src = testUrl;
@@ -1366,6 +1367,7 @@ async function tryLoadingGame(game, startAttempt = 0) {
     }
     
     // Nothing found
+    frame.srcdoc = ''; // CLEAR THE LOADING SCREEN
     alert(`Could not find ${formatGameName(game)}. It may have been removed.`);
     backToMain();
 }
