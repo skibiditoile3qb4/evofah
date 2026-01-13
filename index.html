@@ -435,17 +435,17 @@
     <script>
         const ky = atob('Ymx1ZGNhbGM=');
 
-        if (localStorage.getItem('good') === null) {
-            localStorage.setItem('good', '0');
- } else if (localStorage.getItem('good') === '1') {
+if (localStorage.getItem('good') === null) {
+    localStorage.setItem('good', '0');
+} else if (localStorage.getItem('good') === '1') {
     document.getElementById('passwordScreen').style.display = 'none';
     document.getElementById('mainView').style.display = 'flex';
     setTimeout(() => {
         updateCoinDisplay();
         updateUserDisplay();
+        checkAndResetAbsurdMoney(); // Add this line
     }, 0);
-}
-            
+}        
 function checkPassword() {
     const input = document.getElementById('passwordInput').value;
     if (input === ky) {
@@ -622,7 +622,56 @@ function updateSphereAnimation() {
         }
     }
 }
-
+// Add this function with the other utility functions (around line 500-600)
+function checkAndResetAbsurdMoney() {
+    const resetFlag = localStorage.getItem('_moneyResetDone');
+    const threshold = 500000000; // 500 million coins
+    
+    if (!resetFlag && coins >= threshold) {
+        // First time catching absurd money - reset it
+        coins = 10; // Reset to starting amount
+        setCoins(coins);
+        updateCoinDisplay();
+        
+        // Mark that we've done the reset
+        localStorage.setItem('_moneyResetDone', '1');
+        
+        // Show notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 2px solid #ff4444;
+            border-radius: 16px;
+            padding: 40px 60px;
+            z-index: 100000;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 68, 68, 0.3);
+        `;
+        
+        notification.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+            <div style="font-size: 32px; font-weight: bold; color: #ff4444; margin-bottom: 15px;">SUSPICIOUS BALANCE DETECTED</div>
+            <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
+                Your balance has been reset to 10 coins.<br>
+                This is a one-time correction for leaked dev codes.<br>
+                Play fair and have fun!
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 5000);
+    }
+}
 function checkAndHandleBan() {
     const banStatus = checkBanStatus();
     if (banStatus.banned) {
@@ -943,10 +992,10 @@ function deobfuscateSeedAdmin(obfuscated) {
          function checkGreatReset() {
             const resetFlag = localStorage.getItem('reset');
             
-            if (resetFlag != '2') {
+            if (resetFlag != '3') {
 
-                setCoins(10);
-                localStorage.setItem('reset', '2');
+                
+                localStorage.setItem('reset', '3');
                 showResetNotification();
                 
                 return true;
@@ -972,11 +1021,11 @@ function deobfuscateSeedAdmin(obfuscated) {
             `;
             
             notification.innerHTML = `
-                <div style="font-size: 48px; margin-bottom: 20px;">⚡</div>
-                <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">THE SECOND GREAT RESET</div>
+                <div style="font-size: 48px; margin-bottom: 20px;">😢</div>
+                <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">GAME RESET.</div>
                 <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
-                    The economy has been reset.<br>
-                    Everyone starts fresh with 10 coins. Debuffs added!<br>
+                    The old games are gone. The previous owner stopped pushing them.<br>
+                    New games, progress gone. Have fun!<br>
                     Good luck!
                 </div>
             `;
@@ -1652,7 +1701,7 @@ document.head.appendChild(swordStyle);
         document.getElementById('devInput').addEventListener('input', (e) => {
     const code = e.target.value;
 
-    if (code === 'ved1') {
+    if (code === 'vedabcd') {
         coins += 100;
         setCoins(coins);
         updateCoinDisplay();
@@ -1666,7 +1715,7 @@ document.head.appendChild(swordStyle);
     updateUserDisplay();
     e.target.value = '';
 
-    } else if (code === 'ved3') {
+    } else if (code === 'vedefgh') {
         userProfile.adsDisabled = !userProfile.adsDisabled;
         saveUserProfile(userProfile);
 
@@ -1677,12 +1726,12 @@ document.head.appendChild(swordStyle);
         alert(userProfile.adsDisabled ? '✅ Ads disabled!' : '✅ Ads enabled!');
         e.target.value = '';
 
-    } else if (code === 'ved4') {
+    } else if (code === 'vedijkl') {
         adIntervalTime = 10000;
         lastAdTime = Date.now();
         alert('✅ Ad interval set to 10 seconds!');
         e.target.value = '';
-    }  else if (code === 'ved5') {
+    }  else if (code === 'vedmnop') {
         coins = 999999999;
         setCoins(coins);
         updateCoinDisplay();
