@@ -1248,7 +1248,7 @@ if (gamePlayTime > 0) {
             displayGames(results);
         }
 
-       function loadGame(game) {
+      function loadGame(game) {
     document.getElementById('mainView').style.display = 'none';
     document.getElementById('gameView').style.display = 'block';
     
@@ -1283,6 +1283,12 @@ if (gamePlayTime > 0) {
         return;
     } else if (game === 'eaglercraft-1.8') {
         document.getElementById('gameFrame').src = 'https://eaglercraft1-8.github.io/';
+        gameIsPlaying = true;
+        return;
+    } else if (game === 'clash-royale') {
+        const frame = document.getElementById('gameFrame');
+        frame.classList.add('mobile-game');
+        frame.src = 'https://www.greenfoot.org/scenarios/27793?embed=true';
         gameIsPlaying = true;
         return;
     }
