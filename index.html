@@ -1356,8 +1356,8 @@ async function tryLoadingGame(game, startAttempt = 0) {
         const isValid = await testGameUrl(testUrl);
         
         if (isValid) {
-            // Found it! Clear srcdoc and load the game
-            frame.srcdoc = ''; // CLEAR THE LOADING SCREEN
+            // Found it! Remove srcdoc attribute and load the game
+            frame.removeAttribute('srcdoc'); // ← IMPORTANT: Remove the srcdoc attribute
             gameUrlCache[game] = i;
             saveUrlCache();
             frame.src = testUrl;
@@ -1367,11 +1367,10 @@ async function tryLoadingGame(game, startAttempt = 0) {
     }
     
     // Nothing found
-    frame.srcdoc = ''; // CLEAR THE LOADING SCREEN
+    frame.removeAttribute('srcdoc'); // ← Also remove it here
     alert(`Could not find ${formatGameName(game)}. It may have been removed.`);
     backToMain();
 }
-
 // Test if a game URL is valid by checking response text
 async function testGameUrl(url) {
     try {
