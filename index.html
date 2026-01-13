@@ -1281,10 +1281,10 @@ if (gamePlayTime > 0) {
         document.getElementById('gameFrame').src = 'slots.html';
         gameIsPlaying = true;
         return;
-    } else if (game === 'eaglercraft-1.8') {
-        document.getElementById('gameFrame').src = 'https://eaglercraft1-8.github.io/';
-        gameIsPlaying = true;
-        return;
+} else if (game === 'eagler') {
+    gameIsPlaying = true;
+    window.location.href = "craft.html"; // redirect
+    return;
     } else if (game === 'clash-royale') {
         const frame = document.getElementById('gameFrame');
         frame.classList.add('mobile-game');
