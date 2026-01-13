@@ -1248,7 +1248,7 @@ if (gamePlayTime > 0) {
             displayGames(results);
         }
 
-        function loadGame(game) {
+       function loadGame(game) {
     document.getElementById('mainView').style.display = 'none';
     document.getElementById('gameView').style.display = 'block';
     
@@ -1284,6 +1284,26 @@ if (gamePlayTime > 0) {
     } else if (game === 'eaglercraft-1.8') {
         document.getElementById('gameFrame').src = 'https://eaglercraft1-8.github.io/';
         gameIsPlaying = true;
+        return;
+    }
+    
+    // Check cache first
+    const cachedDir = gameUrlCache[game];
+    if (cachedDir === 'simple') {
+        // Load from /a/ directly
+        document.getElementById('gameFrame').src = `https://lnahtml.github.io/a/${game}`;
+        gameIsPlaying = true;
+        if (userProfile.visualizerEnabled) {
+            document.body.style.setProperty('--visualizer-active', '1');
+        }
+        return;
+    } else if (cachedDir !== undefined) {
+        // Load from cached a0-a9
+        document.getElementById('gameFrame').src = `https://lnahtml.github.io/a${cachedDir}/${game}`;
+        gameIsPlaying = true;
+        if (userProfile.visualizerEnabled) {
+            document.body.style.setProperty('--visualizer-active', '1');
+        }
         return;
     }
     
@@ -1348,6 +1368,19 @@ async function tryLoadingGame(game, startAttempt = 0) {
         </div>
     `;
     
+    // First try just /a/ (without number)
+    const simpleUrl = `${baseUrl}a/${game}`;
+    const simpleValid = await testGameUrl(simpleUrl);
+    
+    if (simpleValid) {
+        frame.removeAttribute('srcdoc');
+        gameUrlCache[game] = 'simple';
+        saveUrlCache();
+        frame.src = simpleUrl;
+        console.log(`✅ Found ${game} at /a/`);
+        return;
+    }
+    
     // Try all URLs from startAttempt to 9
     for (let i = startAttempt; i <= 9; i++) {
         const testUrl = `${baseUrl}a${i}/${game}`;
@@ -1357,7 +1390,7 @@ async function tryLoadingGame(game, startAttempt = 0) {
         
         if (isValid) {
             // Found it! Remove srcdoc attribute and load the game
-            frame.removeAttribute('srcdoc'); // ← IMPORTANT: Remove the srcdoc attribute
+            frame.removeAttribute('srcdoc');
             gameUrlCache[game] = i;
             saveUrlCache();
             frame.src = testUrl;
@@ -1367,10 +1400,11 @@ async function tryLoadingGame(game, startAttempt = 0) {
     }
     
     // Nothing found
-    frame.removeAttribute('srcdoc'); // ← Also remove it here
+    frame.removeAttribute('srcdoc');
     alert(`Could not find ${formatGameName(game)}. It may have been removed.`);
     backToMain();
 }
+
 // Test if a game URL is valid by checking response text
 async function testGameUrl(url) {
     try {
