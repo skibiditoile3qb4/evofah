@@ -993,10 +993,10 @@ function deobfuscateSeedAdmin(obfuscated) {
          function checkGreatReset() {
             const resetFlag = localStorage.getItem('reset');
             
-            if (resetFlag != '3') {
+            if (resetFlag != '4') {
 
                 
-                localStorage.setItem('reset', '3');
+                localStorage.setItem('reset', '4');
                 showResetNotification();
                 
                 return true;
@@ -1022,11 +1022,11 @@ function deobfuscateSeedAdmin(obfuscated) {
             `;
             
             notification.innerHTML = `
-                <div style="font-size: 48px; margin-bottom: 20px;">😢</div>
-                <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">GAME RESET.</div>
+                <div style="font-size: 48px; margin-bottom: 20px;">😄</div>
+                <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">OLD GAMES + NEW GAMES.</div>
                 <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
-                    The old games are gone. The previous owner stopped pushing them.<br>
-                    New games, progress gone. Have fun!<br>
+                    Yay new gamess yay<br>
+                   + old games yay!<br>
                     Good luck!
                 </div>
             `;
@@ -1038,7 +1038,7 @@ function deobfuscateSeedAdmin(obfuscated) {
                 setTimeout(() => {
                     notification.remove();
                 }, 300);
-            }, 10000);
+            }, 5000);
         }
 
         const style = document.createElement('style');
