@@ -113,8 +113,11 @@
 <body>
    <div class="container">
     <button class="back-btn" onclick="window.location.href='index.html'">← BACK</button>
+       <button class="back-btn" onclick="window.location.href='gemshop.html'" style="background: linear-gradient(135deg, #d69e2e 0%, #ffd700 100%); border: 2px solid #ffd700; margin-left: 10px;">💎 GEM SHOP</button>
     <h1>🛒 SHOP</h1>
-    <div class="coin-display">Your Coins: <span id="coinAmount">0</span></div>
+    <div class="coin-display">
+    Your Coins: <span id="coinAmount">0</span> | 💎 Gems: <span id="gemAmount">0</span>
+</div>
 
     <!-- RANKS SECTION -->
     <div style="margin-top: 40px;">
@@ -134,12 +137,12 @@
             <button id="buyLegendaryRank">Purchase</button>
         </div>
 
-        <div class="shop-item" id="mysticalRankItem">
-            <h2>✨ Mystical Rank</h2>
-            <p>Flex on your friends with the mystical blue rank! INSANE PERKS: LOSS PROTECTION, 3X PASSIVE COIN GAIN, MYSTICAL COSMETIC.</p>
-            <div class="price">250,000 Coins</div>
-            <button id="buyMysticalRank">Purchase</button>
-        </div>
+<div class="shop-item" id="mysticalRankItem">
+    <h2>✨ Mystical Rank</h2>
+    <p>Flex on your friends with the mystical blue rank! INSANE PERKS: LOSS PROTECTION, 3X PASSIVE COIN GAIN, MYSTICAL COSMETIC.</p>
+    <div class="price" style="color: #d69e2e;">50 💎</div>
+    <button id="buyMysticalRank">Purchase</button>
+</div>
     </div>
 
     <!-- UTILITIES SECTION -->
@@ -303,12 +306,12 @@
             <button id="buyBlackhole" style="background: #a855f7; border-color: #7c3aed;">Purchase</button>
         </div>
         
-        <div class="shop-item" style="border: 2px solid #fff;">
-            <h2>🖤 Black Wings</h2>
-            <p>Dark angelic wings that flap behind your sphere.</p>
-            <div class="price">175,000 Coins</div>
-            <button id="buyWings">Purchase</button>
-        </div>
+       <div class="shop-item" style="border: 2px solid #fff;">
+    <h2>🖤 Black Wings</h2>
+    <p>Dark angelic wings that flap behind your sphere.</p>
+    <div class="price" style="color: #d69e2e;">30 💎</div>
+    <button id="buyWings">Purchase</button>
+</div>
 
         <div class="shop-item" style="border: 2px solid #ffd700;">
             <h2>✨ Golden Aura</h2>
@@ -342,12 +345,12 @@
     <div class="price" style="color: #ffff00;">200,000 Coins</div>
     <button id="buyLightningBlade" style="background: #ffff00; border-color: #ffd700; color: #000;">Purchase</button>
 </div>
-        <div class="shop-item" style="border: 2px solid #ff4500;">
-            <h2>🐉 Dragon Sword</h2>
-            <p>Legendary blade forged in dragon fire. Doubles all coin PROFIT!</p>
-            <div class="price" style="color: #ff4500;">300,000 Coins</div>
-            <button id="buyDragonSword" style="background: #ff4500; border-color: #ff6347;">Purchase</button>
-        </div>
+<div class="shop-item" style="border: 2px solid #ff4500;">
+    <h2>🐉 Dragon Sword</h2>
+    <p>Legendary blade forged in dragon fire. Doubles all coin PROFIT!</p>
+    <div class="price" style="color: #d69e2e;">50 💎</div>
+    <button id="buyDragonSword" style="background: #ff4500; border-color: #ff6347;">Purchase</button>
+</div>
     </div>
        <!-- POTIONS SECTION -->
 <div style="margin-top: 40px; padding-top: 40px; border-top: 1px solid #333;">
@@ -409,6 +412,7 @@
 
         let coins = getCoins();
         let userProfile = getUserProfile();
+        document.getElementById('gemAmount').textContent = userProfile.gems || 0;
 
         document.getElementById('coinAmount').textContent = coins;
 
@@ -624,57 +628,56 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
         });
 
         // Mystical Rank Purchase
-        document.getElementById('buyMysticalRank').addEventListener('click', () => {
-            if (userProfile.status === 'mystical') {
-                alert('❌ You already have this rank!');
-                return;
+document.getElementById('buyMysticalRank').addEventListener('click', () => {
+    if (userProfile.status === 'mystical') {
+        alert('❌ You already have this rank!');
+        return;
+    }
+    
+    const gemCost = 50;
+    if ((userProfile.gems || 0) >= gemCost) {
+        if (confirm(`Purchase Mystical rank for ${gemCost} gems?\n\n✨ BENEFITS:\n• Earn 300 coins per 30 seconds (vs 100)\n• Exclusive Mystical Aura effect\n• Loss Protection: 50% refund on losses up to 10k (once per day)`)) {
+            userProfile.gems -= gemCost;
+            userProfile.status = 'mystical';
+            
+            // Initialize cosmetics if needed
+            if (!userProfile.ownedCosmetics) {
+                userProfile.ownedCosmetics = {
+                    colors: ['default'],
+                    hats: ['none'],
+                    faces: ['none'],
+                    effects: ['none'],
+                    swords: ['none']
+                };
             }
             
-            if (coins >= 250000) {
-                if (confirm('Purchase Mystical rank for 250,000 coins?\n\n✨ BENEFITS:\n• Earn 100 coins per 30 seconds (vs 30)\n• Exclusive Mystical Aura effect\n• Loss Protection: 50% refund on losses up to 10k (once per day)')) {
-                    coins -= 250000;
-                    setCoins(coins);
-                    userProfile.status = 'mystical';
-                    
-                    // Initialize cosmetics if needed
-                    if (!userProfile.ownedCosmetics) {
-                        userProfile.ownedCosmetics = {
-                            colors: ['default'],
-                            hats: ['none'],
-                            faces: ['none'],
-                            effects: ['none'],
-                            swords: ['none']
-                        };
-                    }
-                    
-                    // Auto-give and equip mystical aura
-                    if (!userProfile.ownedCosmetics.effects.includes('mystical-aura')) {
-                        userProfile.ownedCosmetics.effects.push('mystical-aura');
-                    }
-                    if (!userProfile.equippedCosmetics) {
-                        userProfile.equippedCosmetics = {
-                            color: 'default',
-                            hat: 'none',
-                            face: 'none',
-                            effect: 'mystical-aura',
-                            sword: 'none'
-                        };
-                    } else {
-                        userProfile.equippedCosmetics.effect = 'mystical-aura';
-                    }
-                    
-                    saveUserProfile(userProfile);
-                    alert('✅ Success! You are now Mystical rank with exclusive aura!\n\n🎮 Earn 3x more coins while playing\n✨ Mystical Aura automatically equipped\n🛡️ Loss Protection activated');
-                    document.getElementById('coinAmount').textContent = coins;
-                    markAsOwned('buyMysticalRank', document.getElementById('mysticalRankItem'));
-                    // Also mark lower ranks as owned
-                    markAsOwned('buyRareRank', document.getElementById('rareRankItem'));
-                    markAsOwned('buyLegendaryRank', document.getElementById('legendaryRankItem'));
-                }
-            } else {
-                alert('❌ Not enough coins! You need 250,000 coins.');
+            // Auto-give and equip mystical aura
+            if (!userProfile.ownedCosmetics.effects.includes('mystical-aura')) {
+                userProfile.ownedCosmetics.effects.push('mystical-aura');
             }
-        });
+            if (!userProfile.equippedCosmetics) {
+                userProfile.equippedCosmetics = {
+                    color: 'default',
+                    hat: 'none',
+                    face: 'none',
+                    effect: 'mystical-aura',
+                    sword: 'none'
+                };
+            } else {
+                userProfile.equippedCosmetics.effect = 'mystical-aura';
+            }
+            
+            saveUserProfile(userProfile);
+            alert('✅ Success! You are now Mystical rank with exclusive aura!\n\n🎮 Earn 3x more coins while playing\n✨ Mystical Aura automatically equipped\n🛡️ Loss Protection activated');
+            document.getElementById('gemAmount').textContent = userProfile.gems;
+            markAsOwned('buyMysticalRank', document.getElementById('mysticalRankItem'));
+            markAsOwned('buyRareRank', document.getElementById('rareRankItem'));
+            markAsOwned('buyLegendaryRank', document.getElementById('legendaryRankItem'));
+        }
+    } else {
+        alert(`❌ Not enough gems! You need ${gemCost} gems.`);
+    }
+});
 
         // Helper function to buy cosmetic
         function buyCosmetic(type, item, cost, buttonId) {
@@ -725,13 +728,59 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
 
         // Effects
         document.getElementById('buyBlackhole').addEventListener('click', () => buyCosmetic('effects', 'blackhole', 100000, 'buyBlackhole'));
-        document.getElementById('buyWings').addEventListener('click', () => buyCosmetic('effects', 'wings', 175000, 'buyWings'));
+       // Black Wings (replace the existing line in the Effects section)
+document.getElementById('buyWings').addEventListener('click', () => {
+    if (userProfile.ownedCosmetics.effects.includes('wings')) {
+        alert('❌ You already own this!');
+        return;
+    }
+    
+    const gemCost = 30;
+    if ((userProfile.gems || 0) >= gemCost) {
+        if (confirm(`Purchase Black Wings for ${gemCost} gems?`)) {
+            userProfile.gems -= gemCost;
+            userProfile.ownedCosmetics.effects.push('wings');
+            saveUserProfile(userProfile);
+            alert(`✅ Successfully purchased Black Wings!`);
+            document.getElementById('gemAmount').textContent = userProfile.gems;
+            const button = document.getElementById('buyWings');
+            button.textContent = 'Already Owned';
+            button.disabled = true;
+            button.parentElement.classList.add('purchased');
+        }
+    } else {
+        alert(`❌ Not enough gems! You need ${gemCost} gems.`);
+    }
+});
         document.getElementById('buyGoldenAura').addEventListener('click', () => buyCosmetic('effects', 'golden-aura', 150000, 'buyGoldenAura'));
 
         // Swords
         document.getElementById('buyStickSword').addEventListener('click', () => buyCosmetic('swords', 'stick', 5000, 'buyStickSword'));
         document.getElementById('buyStoneSword').addEventListener('click', () => buyCosmetic('swords', 'stone', 50000, 'buyStoneSword'));
-        document.getElementById('buyDragonSword').addEventListener('click', () => buyCosmetic('swords', 'dragon', 300000, 'buyDragonSword'));
+        // Dragon Sword (replace the existing line in the Swords section)
+document.getElementById('buyDragonSword').addEventListener('click', () => {
+    if (userProfile.ownedCosmetics.swords.includes('dragon')) {
+        alert('❌ You already own this!');
+        return;
+    }
+    
+    const gemCost = 50;
+    if ((userProfile.gems || 0) >= gemCost) {
+        if (confirm(`Purchase Dragon Sword for ${gemCost} gems?`)) {
+            userProfile.gems -= gemCost;
+            userProfile.ownedCosmetics.swords.push('dragon');
+            saveUserProfile(userProfile);
+            alert(`✅ Successfully purchased Dragon Sword!`);
+            document.getElementById('gemAmount').textContent = userProfile.gems;
+            const button = document.getElementById('buyDragonSword');
+            button.textContent = 'Already Owned';
+            button.disabled = true;
+            button.parentElement.classList.add('purchased');
+        }
+    } else {
+        alert(`❌ Not enough gems! You need ${gemCost} gems.`);
+    }
+});
         document.getElementById('buyLightningBlade').addEventListener('click', () => buyCosmetic('swords', 'lightning', 200000, 'buyLightningBlade'));
 
 
