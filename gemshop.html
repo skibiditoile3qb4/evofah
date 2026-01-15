@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gem Shop - Permanent Upgrades</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .back-btn {
+            padding: 12px 24px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            margin-bottom: 30px;
+        }
+        .back-btn:hover {
+            background: #252525;
+            border-color: #555;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        .gem-display {
+            text-align: center;
+            font-size: 24px;
+            color: #d69e2e;
+            margin-bottom: 40px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 2px solid #d69e2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        .info-box h3 {
+            color: #d69e2e;
+            margin-bottom: 10px;
+        }
+        .info-box p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+        .upgrades-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .upgrade-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+        .upgrade-card:hover {
+            border-color: #555;
+            transform: translateY(-2px);
+        }
+        .upgrade-card.owned {
+            border-color: #38a169;
+            background: #1a2a1a;
+        }
+        .upgrade-card.max-level {
+            border-color: #d69e2e;
+            background: #2a2a1a;
+        }
+        .upgrade-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .upgrade-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .upgrade-desc {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 15px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .upgrade-level {
+            text-align: center;
+            color: #d69e2e;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .upgrade-effect {
+            text-align: center;
+            color: #38a169;
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .upgrade-cost {
+            text-align: center;
+            font-size: 18px;
+            color: #d69e2e;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .buy-btn {
+            width: 100%;
+            padding: 12px;
+            background: #d69e2e;
+            border: 2px solid #b7791f;
+            border-radius: 8px;
+            color: #000;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .buy-btn:hover:not(:disabled) {
+            background: #b7791f;
+            transform: scale(1.02);
+        }
+        .buy-btn:disabled {
+            background: #333;
+            border-color: #555;
+            color: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="window.location.href='shop.html'">← BACK TO SHOP</button>
+        <h1>💎 GEM SHOP</h1>
+        <div class="gem-display">You have <span id="gemCount">0</span> 💎</div>
+        
+        <div class="info-box">
+            <h3>✨ Permanent Upgrades</h3>
+            <p>These upgrades are bought with gems and are NEVER lost on rebirth!<br>
+            Stack upgrades to become more powerful with each prestige.</p>
+        </div>
+        
+        <div class="upgrades-grid" id="upgradesGrid"></div>
+    </div>
+
+    <script>
+        function getUserProfile() {
+            try {
+                const stored = localStorage.getItem('userProfile');
+                if (stored) {
+                    const profile = JSON.parse(stored);
+                    if (!profile.gemUpgrades) {
+                        profile.gemUpgrades = {};
+                    }
+                    if (typeof profile.gems === 'undefined') profile.gems = 0;
+                    return profile;
+                }
+            } catch(e) {}
+            return { gems: 0, gemUpgrades: {} };
+        }
+
+        function saveUserProfile(profile) {
+            try {
+                localStorage.setItem('userProfile', JSON.stringify(profile));
+            } catch(e) {}
+        }
+
+        let userProfile = getUserProfile();
+
+        const upgrades = {
+            rebirth_boost: {
+                name: 'Rebirth Power',
+                icon: '🔥',
+                desc: 'Start with more coins after rebirth',
+                maxLevel: 5,
+                baseCost: 10,
+                costIncrease: 2,
+                effect: (level) => `Start with ${50 + (level * 50)} coins`
+            },
+            auto_collect: {
+                name: 'Auto Collector',
+                icon: '🤖',
+                desc: 'Automatically collect idle coins while offline',
+                maxLevel: 5,
+                baseCost: 25,
+                costIncrease: 2.5,
+                effect: (level) => {
+                    if (level === 0) return 'Locked';
+                    const rate = 100 - (level * 10);
+                    return `Earn 1 coin every ${rate}s while offline`;
+                }
+            },
+            coin_magnet: {
+                name: 'Coin Magnet',
+                icon: '🧲',
+                desc: 'Increase all coin gains permanently',
+                maxLevel: 10,
+                baseCost: 8,
+                costIncrease: 1.6,
+                effect: (level) => level > 0 ? `+${level * 5}% to ALL coin gains` : 'No bonus yet'
+            }
+        };
+
+        function getUpgradeLevel(id) {
+            return userProfile.gemUpgrades[id] || 0;
+        }
+
+        function getUpgradeCost(upgrade, currentLevel) {
+            if (currentLevel >= upgrade.maxLevel) return 0;
+            return Math.floor(upgrade.baseCost * Math.pow(upgrade.costIncrease, currentLevel));
+        }
+
+        function renderUpgrades() {
+            document.getElementById('gemCount').textContent = userProfile.gems;
+            
+            const grid = document.getElementById('upgradesGrid');
+            grid.innerHTML = '';
+
+            Object.entries(upgrades).forEach(([id, upgrade]) => {
+                const level = getUpgradeLevel(id);
+                const cost = getUpgradeCost(upgrade, level);
+                const maxed = level >= upgrade.maxLevel;
+
+                const card = document.createElement('div');
+                card.className = 'upgrade-card' + (level > 0 ? ' owned' : '') + (maxed ? ' max-level' : '');
+                
+                card.innerHTML = `
+                    <div class="upgrade-icon">${upgrade.icon}</div>
+                    <div class="upgrade-name">${upgrade.name}</div>
+                    <div class="upgrade-desc">${upgrade.desc}</div>
+                    <div class="upgrade-level">Level: ${level}/${upgrade.maxLevel}</div>
+                    <div class="upgrade-effect">${upgrade.effect(level)}</div>
+                    <div class="upgrade-cost">${maxed ? '✅ MAX LEVEL' : `${cost} 💎`}</div>
+                    <button class="buy-btn" id="btn-${id}" ${maxed || userProfile.gems < cost ? 'disabled' : ''}>
+                        ${maxed ? 'MAXED' : 'UPGRADE'}
+                    </button>
+                `;
+
+                if (!maxed) {
+                    card.querySelector('.buy-btn').addEventListener('click', () => buyUpgrade(id));
+                }
+
+                grid.appendChild(card);
+            });
+        }
+
+        function buyUpgrade(id) {
+            const upgrade = upgrades[id];
+            const level = getUpgradeLevel(id);
+            const cost = getUpgradeCost(upgrade, level);
+
+            if (level >= upgrade.maxLevel) {
+                alert('This upgrade is already maxed!');
+                return;
+            }
+
+            if (userProfile.gems < cost) {
+                alert('Not enough gems!');
+                return;
+            }
+
+            userProfile.gems -= cost;
+            userProfile.gemUpgrades[id] = level + 1;
+            saveUserProfile(userProfile);
+
+            alert(`✅ Upgraded ${upgrade.name} to level ${level + 1}!`);
+            renderUpgrades();
+        }
+
+        // Initialize
+        renderUpgrades();
+    </script>
+</body>
+</html>
