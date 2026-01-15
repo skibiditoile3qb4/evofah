@@ -458,26 +458,37 @@ function updateBigSphereAnimation() {
             isDragging = false;
         });
 
-        // Load profile data
-        function loadProfileData() {
-            document.getElementById('profileUsername').textContent = userProfile.username;
-            document.getElementById('profileStatus').textContent = userProfile.status;
-            document.getElementById('profileStatus').className = 'status ' + userProfile.status;
-            document.getElementById('profileCoins').textContent = coins.toLocaleString();
+       // Around line 250, update the loadProfileData function
+function loadProfileData() {
+    document.getElementById('profileUsername').textContent = userProfile.username;
+    document.getElementById('profileStatus').textContent = userProfile.status;
+    document.getElementById('profileStatus').className = 'status ' + userProfile.status;
+    document.getElementById('profileCoins').textContent = coins.toLocaleString();
 
-            document.getElementById('statStatus').textContent = userProfile.status;
-            document.getElementById('statCoins').textContent = coins.toLocaleString();
-            document.getElementById('statGems').textContent = (userProfile.gems || 0).toLocaleString();
-document.getElementById('statRebirthTier').textContent = userProfile.rebirthData?.tier || 0;
-document.getElementById('statTotalRebirths').textContent = userProfile.rebirthData?.totalRebirths || 0;
-            
-            const totalTime = getTotalActiveTime();
-            const minutes = Math.floor(totalTime / 60);
-            document.getElementById('statPlaytime').textContent = `${minutes} minutes`;
+    document.getElementById('statStatus').textContent = userProfile.status;
+    document.getElementById('statCoins').textContent = coins.toLocaleString();
+    document.getElementById('statGems').textContent = (userProfile.gems || 0).toLocaleString();
+    document.getElementById('statRebirthTier').textContent = userProfile.rebirthData?.tier || 0;
+    document.getElementById('statTotalRebirths').textContent = userProfile.rebirthData?.totalRebirths || 0;
+    
+    const totalTime = getTotalActiveTime();
+    const minutes = Math.floor(totalTime / 60);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    
+    // Better formatting
+    let timeText = '';
+    if (hours > 0) {
+        timeText = `${hours}h ${remainingMinutes}m`;
+    } else {
+        timeText = `${minutes} minutes`;
+    }
+    
+    document.getElementById('statPlaytime').textContent = timeText;
 
-            drawBigPlayerSphere();
-            updateBigSphereAnimation();
-        }
+    drawBigPlayerSphere();
+    updateBigSphereAnimation();
+}
 
         // Cosmetics data
         const cosmetics = {
