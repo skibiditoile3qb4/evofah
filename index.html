@@ -831,6 +831,15 @@ function showLossProtectionNotification(refund) {
 function setCoins(amount) {
     try {
         const oldCoins = coins;
+        
+        if (amount > oldCoins) {
+            const magnetLevel = userProfile.gemUpgrades?.coin_magnet || 0;
+            const bonus = magnetLevel * 0.05; // 5% per level
+            const gain = amount - oldCoins;
+            const boostedGain = Math.floor(gain * (1 + bonus));
+            amount = oldCoins + boostedGain;
+        }
+        
         localStorage.setItem(_0x2b4a(_0x9c3d), _0x4a2b(amount.toString()));
         
         // Track achievements
@@ -1155,7 +1164,29 @@ activityCheckInterval = setInterval(() => {
     }
     isActive = false;
 }, 1000);
-
+// AUTO COLLECTOR - Idle coin generation
+setInterval(() => {
+    const autoCollectLevel = userProfile.gemUpgrades?.auto_collect || 0;
+    
+    if (autoCollectLevel > 0) {
+        // Fixed rate: every 30 seconds
+        const rate = 30;
+        // Coins per tick: 20 at level 1, up to 60 at level 5
+        const coinsPerTick = 10 + (autoCollectLevel * 10);
+        
+        // Check if enough time has passed
+        const lastCollect = parseInt(localStorage.getItem('_lastAutoCollect') || '0');
+        const now = Date.now();
+        const elapsed = now - lastCollect;
+        
+        if (elapsed >= rate * 1000) {
+            coins += coinsPerTick;
+            setCoins(coins);
+            updateCoinDisplay();
+            localStorage.setItem('_lastAutoCollect', now.toString());
+        }
+    }
+}, 1000);
     function showAd() {
     const overlay = document.getElementById('adOverlay');
     const skipBtn = document.getElementById('skipAdBtn');
