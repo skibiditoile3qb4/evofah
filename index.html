@@ -362,6 +362,10 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
 }
+@keyframes sparkle {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); transform: scale(1); }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); transform: scale(1.05); }
+}
     </style>
     <script src="PlayerSphere.js"></script>
 </head>
@@ -379,7 +383,7 @@
         <canvas id="playerSphere" width="150" height="150" style="display: block; margin: 0 auto 10px;"></canvas>
         <div id="userName" style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">guest000000</div>
         <div id="userStatus" style="font-size: 14px; margin-bottom: 8px;">player</div>
-        <div style="font-size: 13px; color: #d69e2e;">💰 <span id="coinAmountTop">10</span></div>
+        <div style="font-size: 13px; color: #d69e2e;">💰 <span id="coinAmountTop">10</span> | 💎 <span id="gemAmountTop">0</span></div>
     </div>
     
 </div>
@@ -399,6 +403,7 @@
                 <button id="plinkoBtn" style="background: #3182ce; border: 1px solid #2c5282;">PLINKO 🎯</button>
                 <button id="rouletteBtn" style="background: #c53030; border: 1px solid #9b2c2c;">ROULETTE ⭕</button>
                 <button id="slotsBtn" style="background:#319795;border:1px solid #2c7a7b;">SLOTS 🎰</button>
+                 <button id="moreBtn" style="background: linear-gradient(135deg, #d69e2e 0%, #ffd700 100%); border: 2px solid #ffd700; animation: sparkle 2s infinite;">MORE ✨</button>
             </div>
             <div id="gameList"></div>
             <div class="dev-section">
@@ -517,7 +522,28 @@ function getUserProfile() {
                     sword: 'none'
                 };
             }
-
+// ----- REBIRTH DATA -----
+            if (!profile.rebirthData) {
+                profile.rebirthData = {
+                    tier: 0,
+                    totalRebirths: 0,
+                    totalGemsEarned: 0
+                };
+            }
+            if (typeof profile.gems === 'undefined') profile.gems = 0;
+            
+            // ----- ACHIEVEMENTS -----
+            if (!profile.achievements) {
+                profile.achievements = {
+                    unlocked: [],
+                    progress: {
+                        gamesPlayed: 0,
+                        coinsEarned: 0,
+                        coinsSpent: 0,
+                        cosmeticsOwned: 0
+                    }
+                };
+            }
             // ----- OWNED COSMETICS -----
             if (!profile.ownedCosmetics) {
                 profile.ownedCosmetics = {
@@ -813,11 +839,22 @@ function showLossProtectionNotification(refund) {
             return 10;
         }
 
-        function setCoins(amount) {
-            try {
-                localStorage.setItem(_0x2b4a(_0x9c3d), _0x4a2b(amount.toString()));
-            } catch(e) {}
+function setCoins(amount) {
+    try {
+        const oldCoins = coins;
+        localStorage.setItem(_0x2b4a(_0x9c3d), _0x4a2b(amount.toString()));
+        
+        // Track achievements
+        if (userProfile.achievements) {
+            if (amount > oldCoins) {
+                userProfile.achievements.progress.coinsEarned += (amount - oldCoins);
+            } else if (amount < oldCoins) {
+                userProfile.achievements.progress.coinsSpent += (oldCoins - amount);
+            }
+            saveUserProfile(userProfile);
         }
+    } catch(e) {}
+}
 
         function getLastActivity() {
             try {
@@ -1069,6 +1106,9 @@ function updateCoinDisplay() {
     
     const topCoin = document.getElementById('coinAmountTop');
     if (topCoin) topCoin.textContent = coins;
+    
+    const topGem = document.getElementById('gemAmountTop');
+    if (topGem) topGem.textContent = userProfile.gems || 0;
 }
 
 if (checkAndHandleBan()) {
@@ -1569,6 +1609,9 @@ function backToMain() {
         document.getElementById('slotsBtn').addEventListener('click', () => {
             loadGame('slots');
         });
+        document.getElementById('moreBtn').addEventListener('click', () => {
+    window.location.href = 'more.html';
+});
 
 window.addEventListener('message', (event) => {
     if (event.data.type === 'getCoins') {
