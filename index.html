@@ -530,8 +530,11 @@ function getUserProfile() {
                     totalGemsEarned: 0
                 };
             }
-            if (typeof profile.gems === 'undefined') profile.gems = 0;
             
+            if (typeof profile.gems === 'undefined') profile.gems = 0;
+            if (!profile.gemUpgrades) {
+    profile.gemUpgrades = {};
+}
            
             // ----- OWNED COSMETICS -----
             if (!profile.ownedCosmetics) {
