@@ -1117,37 +1117,43 @@ if (checkAndHandleBan()) {
         let gamePlayTime = 0;
         let lastAdTime = Date.now();
 
+// Around line 500-600, update the activity check interval
 activityCheckInterval = setInterval(() => {
     if (gameIsPlaying) {
         gamePlayTime += 1;
-if (gamePlayTime > 0) {
-    const hasGoldenAura = userProfile.equippedCosmetics?.effect === 'golden-aura';
-    const interval = hasGoldenAura ? 10 : 30;
-    
-    if (gamePlayTime % interval === 0) {
-        let coinReward = 100;
-        if (userProfile.status === 'mystical') coinReward = 300;
-        coins += coinReward;
-        setCoins(coins);
-        updateCoinDisplay();
-    }
-}
+        
+        // This part is good - keeps running
+        if (gamePlayTime > 0) {
+            const hasGoldenAura = userProfile.equippedCosmetics?.effect === 'golden-aura';
+            const interval = hasGoldenAura ? 10 : 30;
+            
+            if (gamePlayTime % interval === 0) {
+                let coinReward = 100;
+                if (userProfile.status === 'mystical') coinReward = 300;
+                coins += coinReward;
+                setCoins(coins);
+                updateCoinDisplay();
+            }
+        }
 
-                if (!userProfile.adsDisabled && Date.now() - lastAdTime >= adIntervalTime) {
-                    showAd();
-                    lastAdTime = Date.now();
-                }
-            }
-            
-            const now = Date.now();
-            const isCurrentlyActive = (isActive && (now - lastActivity) < 2000);
-            
-            if (isCurrentlyActive) {
-                totalActiveTime += 1;
-                setTotalActiveTime(totalActiveTime);
-            }
-            isActive = false;
-        }, 1000);
+        if (!userProfile.adsDisabled && Date.now() - lastAdTime >= adIntervalTime) {
+            showAd();
+            lastAdTime = Date.now();
+        }
+
+        totalActiveTime += 1;
+        setTotalActiveTime(totalActiveTime);
+    }
+    
+    const now = Date.now();
+    const isCurrentlyActive = (isActive && (now - lastActivity) < 2000);
+    
+    if (isCurrentlyActive && !gameIsPlaying) {  // Only track non-game activity here
+        totalActiveTime += 1;
+        setTotalActiveTime(totalActiveTime);
+    }
+    isActive = false;
+}, 1000);
 
     function showAd() {
     const overlay = document.getElementById('adOverlay');
