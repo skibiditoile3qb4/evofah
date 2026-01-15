@@ -535,11 +535,12 @@
             showRebirthAnimation(nextTier, req.gems);
             
             // Wait for animation, then apply rebirth
-            setTimeout(() => {
-                // Reset coins
-                coins = 50;
-                setCoins(coins);
-                
+setTimeout(() => {
+    // Reset coins with Rebirth Power bonus
+    const rebirthPowerLevel = userProfile.gemUpgrades?.rebirth_boost || 0;
+    const startingCoins = 50 + (rebirthPowerLevel * 50);
+    coins = startingCoins;
+    setCoins(coins);
                 // Reset cosmetics
                 userProfile.ownedCosmetics = {
                     colors: ['default'],
