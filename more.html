@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>More - Rebirth & Achievements</title>
+    <title>Rebirth System</title>
     <style>
         * {
             margin: 0;
@@ -42,36 +42,6 @@
             font-size: 36px;
             font-weight: 300;
             letter-spacing: 2px;
-        }
-        .tabs {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-bottom: 40px;
-        }
-        .tab-btn {
-            padding: 15px 40px;
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 8px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.3s;
-        }
-        .tab-btn:hover {
-            border-color: #555;
-            transform: translateY(-2px);
-        }
-        .tab-btn.active {
-            border-color: #d69e2e;
-            background: #2a2a1a;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
         }
         
         /* REBIRTH STYLES */
@@ -215,191 +185,52 @@
             cursor: not-allowed;
             opacity: 0.5;
         }
-        
-        /* ACHIEVEMENT STYLES */
-        .achievement-header {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .achievement-summary {
-            font-size: 18px;
-            color: #d69e2e;
-            margin-bottom: 10px;
-        }
-        .category-filters {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 30px;
-        }
-        .filter-btn {
-            padding: 10px 20px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 6px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        .filter-btn:hover {
-            border-color: #555;
-        }
-        .filter-btn.active {
-            background: #d69e2e;
-            border-color: #b7791f;
-            color: #000;
-        }
-        .achievements-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        .achievement-card {
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .achievement-card:hover {
-            border-color: #555;
-            transform: translateY(-5px);
-        }
-        .achievement-card.unlocked {
-            border-color: #d69e2e;
-            background: #2a2a1a;
-        }
-        .achievement-card.locked {
-            opacity: 0.6;
-        }
-        .achievement-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-        .achievement-name {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .achievement-desc {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 10px;
-        }
-        .achievement-reward {
-            color: #d69e2e;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        
-        /* NOTIFICATION */
-        .achievement-notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-            border: 3px solid #d69e2e;
-            border-radius: 16px;
-            padding: 40px 60px;
-            z-index: 10000;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(214, 158, 46, 0.5);
-            animation: popIn 0.5s ease-out forwards;
-        }
-        @keyframes popIn {
-            0% { transform: translate(-50%, -50%) scale(0); }
-            50% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); }
-        }
-        .notification-title {
-            font-size: 32px;
-            margin-bottom: 20px;
-        }
-        .notification-icon {
-            font-size: 64px;
-            margin-bottom: 15px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <button class="back-btn" onclick="window.location.href='index.html'">← BACK</button>
-        <h1>✨ MORE</h1>
+        <h1>💎 REBIRTH SYSTEM</h1>
         
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="rebirth">💎 REBIRTH</button>
-            <button class="tab-btn" data-tab="achievements">🏆 ACHIEVEMENTS</button>
+        <div class="rebirth-overview">
+            <h2 style="font-size: 28px; margin-bottom: 20px;">💎 PRESTIGE & REBIRTH</h2>
+            <div class="rebirth-stats">
+                <div class="rebirth-stat">
+                    <div class="rebirth-stat-label">Current Tier</div>
+                    <div class="rebirth-stat-value" id="currentTier">0</div>
+                </div>
+                <div class="rebirth-stat">
+                    <div class="rebirth-stat-label">Total Rebirths</div>
+                    <div class="rebirth-stat-value" id="totalRebirths">0</div>
+                </div>
+                <div class="rebirth-stat">
+                    <div class="rebirth-stat-label">Lifetime Gems</div>
+                    <div class="rebirth-stat-value" id="lifetimeGems">0</div>
+                </div>
+            </div>
         </div>
         
-        <!-- REBIRTH TAB -->
-        <div class="tab-content active" id="rebirth">
-            <div class="rebirth-overview">
-                <h2 style="font-size: 28px; margin-bottom: 20px;">💎 REBIRTH SYSTEM</h2>
-                <div class="rebirth-stats">
-                    <div class="rebirth-stat">
-                        <div class="rebirth-stat-label">Current Tier</div>
-                        <div class="rebirth-stat-value" id="currentTier">0</div>
-                    </div>
-                    <div class="rebirth-stat">
-                        <div class="rebirth-stat-label">Total Rebirths</div>
-                        <div class="rebirth-stat-value" id="totalRebirths">0</div>
-                    </div>
-                    <div class="rebirth-stat">
-                        <div class="rebirth-stat-label">Lifetime Gems</div>
-                        <div class="rebirth-stat-value" id="lifetimeGems">0</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="requirements-section">
-                <h3 style="margin-bottom: 20px; text-align: center;">Next Rebirth Requirements</h3>
-                <div id="requirementsList"></div>
-            </div>
-            
-            <div class="impact-sections">
-                <div class="impact-box lose">
-                    <div class="impact-title" style="color: #ff4444;">❌ YOU WILL LOSE</div>
-                    <div class="impact-list" id="loseList"></div>
-                </div>
-                <div class="impact-box keep">
-                    <div class="impact-title" style="color: #38a169;">✅ YOU WILL KEEP</div>
-                    <div class="impact-list" id="keepList"></div>
-                </div>
-                <div class="impact-box gain">
-                    <div class="impact-title" style="color: #d69e2e;">💎 YOU WILL GAIN</div>
-                    <div class="impact-list" id="gainList"></div>
-                </div>
-            </div>
-            
-            <button class="rebirth-btn" id="rebirthBtn">REBIRTH NOW</button>
+        <div class="requirements-section">
+            <h3 style="margin-bottom: 20px; text-align: center;">Next Rebirth Requirements</h3>
+            <div id="requirementsList"></div>
         </div>
         
-        <!-- ACHIEVEMENTS TAB -->
-        <div class="tab-content" id="achievements">
-            <div class="achievement-header">
-                <div class="achievement-summary" id="achievementSummary">0/15 Achievements Unlocked (0%)</div>
-                <div style="color: #888;">Total gems from achievements: <span id="totalAchievementGems" style="color: #d69e2e;">0 💎</span></div>
+        <div class="impact-sections">
+            <div class="impact-box lose">
+                <div class="impact-title" style="color: #ff4444;">❌ YOU WILL LOSE</div>
+                <div class="impact-list" id="loseList"></div>
             </div>
-            
-            <div class="category-filters">
-                <button class="filter-btn active" data-category="all">All</button>
-                <button class="filter-btn" data-category="gaming">🎮 Gaming</button>
-                <button class="filter-btn" data-category="wealth">💰 Wealth</button>
-                <button class="filter-btn" data-category="collector">🎨 Collector</button>
-                <button class="filter-btn" data-category="special">⭐ Special</button>
+            <div class="impact-box keep">
+                <div class="impact-title" style="color: #38a169;">✅ YOU WILL KEEP</div>
+                <div class="impact-list" id="keepList"></div>
             </div>
-            
-            <div class="achievements-grid" id="achievementsGrid"></div>
+            <div class="impact-box gain">
+                <div class="impact-title" style="color: #d69e2e;">💎 YOU WILL GAIN</div>
+                <div class="impact-list" id="gainList"></div>
+            </div>
         </div>
+        
+        <button class="rebirth-btn" id="rebirthBtn">REBIRTH NOW</button>
     </div>
 
     <script>
@@ -412,7 +243,6 @@
                 const stored = localStorage.getItem('userProfile');
                 if (stored) {
                     const profile = JSON.parse(stored);
-                    //mwah
                     // Initialize rebirth data
                     if (!profile.rebirthData) {
                         profile.rebirthData = {
@@ -422,19 +252,6 @@
                         };
                     }
                     if (typeof profile.gems === 'undefined') profile.gems = 0;
-                    
-                    // Initialize achievements
-                    if (!profile.achievements) {
-                        profile.achievements = {
-                            unlocked: [],
-                            progress: {
-                                gamesPlayed: 0,
-                                coinsEarned: 0,
-                                coinsSpent: 0,
-                                cosmeticsOwned: 0
-                            }
-                        };
-                    }
                     
                     return profile;
                 }
@@ -446,8 +263,7 @@
                 equippedCosmetics: { color: 'default', hat: 'none', face: 'none', effect: 'none', sword: 'none' },
                 ownedCosmetics: { colors: ['default'], hats: ['none'], faces: ['none'], effects: ['none'], swords: ['none'] },
                 rebirthData: { tier: 0, totalRebirths: 0, totalGemsEarned: 0 },
-                gems: 0,
-                achievements: { unlocked: [], progress: { gamesPlayed: 0, coinsEarned: 0, coinsSpent: 0, cosmeticsOwned: 0 } }
+                gems: 0
             };
         }
 
@@ -474,32 +290,6 @@
         let userProfile = getUserProfile();
         let coins = getCoins();
 
-        // ACHIEVEMENTS DATABASE (Simplified - 15 total)
-        const achievementsDB = {
-            // Gaming (4)
-            first_game: { name: 'First Steps', desc: 'Play your first game', icon: '🎮', reward: 1, category: 'gaming' },
-            game_explorer: { name: 'Explorer', desc: 'Play 10 different games', icon: '🗺️', reward: 5, category: 'gaming' },
-            game_master: { name: 'Game Master', desc: 'Play 50 different games', icon: '👑', reward: 15, category: 'gaming' },
-            marathon: { name: 'Marathon', desc: 'Play for 1 hour straight', icon: '⏱️', reward: 10, category: 'gaming' },
-            
-            // Wealth (4)
-            first_coin: { name: 'First Coin', desc: 'Earn 100 coins', icon: '🪙', reward: 1, category: 'wealth' },
-            getting_rich: { name: 'Getting Rich', desc: 'Earn 1,000 coins total', icon: '💰', reward: 2, category: 'wealth' },
-            entrepreneur: { name: 'Entrepreneur', desc: 'Earn 50,000 coins total', icon: '💼', reward: 10, category: 'wealth' },
-            big_spender: { name: 'Big Spender', desc: 'Spend 10,000 coins', icon: '💸', reward: 5, category: 'wealth' },
-            
-            // Collector (4)
-            first_purchase: { name: 'First Purchase', desc: 'Buy any cosmetic', icon: '🛍️', reward: 2, category: 'collector' },
-            fashionista: { name: 'Fashionista', desc: 'Own 10 cosmetics', icon: '👗', reward: 8, category: 'collector' },
-            collector: { name: 'Collector', desc: 'Own 25 cosmetics', icon: '📦', reward: 20, category: 'collector' },
-            completionist: { name: 'Completionist', desc: 'Unlock all locked games', icon: '✅', reward: 25, category: 'collector' },
-            
-            // Special (3)
-            phoenix_rising: { name: 'Phoenix Rising', desc: 'Complete first rebirth', icon: '🔥', reward: 10, category: 'special' },
-            rebirth_master: { name: 'Rebirth Master', desc: 'Complete 5 rebirths', icon: '💎', reward: 50, category: 'special' },
-            the_fallen: { name: 'The Fallen', desc: 'Lose 10,000 coins total', icon: '💀', reward: 5, category: 'special' }
-        };
-
         // Calculate rebirth requirements
         function getRebirthRequirements(tier) {
             const requirements = {
@@ -523,12 +313,18 @@
             };
         }
 
+        // Get total cosmetics (minus 5 for defaults)
+        function getTotalCosmetics() {
+            const total = Object.values(userProfile.ownedCosmetics || {}).reduce((sum, arr) => sum + arr.length, 0);
+            return Math.max(0, total - 5);
+        }
+
         // Check if requirements met
         function checkRebirthRequirements() {
             const nextTier = userProfile.rebirthData.tier + 1;
             const req = getRebirthRequirements(nextTier);
             
-            const totalCosmetics = Object.values(userProfile.ownedCosmetics || {}).reduce((sum, arr) => sum + arr.length, 0);
+            const totalCosmetics = getTotalCosmetics();
             const totalSwords = (userProfile.ownedCosmetics?.swords || []).filter(s => s !== 'none').length;
             
             return {
@@ -552,7 +348,7 @@
             document.getElementById('lifetimeGems').textContent = userProfile.rebirthData.totalGemsEarned;
             
             // Requirements
-            const totalCosmetics = Object.values(userProfile.ownedCosmetics || {}).reduce((sum, arr) => sum + arr.length, 0);
+            const totalCosmetics = getTotalCosmetics();
             const totalSwords = (userProfile.ownedCosmetics?.swords || []).filter(s => s !== 'none').length;
             
             const reqList = document.getElementById('requirementsList');
@@ -601,8 +397,7 @@
                 • Username (${userProfile.username})<br>
                 • Status (${userProfile.status})<br>
                 • Unlocked games (${userProfile.unlockedGames.length})<br>
-                • All gems (${userProfile.gems})<br>
-                • Achievements (${userProfile.achievements.unlocked.length})
+                • All gems (${userProfile.gems})
             `;
             document.getElementById('gainList').innerHTML = `
                 💎 ${req.gems} gems
@@ -649,126 +444,14 @@
             userProfile.rebirthData.totalRebirths++;
             userProfile.rebirthData.totalGemsEarned += req.gems;
             
-            // Check achievement
-            checkAndUnlockAchievement('phoenix_rising');
-            if (userProfile.rebirthData.totalRebirths >= 5) checkAndUnlockAchievement('rebirth_master');
-            
             saveUserProfile(userProfile);
             
             alert(`🎉 REBIRTH SUCCESSFUL! 🎉\n\nYou are now Tier ${nextTier}!\n+${req.gems} gems received!`);
             renderRebirthTab();
         });
 
-        // Check and unlock achievement
-        function checkAndUnlockAchievement(id) {
-            if (userProfile.achievements.unlocked.includes(id)) return;
-            
-            const achievement = achievementsDB[id];
-            if (!achievement) return;
-            
-            userProfile.achievements.unlocked.push(id);
-            userProfile.gems += achievement.reward;
-            saveUserProfile(userProfile);
-            
-            showAchievementNotification(achievement);
-        }
-
-        // Show achievement notification
-        function showAchievementNotification(achievement) {
-            const notification = document.createElement('div');
-            notification.className = 'achievement-notification';
-            notification.innerHTML = `
-                <div class="notification-title">🎉 ACHIEVEMENT UNLOCKED! 🎉</div>
-                <div class="notification-icon">${achievement.icon}</div>
-                <div style="font-size: 24px; margin-bottom: 10px;">${achievement.name}</div>
-                <div style="font-size: 18px; color: #d69e2e;">+${achievement.reward} gems 💎</div>
-            `;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'popIn 0.3s ease-out reverse';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-
-        // Render achievements
-        function renderAchievements(filter = 'all') {
-            const grid = document.getElementById('achievementsGrid');
-            grid.innerHTML = '';
-            
-            let totalGems = 0;
-            
-            Object.entries(achievementsDB).forEach(([id, ach]) => {
-                if (filter !== 'all' && ach.category !== filter) return;
-                
-                const unlocked = userProfile.achievements.unlocked.includes(id);
-                if (unlocked) totalGems += ach.reward;
-                
-                const card = document.createElement('div');
-                card.className = 'achievement-card ' + (unlocked ? 'unlocked' : 'locked');
-                card.innerHTML = `
-                    <div class="achievement-icon">${unlocked ? ach.icon : '🔒'}</div>
-                    <div class="achievement-name">${unlocked ? ach.name : '???'}</div>
-                    <div class="achievement-desc">${unlocked ? ach.desc : 'Locked'}</div>
-                    <div class="achievement-reward">${unlocked ? `+${ach.reward} 💎` : '???'}</div>
-                `;
-                grid.appendChild(card);
-            });
-            
-            // Update summary
-            const total = Object.keys(achievementsDB).length;
-            const unlocked = userProfile.achievements.unlocked.length;
-            const percent = Math.floor((unlocked / total) * 100);
-            document.getElementById('achievementSummary').textContent = `${unlocked}/${total} Achievements Unlocked (${percent}%)`;
-            document.getElementById('totalAchievementGems').textContent = `${totalGems} 💎`;
-        }
-
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.tab).classList.add('active');
-            });
-        });
-
-        // Category filtering
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderAchievements(btn.dataset.category);
-            });
-        });
-
-        // Auto-check achievements on load
-        function autoCheckAchievements() {
-            const progress = userProfile.achievements.progress;
-            
-            // Gaming
-            if (progress.gamesPlayed >= 1) checkAndUnlockAchievement('first_game');
-            if (progress.gamesPlayed >= 10) checkAndUnlockAchievement('game_explorer');
-            if (progress.gamesPlayed >= 50) checkAndUnlockAchievement('game_master');
-            
-            // Wealth
-            if (progress.coinsEarned >= 100) checkAndUnlockAchievement('first_coin');
-            if (progress.coinsEarned >= 1000) checkAndUnlockAchievement('getting_rich');
-            if (progress.coinsEarned >= 50000) checkAndUnlockAchievement('entrepreneur');
-            if (progress.coinsSpent >= 10000) checkAndUnlockAchievement('big_spender');
-            
-            // Collector
-            if (progress.cosmeticsOwned >= 1) checkAndUnlockAchievement('first_purchase');
-            if (progress.cosmeticsOwned >= 10) checkAndUnlockAchievement('fashionista');
-            if (progress.cosmeticsOwned >= 25) checkAndUnlockAchievement('collector');
-            if (userProfile.unlockedGames.length >= 15) checkAndUnlockAchievement('completionist');
-        }
-
         // Initialize
         renderRebirthTab();
-        renderAchievements();
-        autoCheckAchievements();
     </script>
 </body>
 </html>
