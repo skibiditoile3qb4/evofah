@@ -200,19 +200,20 @@
                 costIncrease: 2,
                 effect: (level) => `Start with ${50 + (level * 50)} coins`
             },
-            auto_collect: {
-                name: 'Auto Collector',
-                icon: '🤖',
-                desc: 'Automatically collect idle coins while offline',
-                maxLevel: 5,
-                baseCost: 25,
-                costIncrease: 2.5,
-                effect: (level) => {
-                    if (level === 0) return 'Locked';
-                    const rate = 100 - (level * 10);
-                    return `Earn 1 coin every ${rate}s while offline`;
-                }
-            },
+auto_collect: {
+    name: 'Auto Collector',
+    icon: '🤖',
+    desc: 'Automatically collect idle coins while offline',
+    maxLevel: 5,
+    baseCost: 25,
+    costIncrease: 2.5,
+    effect: (level) => {
+        if (level === 0) return 'Locked';
+        const coinsPerTick = 10 + (level * 10); // 20, 30, 40, 50, 60 coins
+        const rate = 10; // Every 30 seconds
+        return `Earn ${coinsPerTick} coins every ${rate}s while idle`;
+    }
+}
             coin_magnet: {
                 name: 'Coin Magnet',
                 icon: '🧲',
