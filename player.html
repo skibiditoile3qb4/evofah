@@ -290,7 +290,6 @@
         const _0x4a2b = (s) => btoa(s).split('').reverse().join('');
         const _0x2b4a = (s) => atob(s.split('').reverse().join(''));
         const _0x9c3d = 'X2NvaW5EYXRh';
-        const _0x3e8a = 'X3RvdGFsQWN0aXZlVGltZQ==';
 
         function getUserProfile() {
             try {
@@ -358,12 +357,12 @@
         }
 
         function getTotalActiveTime() {
-            try {
-                const stored = localStorage.getItem(_0x2b4a(_0x3e8a));
-                return stored ? parseInt(_0x2b4a(stored)) : 0;
-            } catch(e) {}
-            return 0;
-        }
+    try {
+        const stored = localStorage.getItem('totalActiveTime');
+        return stored ? parseInt(stored) : 0;
+    } catch(e) {}
+    return 0;
+}
         function getActivePotion() {
     try {
         const saved = localStorage.getItem('_activePotion');
