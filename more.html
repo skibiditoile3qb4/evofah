@@ -404,27 +404,28 @@
         let coins = getCoins();
 
         // Calculate rebirth requirements
-        function getRebirthRequirements(tier) {
-            const requirements = {
-                1: { coins: 10000, cosmetics: 3, games: 0, swords: 0, gems: 5 },
-                2: { coins: 25000, cosmetics: 8, games: 5, swords: 0, gems: 12 },
-                3: { coins: 50000, cosmetics: 15, games: 10, swords: 1, gems: 25 },
-                4: { coins: 100000, cosmetics: 25, games: 15, swords: 2, gems: 50 },
-                5: { coins: 250000, cosmetics: 40, games: 20, swords: 3, gems: 100 }
-            };
-            
-            if (tier <= 5) return requirements[tier];
-            
-            // Tier 6+ formulas
-            const excess = tier - 5;
-            return {
-                coins: Math.floor(250000 * Math.pow(1.5, excess)),
-                cosmetics: Math.floor(40 * Math.pow(1.2, excess)),
-                games: 20,
-                swords: 3,
-                gems: Math.floor(100 * Math.pow(2, excess))
-            };
-        }
+        // Calculate rebirth requirements
+function getRebirthRequirements(tier) {
+    const requirements = {
+        1: { coins: 50000, cosmetics: 5, games: 3, swords: 0, gems: 2 },
+        2: { coins: 150000, cosmetics: 10, games: 6, swords: 1, gems: 5 },
+        3: { coins: 400000, cosmetics: 15, games: 9, swords: 2, gems: 10 },
+        4: { coins: 1000000, cosmetics: 20, games: 12, swords: 3, gems: 15 },
+        5: { coins: 2500000, cosmetics: 24, games: 13, swords: 3, gems: 25 }
+    };
+    
+    if (tier <= 5) return requirements[tier];
+    
+    // Tier 6+ formulas - exponential scaling for coins
+    const excess = tier - 5;
+    return {
+        coins: Math.floor(2500000 * Math.pow(2.5, excess)), // Much faster exponential growth
+        cosmetics: 24, // Maxed out
+        games: 13, // Maxed out
+        swords: 3, // Maxed out
+        gems: Math.floor(25 * Math.pow(1.5, excess))
+    };
+}
 
         // Get total cosmetics (minus 5 for defaults)
         function getTotalCosmetics() {
