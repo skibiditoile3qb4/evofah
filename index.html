@@ -859,19 +859,20 @@ function setCoins(amount) {
             } catch(e) {}
         }
 
-        function getTotalActiveTime() {
-            try {
-                const stored = localStorage.getItem(_0x2b4a(_0x3e8a));
-                return stored ? parseInt(_0x2b4a(stored)) : 0;
-            } catch(e) {}
-            return 0;
-        }
+       function getTotalActiveTime() {
+    try {
+        const stored = localStorage.getItem('totalActiveTime');
+        return stored ? parseInt(stored) : 0;
+    } catch(e) {}
+    return 0;
+}
 
-        function setTotalActiveTime(time) {
-            try {
-                localStorage.setItem(_0x2b4a(_0x3e8a), _0x4a2b(time.toString()));
-            } catch(e) {}
-        }
+function setTotalActiveTime(time) {
+    try {
+        localStorage.setItem('totalActiveTime', time.toString());
+    } catch(e) {}
+}
+
 
         function generateSeed() {
             return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
