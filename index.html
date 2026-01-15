@@ -993,10 +993,10 @@ function deobfuscateSeedAdmin(obfuscated) {
          function checkGreatReset() {
             const resetFlag = localStorage.getItem('reset');
             
-            if (resetFlag != '4') {
+            if (resetFlag != '5') {
 
                 
-                localStorage.setItem('reset', '4');
+                localStorage.setItem('reset', '5');
                 showResetNotification();
                 
                 return true;
@@ -1023,10 +1023,10 @@ function deobfuscateSeedAdmin(obfuscated) {
             
             notification.innerHTML = `
                 <div style="font-size: 48px; margin-bottom: 20px;">😄</div>
-                <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">OLD GAMES + NEW GAMES.</div>
+                <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">New update coming soon.</div>
                 <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
-                    Yay new gamess yay<br>
-                   + old games yay!<br>
+                    Prestige? Gems?<br>
+                   New better games?<br>
                     Good luck!
                 </div>
             `;
