@@ -381,8 +381,223 @@
     0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); transform: scale(1); }
     50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); transform: scale(1.05); }
 }
+// ============================================
+// SNIPPET 1: Add BEFORE closing </head> tag
+// Location: Around line 260 (after PlayerSphere.js script)
+// ============================================
+
+<script src="relay-client.js"></script>
+
+
+// ============================================
+// SNIPPET 2: Add to CSS section
+// Location: Inside <style> tag, around line 240 (after @keyframes sparkle)
+// ============================================
+
+#chatContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    display: none;
+    flex-direction: column;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+#chatContainer.show {
+    display: flex;
+}
+#chatHeader {
+    padding: 15px;
+    border-bottom: 2px solid #333;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    border-radius: 10px 10px 0 0;
+}
+#chatOnlineCount {
+    font-size: 12px;
+    color: #4ade80;
+    font-weight: normal;
+}
+#closeChat {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+#closeChat:hover {
+    background: #333;
+}
+#chatMessages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#chatMessages::-webkit-scrollbar {
+    width: 8px;
+}
+#chatMessages::-webkit-scrollbar-track {
+    background: #0a0a0a;
+    border-radius: 4px;
+}
+#chatMessages::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+#chatMessages::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+.chat-message {
+    padding: 8px 12px;
+    background: #0a0a0a;
+    border-radius: 8px;
+    border-left: 3px solid #333;
+    animation: slideInChat 0.2s ease-out;
+}
+@keyframes slideInChat {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.chat-username {
+    font-weight: bold;
+    margin-right: 5px;
+    font-size: 13px;
+}
+.chat-status-badge {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+    font-weight: bold;
+}
+.chat-status-badge.admin {
+    background: #ff4444;
+    color: #000;
+}
+.chat-status-badge.owner {
+    background: #a855f7;
+    color: #fff;
+}
+.chat-status-badge.legendary {
+    background: #ffd700;
+    color: #000;
+}
+.chat-status-badge.rare {
+    background: #3b82f6;
+    color: #fff;
+}
+.chat-status-badge.mystical {
+    background: linear-gradient(135deg, #008c99 0%, #00d9ff 100%);
+    color: #fff;
+}
+.chat-status-badge.player {
+    background: #333;
+    color: #ccc;
+}
+.chat-text {
+    color: #ccc;
+    font-size: 14px;
+    word-wrap: break-word;
+    display: block;
+    margin-top: 4px;
+}
+.chat-system {
+    text-align: center;
+    color: #888;
+    font-size: 12px;
+    font-style: italic;
+}
+#chatInputContainer {
+    padding: 15px;
+    border-top: 2px solid #333;
+    background: #0a0a0a;
+    border-radius: 0 0 10px 10px;
+}
+#chatInput {
+    width: 100%;
+    padding: 10px 12px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+#chatInput:focus {
+    border-color: #555;
+}
+#chatToggleBtn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #d69e2e 0%, #ffd700 100%);
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(214, 158, 46, 0.4);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#chatToggleBtn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(214, 158, 46, 0.6);
+}
+#chatToggleBtn.has-unread {
+    animation: bounceChat 0.5s ease infinite;
+}
+@keyframes bounceChat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+.connection-status {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+.connection-status.connected {
+    background: #4ade80;
+    color: #000;
+}
+.connection-status.disconnected {
+    background: #ff4444;
+    color: #fff;
+}
     </style>
     <script src="PlayerSphere.js"></script>
+    <script src="relay-client.js"></script>
 </head>
 <body>
     <div id="passwordScreen">
@@ -443,6 +658,22 @@
         <button id="backBtn">← BACK</button>
         <iframe id="gameFrame"></iframe>
     </div>
+<button id="chatToggleBtn">💬</button>
+
+<div id="chatContainer">
+    <div id="chatHeader">
+        <div>
+            💬 Global Chat
+            <span id="chatOnlineCount">• 0 online</span>
+            <span id="connectionStatus" class="connection-status disconnected">Offline</span>
+        </div>
+        <button id="closeChat">✕</button>
+    </div>
+    <div id="chatMessages"></div>
+    <div id="chatInputContainer">
+        <input type="text" id="chatInput" placeholder="Type a message..." maxlength="200">
+    </div>
+</div>
 
 <div id="adOverlay">
     <div class="ad-content">
@@ -2078,6 +2309,312 @@ setInterval(() => {
 
 loadLightningState();
 updateLightningIcon();
+
+        const RELAY_SERVER = 'wss://relayfah.onrender.com';
+let relay = null;
+let chatOpen = false;
+let unreadMessages = 0;
+let onlineCount = 0;
+
+async function initChat() {
+    try {
+        relay = new RelayClient(RELAY_SERVER);
+        await relay.connect();
+        relay.joinRoom('global_chat', userProfile.username);
+        
+        relay.on('connected', () => {
+            updateConnectionStatus(true);
+        });
+        
+        relay.on('disconnected', () => {
+            updateConnectionStatus(false);
+        });
+        
+        relay.on('joined', (data) => {
+            addSystemMessage('Welcome to global chat!');
+            onlineCount = data.players.length;
+            updateOnlineCount();
+            
+            if (data.chatHistory && data.chatHistory.length > 0) {
+                data.chatHistory.forEach(msg => {
+                    displayChatMessage(msg, false);
+                });
+            }
+        });
+        
+        relay.on('chat_message', (data) => {
+            displayChatMessage(data.message, true);
+            
+            if (!chatOpen) {
+                unreadMessages++;
+                document.getElementById('chatToggleBtn').classList.add('has-unread');
+            }
+        });
+        
+        relay.on('player_joined', (data) => {
+            addSystemMessage(`${data.player.username} joined the chat`);
+            onlineCount++;
+            updateOnlineCount();
+        });
+        
+        relay.on('player_left', (data) => {
+            addSystemMessage(`${data.player.username} left the chat`);
+            onlineCount--;
+            updateOnlineCount();
+        });
+        
+    } catch (error) {
+        console.error('Failed to connect to chat:', error);
+        addSystemMessage('Failed to connect to chat server');
+    }
+}
+
+function updateConnectionStatus(connected) {
+    const status = document.getElementById('connectionStatus');
+    if (connected) {
+        status.textContent = 'Online';
+        status.className = 'connection-status connected';
+    } else {
+        status.textContent = 'Offline';
+        status.className = 'connection-status disconnected';
+    }
+}
+
+function updateOnlineCount() {
+    document.getElementById('chatOnlineCount').textContent = `• ${onlineCount} online`;
+}
+
+function displayChatMessage(message, shouldScroll = true) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'chat-message';
+    
+    const statusClass = message.status || 'player';
+    
+    msgDiv.innerHTML = `
+        <div>
+            <span class="chat-username">${message.username}</span>
+            <span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>
+        </div>
+        <span class="chat-text">${escapeHtml(message.message)}</span>
+    `;
+    
+    messagesContainer.appendChild(msgDiv);
+    
+    if (shouldScroll) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+
+function addSystemMessage(text) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'chat-message chat-system';
+    msgDiv.textContent = text;
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function toggleChat() {
+    chatOpen = !chatOpen;
+    const container = document.getElementById('chatContainer');
+    
+    if (chatOpen) {
+        container.classList.add('show');
+        unreadMessages = 0;
+        document.getElementById('chatToggleBtn').classList.remove('has-unread');
+        document.getElementById('chatInput').focus();
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+    } else {
+        container.classList.remove('show');
+    }
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (message && relay && relay.connected) {
+        relay.sendChat(message);
+        input.value = '';
+    }
+}
+
+// Event listeners
+document.getElementById('chatToggleBtn').addEventListener('click', toggleChat);
+document.getElementById('closeChat').addEventListener('click', toggleChat);
+
+document.getElementById('chatInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        sendChatMessage();
+    }
+});
+
+// Initialize chat when logged in
+if (localStorage.getItem('good') === '1') {
+    initChat();
+}
+
+
+// ============================================
+// SNIPPET 5: Update relay.sendChat to include status
+// Location: You need to create relay-client.js file
+// Save this as a NEW FILE: relay-client.js
+// ============================================
+
+class RelayClient {
+  constructor(serverUrl) {
+    this.serverUrl = serverUrl;
+    this.ws = null;
+    this.clientId = null;
+    this.room = null;
+    this.username = null;
+    this.connected = false;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 2000;
+    
+    this.handlers = {
+      connected: [],
+      disconnected: [],
+      joined: [],
+      chat_message: [],
+      player_joined: [],
+      player_left: [],
+      game_state_update: [],
+      player_action: [],
+      error: []
+    };
+  }
+  
+  connect() {
+    return new Promise((resolve, reject) => {
+      try {
+        this.ws = new WebSocket(this.serverUrl);
+        
+        this.ws.onopen = () => {
+          console.log('Connected to relay server');
+          this.connected = true;
+          this.reconnectAttempts = 0;
+        };
+        
+        this.ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'connected') {
+            this.clientId = data.clientId;
+            this.emit('connected', data);
+            resolve(data);
+          } else {
+            this.handleMessage(data);
+          }
+        };
+        
+        this.ws.onclose = () => {
+          console.log('Disconnected from relay server');
+          this.connected = false;
+          this.emit('disconnected');
+          this.attemptReconnect();
+        };
+        
+        this.ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          this.emit('error', error);
+          reject(error);
+        };
+        
+      } catch (error) {
+        console.error('Connection error:', error);
+        reject(error);
+      }
+    });
+  }
+  
+  attemptReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log('Max reconnect attempts reached');
+      return;
+    }
+    
+    this.reconnectAttempts++;
+    console.log(`Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    
+    setTimeout(() => {
+      this.connect().catch(() => {});
+    }, this.reconnectDelay);
+  }
+  
+  handleMessage(data) {
+    this.emit(data.type, data);
+  }
+  
+  send(data) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(data));
+    } else {
+      console.warn('WebSocket not connected');
+    }
+  }
+  
+  joinRoom(room, username) {
+    this.room = room;
+    this.username = username;
+    this.send({
+      type: 'join',
+      room,
+      username
+    });
+  }
+  
+  leaveRoom() {
+    this.send({ type: 'leave' });
+    this.room = null;
+  }
+  
+  sendChat(message) {
+    if (!this.room) {
+      console.warn('Not in a room');
+      return;
+    }
+    
+    this.send({
+      type: 'chat',
+      message
+    });
+  }
+  
+  on(event, handler) {
+    if (this.handlers[event]) {
+      this.handlers[event].push(handler);
+    }
+  }
+  
+  off(event, handler) {
+    if (this.handlers[event]) {
+      this.handlers[event] = this.handlers[event].filter(h => h !== handler);
+    }
+  }
+  
+  emit(event, data) {
+    if (this.handlers[event]) {
+      this.handlers[event].forEach(handler => handler(data));
+    }
+  }
+  
+  disconnect() {
+    if (this.ws) {
+      this.ws.close();
+    }
+  }
+}
+
+window.RelayClient = RelayClient;
     </script>
     <script src="visualizer.js"></script>
 </body>
