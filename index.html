@@ -622,6 +622,7 @@
                 <button id="rouletteBtn" style="background: #c53030; border: 1px solid #9b2c2c;">ROULETTE ⭕</button>
                 <button id="slotsBtn" style="background:#319795;border:1px solid #2c7a7b;">SLOTS 🎰</button>
                  <button id="moreBtn" style="background: linear-gradient(135deg, #d69e2e 0%, #ffd700 100%); border: 2px solid #ffd700; animation: sparkle 2s infinite;">MORE ✨</button>
+                <button id="partyBtn" style="background: #a855f7; border: 1px solid #7c3aed;">PARTY CHAT 🎮</button>
             </div>
             <div id="gameList"></div>
             <div class="dev-section">
@@ -1915,6 +1916,9 @@ function backToMain() {
         document.getElementById('moreBtn').addEventListener('click', () => {
     window.location.href = 'more.html';
 });
+        document.getElementById('partyBtn').addEventListener('click', () => {
+    window.location.href = 'party.html';
+});
 
 window.addEventListener('message', (event) => {
     if (event.data.type === 'getCoins') {
@@ -2309,6 +2313,9 @@ async function initChat() {
     try {
         relay = new RelayClient(RELAY_SERVER);
         await relay.connect();
+        
+        updateConnectionStatus(true);
+        
         relay.joinRoom('global_chat', userProfile.username, userProfile.status);
         
         relay.on('connected', () => {
@@ -2317,11 +2324,14 @@ async function initChat() {
         
         relay.on('disconnected', () => {
             updateConnectionStatus(false);
+            onlineCount = 0;
+            updateOnlineCount();
         });
         
         relay.on('joined', (data) => {
             addSystemMessage('Welcome to global chat!');
-            onlineCount = data.players.length;
+            // Fix: Use the players array length
+            onlineCount = data.players ? data.players.length : 0;
             updateOnlineCount();
             
             if (data.chatHistory && data.chatHistory.length > 0) {
@@ -2348,15 +2358,17 @@ async function initChat() {
         
         relay.on('player_left', (data) => {
             addSystemMessage(`${data.player.username} left the chat`);
-            onlineCount--;
+            onlineCount = Math.max(0, onlineCount - 1);
             updateOnlineCount();
         });
         
     } catch (error) {
         console.error('Failed to connect to chat:', error);
         addSystemMessage('Failed to connect to chat server');
+        updateConnectionStatus(false);
     }
 }
+
 
 function updateConnectionStatus(connected) {
     const status = document.getElementById('connectionStatus');
