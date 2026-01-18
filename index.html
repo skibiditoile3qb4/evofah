@@ -381,18 +381,6 @@
     0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); transform: scale(1); }
     50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); transform: scale(1.05); }
 }
-// ============================================
-// SNIPPET 1: Add BEFORE closing </head> tag
-// Location: Around line 260 (after PlayerSphere.js script)
-// ============================================
-
-<script src="relay-client.js"></script>
-
-
-// ============================================
-// SNIPPET 2: Add to CSS section
-// Location: Inside <style> tag, around line 240 (after @keyframes sparkle)
-// ============================================
 
 #chatContainer {
     position: fixed;
@@ -2310,10 +2298,6 @@ setInterval(() => {
 loadLightningState();
 updateLightningIcon();
 
-// ============================================
-// CHAT SYSTEM - Add at the END of your <script> tag
-// Location: After updateLightningIcon() call, before closing </script>
-// ============================================
 
 const RELAY_SERVER = 'wss://relayfah.onrender.com';
 let relay = null;
