@@ -96,15 +96,16 @@ class RelayClient {
   }
   
   // Room Management
-  joinRoom(room, username) {
+joinRoom(room, username, status) {
     this.room = room;
     this.username = username;
     this.send({
-      type: 'join',
-      room,
-      username
+        type: 'join',
+        room,
+        username,
+        status: status || 'player'  // ADD THIS LINE
     });
-  }
+}
   
   leaveRoom() {
     this.send({ type: 'leave' });
