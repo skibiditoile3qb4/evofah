@@ -13,16 +13,20 @@ class RelayClient {
     this.reconnectDelay = 2000;
     
     // Event handlers
-    this.handlers = {
-      connected: [],
-      disconnected: [],
-      chat_message: [],
-      player_joined: [],
-      player_left: [],
-      game_state_update: [],
-      player_action: [],
-      error: []
-    };
+this.handlers = {
+  connected: [],
+  disconnected: [],
+  chat_message: [],
+  player_joined: [],
+  player_left: [],
+  game_state_update: [],
+  player_action: [],
+  error: [],
+  donation: [],        // ADD THIS
+  kick: [],            // ADD THIS
+  disband: [],         // ADD THIS
+  players_update: []   // ADD THIS
+};
   }
   
   connect() {
