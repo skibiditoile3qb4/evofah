@@ -2310,7 +2310,12 @@ setInterval(() => {
 loadLightningState();
 updateLightningIcon();
 
-        const RELAY_SERVER = 'wss://relayfah.onrender.com';
+// ============================================
+// CHAT SYSTEM - Add at the END of your <script> tag
+// Location: After updateLightningIcon() call, before closing </script>
+// ============================================
+
+const RELAY_SERVER = 'wss://relayfah.onrender.com';
 let relay = null;
 let chatOpen = false;
 let unreadMessages = 0;
@@ -2320,7 +2325,7 @@ async function initChat() {
     try {
         relay = new RelayClient(RELAY_SERVER);
         await relay.connect();
-        relay.joinRoom('global_chat', userProfile.username);
+        relay.joinRoom('global_chat', userProfile.username, userProfile.status);
         
         relay.on('connected', () => {
             updateConnectionStatus(true);
@@ -2393,7 +2398,7 @@ function displayChatMessage(message, shouldScroll = true) {
     
     msgDiv.innerHTML = `
         <div>
-            <span class="chat-username">${message.username}</span>
+            <span class="chat-username">${escapeHtml(message.username)}</span>
             <span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>
         </div>
         <span class="chat-text">${escapeHtml(message.message)}</span>
@@ -2460,161 +2465,6 @@ document.getElementById('chatInput').addEventListener('keypress', (e) => {
 if (localStorage.getItem('good') === '1') {
     initChat();
 }
-
-
-// ============================================
-// SNIPPET 5: Update relay.sendChat to include status
-// Location: You need to create relay-client.js file
-// Save this as a NEW FILE: relay-client.js
-// ============================================
-
-class RelayClient {
-  constructor(serverUrl) {
-    this.serverUrl = serverUrl;
-    this.ws = null;
-    this.clientId = null;
-    this.room = null;
-    this.username = null;
-    this.connected = false;
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 2000;
-    
-    this.handlers = {
-      connected: [],
-      disconnected: [],
-      joined: [],
-      chat_message: [],
-      player_joined: [],
-      player_left: [],
-      game_state_update: [],
-      player_action: [],
-      error: []
-    };
-  }
-  
-  connect() {
-    return new Promise((resolve, reject) => {
-      try {
-        this.ws = new WebSocket(this.serverUrl);
-        
-        this.ws.onopen = () => {
-          console.log('Connected to relay server');
-          this.connected = true;
-          this.reconnectAttempts = 0;
-        };
-        
-        this.ws.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'connected') {
-            this.clientId = data.clientId;
-            this.emit('connected', data);
-            resolve(data);
-          } else {
-            this.handleMessage(data);
-          }
-        };
-        
-        this.ws.onclose = () => {
-          console.log('Disconnected from relay server');
-          this.connected = false;
-          this.emit('disconnected');
-          this.attemptReconnect();
-        };
-        
-        this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          this.emit('error', error);
-          reject(error);
-        };
-        
-      } catch (error) {
-        console.error('Connection error:', error);
-        reject(error);
-      }
-    });
-  }
-  
-  attemptReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Max reconnect attempts reached');
-      return;
-    }
-    
-    this.reconnectAttempts++;
-    console.log(`Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-    
-    setTimeout(() => {
-      this.connect().catch(() => {});
-    }, this.reconnectDelay);
-  }
-  
-  handleMessage(data) {
-    this.emit(data.type, data);
-  }
-  
-  send(data) {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data));
-    } else {
-      console.warn('WebSocket not connected');
-    }
-  }
-  
-  joinRoom(room, username) {
-    this.room = room;
-    this.username = username;
-    this.send({
-      type: 'join',
-      room,
-      username
-    });
-  }
-  
-  leaveRoom() {
-    this.send({ type: 'leave' });
-    this.room = null;
-  }
-  
-  sendChat(message) {
-    if (!this.room) {
-      console.warn('Not in a room');
-      return;
-    }
-    
-    this.send({
-      type: 'chat',
-      message
-    });
-  }
-  
-  on(event, handler) {
-    if (this.handlers[event]) {
-      this.handlers[event].push(handler);
-    }
-  }
-  
-  off(event, handler) {
-    if (this.handlers[event]) {
-      this.handlers[event] = this.handlers[event].filter(h => h !== handler);
-    }
-  }
-  
-  emit(event, data) {
-    if (this.handlers[event]) {
-      this.handlers[event].forEach(handler => handler(data));
-    }
-  }
-  
-  disconnect() {
-    if (this.ws) {
-      this.ws.close();
-    }
-  }
-}
-
-window.RelayClient = RelayClient;
     </script>
     <script src="visualizer.js"></script>
 </body>
