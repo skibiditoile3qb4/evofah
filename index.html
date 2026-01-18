@@ -526,6 +526,10 @@
     background: #0a0a0a;
     border-radius: 0 0 10px 10px;
 }
+.donate-section-chat {
+    margin-bottom: 10px;
+}
+
 #chatInput {
     width: 100%;
     padding: 10px 12px;
@@ -583,6 +587,57 @@
     background: #ff4444;
     color: #fff;
 }
+        .donate-section {
+    background: #0a0a0a;
+    border: 1px solid #ffd700;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+.donate-section h4 {
+    color: #ffd700;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+.donate-form {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.donate-form input,
+.donate-form select {
+    padding: 6px 8px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+}
+.donate-form input {
+    flex: 1;
+    min-width: 80px;
+}
+.donate-form select {
+    width: 70px;
+}
+.donate-btn {
+    padding: 6px 12px;
+    background: #ffd700;
+    border: none;
+    border-radius: 4px;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 12px;
+}
+.donate-btn:hover {
+    background: #d69e2e;
+}
+.chat-message.donation {
+    border-left-color: #ffd700;
+    background: linear-gradient(90deg, #0a0a0a 0%, rgba(255, 215, 0, 0.1) 100%);
+}
+
     </style>
     <script src="PlayerSphere.js"></script>
     <script src="relay-client.js"></script>
@@ -659,9 +714,21 @@
         <button id="closeChat">✕</button>
     </div>
     <div id="chatMessages"></div>
-    <div id="chatInputContainer">
-        <input type="text" id="chatInput" placeholder="Type a message..." maxlength="200">
+<div id="chatInputContainer">
+    <div class="donate-section donate-section-chat">
+        <h4>💰 Send Gift</h4>
+        <div class="donate-form">
+            <input type="text" id="globalDonateUsername" placeholder="Username">
+            <input type="number" id="globalDonateAmount" placeholder="Amount" min="1">
+            <select id="globalDonateType">
+                <option value="coins">Coins</option>
+                <option value="gems">Gems</option>
+            </select>
+            <button class="donate-btn" onclick="sendGlobalDonation()">Send</button>
+        </div>
     </div>
+    <input type="text" id="chatInput" placeholder="Type a message..." maxlength="200">
+</div>
 </div>
 
 <div id="adOverlay">
@@ -2461,6 +2528,94 @@ document.getElementById('chatInput').addEventListener('keypress', (e) => {
 if (localStorage.getItem('good') === '1') {
     initChat();
 }
+        function sendGlobalDonation() {
+    const username = document.getElementById('globalDonateUsername').value.trim();
+    const amount = parseInt(document.getElementById('globalDonateAmount').value);
+    const type = document.getElementById('globalDonateType').value;
+    
+    if (!username || !amount || amount <= 0) {
+        alert('Please enter a valid username and amount');
+        return;
+    }
+    
+    // Check if user has enough
+    const balance = type === 'coins' ? coins : (userProfile.gems || 0);
+    
+    if (balance < amount) {
+        alert(`Not enough ${type}! You have ${balance} ${type}.`);
+        return;
+    }
+    
+    if (!confirm(`Send ${amount} ${type} to ${username}?`)) {
+        return;
+    }
+    
+    // Deduct from sender
+    if (type === 'coins') {
+        coins -= amount;
+        setCoins(coins);
+        updateCoinDisplay();
+    } else {
+        userProfile.gems -= amount;
+        saveUserProfile(userProfile);
+        updateCoinDisplay();
+    }
+    
+    // Send donation through relay
+    if (relay && relay.connected) {
+        relay.send({
+            type: 'donation',
+            targetUsername: username,
+            amount: amount,
+            donationType: type,
+            from: userProfile.username
+        });
+        
+        addSystemMessage(`You sent ${amount} ${type} to ${username}`);
+    }
+    
+    // Clear form
+    document.getElementById('globalDonateUsername').value = '';
+    document.getElementById('globalDonateAmount').value = '';
+}
+
+// Update the initChat function to handle donations
+// Add this inside the relay.on handlers (around line 1250):
+
+relay.on('donation', (data) => {
+    if (data.targetUsername === userProfile.username) {
+        // Receive donation
+        if (data.donationType === 'coins') {
+            coins += data.amount;
+            setCoins(coins);
+            updateCoinDisplay();
+        } else {
+            userProfile.gems = (userProfile.gems || 0) + data.amount;
+            saveUserProfile(userProfile);
+            updateCoinDisplay();
+        }
+        
+        const messagesContainer = document.getElementById('chatMessages');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-message donation';
+        
+        msgDiv.innerHTML = `
+            <div>
+                <span class="chat-username">💰 GIFT RECEIVED</span>
+            </div>
+            <span class="chat-text">${escapeHtml(data.from)} sent you ${data.amount} ${data.donationType}!</span>
+        `;
+        
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Show notification if chat is closed
+        if (!chatOpen) {
+            unreadMessages++;
+            document.getElementById('chatToggleBtn').classList.add('has-unread');
+        }
+    }
+});
     </script>
     <script src="visualizer.js"></script>
 </body>
