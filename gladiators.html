@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gladiators Tournament</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0a0a0a; color: #fff; overflow: hidden;
+        }
+        
+        .screen { display: none; width: 100vw; height: 100vh; padding: 20px; }
+        .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        #backBtn {
+            position: fixed; top: 20px; left: 20px; padding: 12px 24px;
+            background: #1a1a1a; border: 1px solid #333; border-radius: 6px;
+            cursor: pointer; z-index: 1000;
+        }
+        
+        h1 { font-size: 48px; margin-bottom: 20px; 
+            background: linear-gradient(135deg, #ff4500 0%, #ffd700 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        
+        #playerList {
+            background: #1a1a1a; border: 2px solid #333; border-radius: 12px;
+            padding: 20px; min-width: 400px; margin-bottom: 20px;
+        }
+        .player-item {
+            padding: 12px; background: #0a0a0a; border-left: 3px solid #d69e2e;
+            border-radius: 6px; margin-bottom: 10px; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .status-ready { background: #4ade80; color: #000; padding: 4px 8px; border-radius: 4px; }
+        
+        .btn {
+            padding: 16px 48px; background: #d69e2e; border: 2px solid #b7791f;
+            border-radius: 8px; color: #000; font-weight: bold; font-size: 18px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn:hover { background: #b7791f; transform: scale(1.05); }
+        .btn.ready { background: #4ade80; }
+        
+        #battleArena {
+            width: 100%; height: 100%; background: linear-gradient(180deg, #1a0a0a 0%, #0a0a0a 100%);
+            position: relative;
+        }
+        .fighter {
+            position: absolute; width: 60px; height: 100px; border-radius: 8px;
+            top: 50%; transform: translateY(-50%);
+        }
+        #player1 { left: 10%; background: #3b82f6; }
+        #player2 { right: 10%; background: #ef4444; }
+        
+        .fighter-name {
+            position: absolute; top: -30px; width: 200px; text-align: center;
+            font-weight: bold; font-size: 14px; left: 50%; transform: translateX(-50%);
+        }
+        .health-bar {
+            position: absolute; top: -50px; width: 150px; height: 20px;
+            background: #333; border-radius: 4px; overflow: hidden;
+            left: 50%; transform: translateX(-50%);
+        }
+        .health-fill {
+            width: 100%; height: 100%; background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+            transition: width 0.3s;
+        }
+        .health-text {
+            position: absolute; top: 0; left: 0; right: 0; text-align: center;
+            line-height: 20px; font-size: 12px; font-weight: bold;
+            text-shadow: 0 0 4px rgba(0,0,0,0.8);
+        }
+        
+        #attackTimer {
+            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+            width: 600px;
+        }
+        #timerLabel { text-align: center; margin-bottom: 10px; font-size: 18px; font-weight: bold; }
+        #timerBar {
+            width: 100%; height: 40px; background: #1a1a1a; border: 2px solid #333;
+            border-radius: 8px; overflow: hidden; position: relative; cursor: pointer;
+        }
+        #timerFill {
+            width: 0%; height: 100%; transition: width 0.05s linear;
+            background: linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #4ade80 100%);
+        }
+        #perfectZone {
+            position: absolute; right: 0; top: 0; width: 10%; height: 100%;
+            background: rgba(74, 222, 128, 0.3); border-left: 2px solid #4ade80;
+        }
+        #attackBtn {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            padding: 20px 60px; background: #d69e2e; border: 2px solid #b7791f;
+            border-radius: 12px; color: #000; font-weight: bold; font-size: 24px;
+            cursor: pointer;
+        }
+        #attackBtn:active { transform: translateX(-50%) scale(0.95); }
+        #attackBtn.disabled { opacity: 0.5; pointer-events: none; }
+        
+        #battleInfo {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            text-align: center; font-size: 16px; background: rgba(26, 26, 26, 0.8);
+            padding: 10px 20px; border-radius: 8px;
+        }
+        
+        .damage-number {
+            position: absolute; font-size: 32px; font-weight: bold; color: #fff;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8); pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
+        .critical-hit { color: #ffd700; font-size: 48px; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        
+        #spectatorNotice {
+            position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%);
+            background: rgba(214, 158, 46, 0.2); border: 2px solid #d69e2e;
+            padding: 15px 30px; border-radius: 8px; font-size: 16px;
+        }
+    </style>
+    <script src="relay-client.js"></script>
+</head>
+<body>
+    <button id="backBtn" onclick="backToMenu()">← BACK TO MENU</button>
+    
+    <!-- Lobby Screen -->
+    <div id="lobbyScreen" class="screen active">
+        <h1>⚔️ GLADIATORS TOURNAMENT</h1>
+        <div id="playerList">
+            <h3 style="margin-bottom: 15px; text-align: center;">Waiting for Players...</h3>
+            <div id="playersContainer"></div>
+        </div>
+        <button id="readyBtn" class="btn" onclick="toggleReady()">READY UP</button>
+        <div style="margin-top: 20px; font-size: 14px; color: #888;">Tournament starts when all players are ready (min 2)</div>
+    </div>
+    
+    <!-- Battle Screen -->
+    <div id="battleScreen" class="screen">
+        <div id="battleArena">
+            <div id="battleInfo">Waiting for match to start...</div>
+            
+            <div id="spectatorNotice" style="display: none;">👁️ SPECTATING</div>
+            
+            <div id="player1" class="fighter">
+                <div class="fighter-name" id="p1Name">Player 1</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="health1"></div>
+                    <div class="health-text" id="healthText1">100/100</div>
+                </div>
+            </div>
+            
+            <div id="player2" class="fighter">
+                <div class="fighter-name" id="p2Name">Player 2</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="health2"></div>
+                    <div class="health-text" id="healthText2">100/100</div>
+                </div>
+            </div>
+            
+            <div id="attackTimer">
+                <div id="timerLabel">Click when the bar is FULL for max damage!</div>
+                <div id="timerBar">
+                    <div id="timerFill"></div>
+                    <div id="perfectZone"></div>
+                </div>
+            </div>
+            
+            <button id="attackBtn" onclick="attack()">ATTACK!</button>
+        </div>
+    </div>
+    
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="screen">
+        <h1 id="resultTitle"></h1>
+        <div id="prizeInfo" style="font-size: 24px; color: #ffd700; margin-bottom: 20px;"></div>
+        <button class="btn" onclick="continueToNextMatch()">CONTINUE</button>
+    </div>
+
+    <script>
+        const RELAY_SERVER = 'wss://relayfah.onrender.com';
+        const ROOM_ID = 'gladiators_global';
+        
+        let relay, userProfile, myPlayerId, isReady = false;
+        let gameState = { readyPlayers: [], bracket: null, currentRound: 0, currentMatchIndex: 0 };
+        let currentMatch = null, isSpectator = false;
+        let myHealth = 100, opponentHealth = 100;
+        let timerProgress = 0, timerInterval = null, canAttack = true;
+
+        async function init() {
+            loadUserProfile();
+            await connectToRelay();
+        }
+
+        function loadUserProfile() {
+            try {
+                const stored = localStorage.getItem('userProfile');
+                userProfile = stored ? JSON.parse(stored) : { username: 'guest' + Math.floor(Math.random() * 100000) };
+            } catch(e) {
+                userProfile = { username: 'guest' + Math.floor(Math.random() * 100000) };
+            }
+        }
+
+        async function connectToRelay() {
+            try {
+                relay = new RelayClient(RELAY_SERVER);
+                await relay.connect();
+                relay.joinRoom(ROOM_ID, userProfile.username, userProfile.status || 'player');
+                
+                relay.on('joined', (data) => {
+                    myPlayerId = relay.clientId;
+                    updatePlayerList(data.players);
+                });
+                
+                relay.on('player_joined', () => relay.send({ type: 'get_players' }));
+                relay.on('player_left', () => relay.send({ type: 'get_players' }));
+                relay.on('players_update', (data) => updatePlayerList(data.players));
+                relay.on('game_state_update', (data) => handleGameStateUpdate(data));
+                relay.on('player_action', (data) => handlePlayerAction(data));
+                
+            } catch (error) {
+                alert('Failed to connect to game server');
+            }
+        }
+
+        function updatePlayerList(players) {
+            const container = document.getElementById('playersContainer');
+            container.innerHTML = '';
+            
+            players.forEach(player => {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                const ready = gameState.readyPlayers.includes(player.id);
+                div.innerHTML = `
+                    <span style="font-weight: bold;">${player.username}</span>
+                    <span class="${ready ? 'status-ready' : ''}" style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background: ${ready ? '#4ade80' : '#333'}; color: ${ready ? '#000' : '#ccc'};">
+                        ${ready ? 'READY' : 'NOT READY'}
+                    </span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleReady() {
+            isReady = !isReady;
+            const btn = document.getElementById('readyBtn');
+            btn.classList.toggle('ready', isReady);
+            btn.textContent = isReady ? 'READY!' : 'READY UP';
+            relay.sendPlayerAction('ready', { ready: isReady });
+        }
+
+        function handlePlayerAction(data) {
+            if (data.action === 'ready') {
+                if (data.actionData.ready) {
+                    if (!gameState.readyPlayers.includes(data.playerId)) {
+                        gameState.readyPlayers.push(data.playerId);
+                    }
+                } else {
+                    gameState.readyPlayers = gameState.readyPlayers.filter(id => id !== data.playerId);
+                }
+                relay.send({ type: 'get_players' });
+            } else if (data.action === 'start_tournament') {
+                startTournament(data.actionData.bracket);
+            } else if (data.action === 'attack' && currentMatch) {
+                if (isSpectator || data.playerId !== myPlayerId) {
+                    handleOpponentAttack(data.actionData, data.playerId);
+                }
+            } else if (data.action === 'match_end') {
+                showMatchResult(data.actionData);
+            }
+        }
+
+        relay.on('players_update', (data) => {
+            updatePlayerList(data.players);
+            
+            const allReady = data.players.length >= 2 && 
+                           data.players.every(p => gameState.readyPlayers.includes(p.id));
+            
+            if (data.players.length >= 2 && data.players[0].id === myPlayerId && allReady && !gameState.bracket) {
+                const bracket = generateBracket(data.players);
+                gameState.bracket = bracket;
+                relay.sendPlayerAction('start_tournament', { bracket });
+            }
+        });
+
+        function generateBracket(players) {
+            const shuffled = [...players].sort(() => Math.random() - 0.5);
+            const matches = [];
+            
+            for (let i = 0; i < shuffled.length; i += 2) {
+                if (i + 1 < shuffled.length) {
+                    matches.push({
+                        p1: shuffled[i].id,
+                        p2: shuffled[i + 1].id,
+                        p1Name: shuffled[i].username,
+                        p2Name: shuffled[i + 1].username,
+                        winner: null
+                    });
+                } else {
+                    matches.push({
+                        p1: shuffled[i].id,
+                        p2: null,
+                        p1Name: shuffled[i].username,
+                        p2Name: 'BYE',
+                        winner: shuffled[i].id
+                    });
+                }
+            }
+            return matches;
+        }
+
+        function startTournament(bracket) {
+            gameState.bracket = bracket;
+            gameState.currentMatchIndex = 0;
+            showScreen('battleScreen');
+            setTimeout(() => startNextMatch(), 2000);
+        }
+
+        function startNextMatch() {
+            const matches = gameState.bracket.filter(m => !m.winner || m.p2 === null);
+            if (matches.length === 0) {
+                // Tournament over
+                const winner = gameState.bracket.find(m => m.winner);
+                if (winner.winner === myPlayerId) {
+                    awardPrize(calculatePrize(gameState.bracket.length + 1));
+                }
+                showScreen('lobbyScreen');
+                gameState = { readyPlayers: [], bracket: null };
+                return;
+            }
+            
+            currentMatch = matches[0];
+            
+            // Check if we're in this match or spectating
+            isSpectator = currentMatch.p1 !== myPlayerId && currentMatch.p2 !== myPlayerId;
+            
+            if (currentMatch.p2 === null) {
+                // Bye - instant win
+                currentMatch.winner = currentMatch.p1;
+                setTimeout(() => startNextMatch(), 1000);
+                return;
+            }
+            
+            startBattle(currentMatch);
+        }
+
+        function startBattle(match) {
+            myHealth = 100;
+            opponentHealth = 100;
+            
+            document.getElementById('p1Name').textContent = match.p1Name;
+            document.getElementById('p2Name').textContent = match.p2Name;
+            
+            if (isSpectator) {
+                document.getElementById('spectatorNotice').style.display = 'block';
+                document.getElementById('attackBtn').classList.add('disabled');
+                document.getElementById('attackTimer').style.opacity = '0.5';
+                document.getElementById('battleInfo').textContent = `${match.p1Name} VS ${match.p2Name}`;
+            } else {
+                document.getElementById('spectatorNotice').style.display = 'none';
+                document.getElementById('attackBtn').classList.remove('disabled');
+                document.getElementById('attackTimer').style.opacity = '1';
+                document.getElementById('battleInfo').textContent = 'FIGHT!';
+                startTimer();
+            }
+            
+            updateHealthBars();
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerProgress = 0;
+            canAttack = true;
+            
+            timerInterval = setInterval(() => {
+                timerProgress += 2;
+                if (timerProgress > 100) timerProgress = 0;
+                document.getElementById('timerFill').style.width = timerProgress + '%';
+            }, 20);
+        }
+
+        function attack() {
+            if (!canAttack || isSpectator) return;
+            
+            let damage, isCritical = false;
+            if (timerProgress >= 90) {
+                damage = 25;
+                isCritical = true;
+            } else {
+                damage = Math.floor((timerProgress / 100) * 25);
+            }
+            
+            showDamageNumber(damage, isCritical, currentMatch.p2 === myPlayerId);
+            
+            relay.sendPlayerAction('attack', { damage, critical: isCritical, target: currentMatch.p2 === myPlayerId ? currentMatch.p1 : currentMatch.p2 });
+            
+            if (currentMatch.p1 === myPlayerId) {
+                opponentHealth = Math.max(0, opponentHealth - damage);
+            } else {
+                opponentHealth = Math.max(0, opponentHealth - damage);
+            }
+            
+            updateHealthBars();
+            
+            if (opponentHealth <= 0) {
+                endMatch(true);
+            }
+            
+            timerProgress = 0;
+        }
+
+        function handleOpponentAttack(attackData, attackerId) {
+            const damage = attackData.damage;
+            const isCritical = attackData.critical;
+            
+            if (isSpectator) {
+                // Show damage on the correct fighter for spectators
+                const isP1Attack = attackerId === currentMatch.p1;
+                showDamageNumber(damage, isCritical, !isP1Attack);
+                
+                if (isP1Attack) {
+                    opponentHealth = Math.max(0, opponentHealth - damage);
+                } else {
+                    myHealth = Math.max(0, myHealth - damage);
+                }
+            } else {
+                showDamageNumber(damage, isCritical, currentMatch.p1 === myPlayerId);
+                myHealth = Math.max(0, myHealth - damage);
+            }
+            
+            updateHealthBars();
+            
+            if (myHealth <= 0 && !isSpectator) {
+                endMatch(false);
+            } else if ((isSpectator && myHealth <= 0) || (isSpectator && opponentHealth <= 0)) {
+                // Spectator sees match end
+                setTimeout(() => startNextMatch(), 2000);
+            }
+        }
+
+        function showDamageNumber(damage, isCritical, onPlayer2) {
+            const div = document.createElement('div');
+            div.className = 'damage-number' + (isCritical ? ' critical-hit' : '');
+            div.textContent = '-' + damage;
+            
+            const fighter = onPlayer2 ? document.getElementById('player2') : document.getElementById('player1');
+            const rect = fighter.getBoundingClientRect();
+            
+            div.style.left = rect.left + rect.width / 2 + 'px';
+            div.style.top = rect.top + 'px';
+            
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 1000);
+        }
+
+        function updateHealthBars() {
+            document.getElementById('health1').style.width = myHealth + '%';
+            document.getElementById('healthText1').textContent = myHealth + '/100';
+            document.getElementById('health2').style.width = opponentHealth + '%';
+            document.getElementById('healthText2').textContent = opponentHealth + '/100';
+        }
+
+        function endMatch(won) {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            currentMatch.winner = won ? myPlayerId : (currentMatch.p1 === myPlayerId ? currentMatch.p2 : currentMatch.p1);
+            
+            relay.sendPlayerAction('match_end', { 
+                matchId: gameState.currentMatchIndex,
+                winner: currentMatch.winner,
+                winnerName: won ? userProfile.username : (currentMatch.p1 === myPlayerId ? currentMatch.p2Name : currentMatch.p1Name)
+            });
+            
+            showMatchResult({ won, winnerName: won ? userProfile.username : (currentMatch.p1 === myPlayerId ? currentMatch.p2Name : currentMatch.p1Name) });
+        }
+
+        function showMatchResult(result) {
+            showScreen('resultsScreen');
+            
+            if (result.won || result.winnerName === userProfile.username) {
+                document.getElementById('resultTitle').textContent = '🏆 VICTORY!';
+                document.getElementById('resultTitle').style.color = '#4ade80';
+            } else {
+                document.getElementById('resultTitle').textContent = '💀 DEFEAT';
+                document.getElementById('resultTitle').style.color = '#ef4444';
+            }
+            
+            const remaining = gameState.bracket.filter(m => !m.winner || m.p2 === null).length - 1;
+            if (remaining === 0 && (result.won || result.winnerName === userProfile.username)) {
+                const prize = calculatePrize(gameState.bracket.length + 1);
+                document.getElementById('prizeInfo').textContent = `💰 You won ${prize} coins!`;
+            } else {
+                document.getElementById('prizeInfo').textContent = remaining > 0 ? 'Next match starting soon...' : 'Tournament Over!';
+            }
+        }
+
+        function calculatePrize(playerCount) {
+            return Math.floor(50 * Math.pow(playerCount, 1.5));
+        }
+
+        function awardPrize(amount) {
+            window.parent.postMessage({ type: 'updateCoins', coins: parseInt(localStorage.getItem(atob('X2NvaW5EYXRh').split('').reverse().join('')) || '10') + amount }, '*');
+        }
+
+        function continueToNextMatch() {
+            showScreen('battleScreen');
+            setTimeout(() => startNextMatch(), 1000);
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function backToMenu() {
+            window.parent.postMessage({ type: 'backToMain' }, '*');
+        }
+
+        function handleGameStateUpdate(data) {
+            if (data.state.bracket) {
+                gameState.bracket = data.state.bracket;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
