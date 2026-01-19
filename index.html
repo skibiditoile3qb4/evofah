@@ -678,6 +678,7 @@
                 <button id="slotsBtn" style="background:#319795;border:1px solid #2c7a7b;">SLOTS 🎰</button>
                  <button id="moreBtn" style="background: linear-gradient(135deg, #d69e2e 0%, #ffd700 100%); border: 2px solid #ffd700; animation: sparkle 2s infinite;">MORE ✨</button>
                 <button id="partyBtn" style="background: #a855f7; border: 1px solid #7c3aed;">PARTY CHAT 🎮</button>
+                <button id="gladiatorsBtn" style="background: #ff4500; border: 1px solid #cc3700;">GLADIATORS ⚔️</button>
             </div>
             <div id="gameList"></div>
             <div class="dev-section">
@@ -1752,8 +1753,11 @@ function loadGame(game) {
         frame.src = 'https://www.greenfoot.org/scenarios/27793?embed=true';
         gameIsPlaying = true;
         return;
+    } else if (game === 'gladiators') {
+    document.getElementById('gameFrame').src = 'gladiators.html';
+    gameIsPlaying = true;
+    return;
     }
-    
     // Get game source
     const gameInfo = gamesList[game];
     
@@ -1985,6 +1989,9 @@ function backToMain() {
 });
         document.getElementById('partyBtn').addEventListener('click', () => {
     window.location.href = 'party.html';
+});
+        document.getElementById('gladiatorsBtn').addEventListener('click', () => {
+    loadGame('gladiators');
 });
 
 window.addEventListener('message', (event) => {
