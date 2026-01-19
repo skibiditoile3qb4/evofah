@@ -21,42 +21,46 @@
         
         #playerList {
             background: #1a1a1a; border: 2px solid #333; border-radius: 12px;
-            padding: 20px; min-width: 400px; margin-bottom: 20px;
+            padding: 20px; min-width: 400px; margin-bottom: 20px; max-height: 400px; overflow-y: auto;
         }
         .player-item {
             padding: 12px; background: #0a0a0a; border-left: 3px solid #d69e2e;
             border-radius: 6px; margin-bottom: 10px; display: flex;
             justify-content: space-between; align-items: center;
         }
-        .status-ready { background: #4ade80; color: #000; padding: 4px 8px; border-radius: 4px; }
         
-        .btn {
-            padding: 16px 48px; background: #d69e2e; border: 2px solid #b7791f;
-            border-radius: 8px; color: #000; font-weight: bold; font-size: 18px;
-            cursor: pointer; transition: all 0.2s;
+        #countdownTimer {
+            font-size: 32px; font-weight: bold; color: #ffd700;
+            margin-top: 20px; text-align: center;
         }
-        .btn:hover { background: #b7791f; transform: scale(1.05); }
-        .btn.ready { background: #4ade80; }
         
         #battleArena {
-            width: 100%; height: 100%; background: linear-gradient(180deg, #1a0a0a 0%, #0a0a0a 100%);
-            position: relative;
+            width: 100%; height: 100%; background: #1a1a1a;
+            position: relative; overflow: hidden;
         }
-        .fighter {
-            position: absolute; width: 60px; height: 100px; border-radius: 8px;
-            top: 50%; transform: translateY(-50%);
-        }
-        #player1 { left: 10%; background: #3b82f6; }
-        #player2 { right: 10%; background: #ef4444; }
         
-        .fighter-name {
-            position: absolute; top: -30px; width: 200px; text-align: center;
-            font-weight: bold; font-size: 14px; left: 50%; transform: translateX(-50%);
+        .arena-circle {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 700px; height: 700px; border-radius: 50%;
+            background: radial-gradient(circle, #2a2a2a 0%, #1a1a1a 100%);
+            border: 4px solid #444;
         }
+        
+        .player {
+            position: absolute; width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; transition: none; z-index: 10;
+        }
+        
+        .player-name {
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            font-weight: bold; font-size: 12px; white-space: nowrap;
+            background: rgba(0,0,0,0.8); padding: 2px 6px; border-radius: 4px;
+        }
+        
         .health-bar {
-            position: absolute; top: -50px; width: 150px; height: 20px;
-            background: #333; border-radius: 4px; overflow: hidden;
-            left: 50%; transform: translateX(-50%);
+            position: absolute; top: -45px; left: 50%; transform: translateX(-50%);
+            width: 100px; height: 16px; background: #333; border-radius: 4px; overflow: hidden;
         }
         .health-fill {
             width: 100%; height: 100%; background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
@@ -64,69 +68,72 @@
         }
         .health-text {
             position: absolute; top: 0; left: 0; right: 0; text-align: center;
-            line-height: 20px; font-size: 12px; font-weight: bold;
+            line-height: 16px; font-size: 10px; font-weight: bold;
             text-shadow: 0 0 4px rgba(0,0,0,0.8);
         }
         
-        #attackTimer {
-            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
-            width: 600px;
+        .sword-swing {
+            position: absolute; width: 60px; height: 4px; background: #fff;
+            border-radius: 2px; transform-origin: left center;
+            pointer-events: none; opacity: 0;
         }
-        #timerLabel { text-align: center; margin-bottom: 10px; font-size: 18px; font-weight: bold; }
-        #timerBar {
-            width: 100%; height: 40px; background: #1a1a1a; border: 2px solid #333;
-            border-radius: 8px; overflow: hidden; position: relative; cursor: pointer;
-        }
-        #timerFill {
-            width: 0%; height: 100%; transition: width 0.05s linear;
-            background: linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #4ade80 100%);
-        }
-        #perfectZone {
-            position: absolute; right: 0; top: 0; width: 10%; height: 100%;
-            background: rgba(74, 222, 128, 0.3); border-left: 2px solid #4ade80;
-        }
-        #attackBtn {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            padding: 20px 60px; background: #d69e2e; border: 2px solid #b7791f;
-            border-radius: 12px; color: #000; font-weight: bold; font-size: 24px;
-            cursor: pointer;
-        }
-        #attackBtn:active { transform: translateX(-50%) scale(0.95); }
-        #attackBtn.disabled { opacity: 0.5; pointer-events: none; }
         
-        #battleInfo {
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-            text-align: center; font-size: 16px; background: rgba(26, 26, 26, 0.8);
-            padding: 10px 20px; border-radius: 8px;
+        #attackMeter {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 400px; background: #1a1a1a; border: 2px solid #333;
+            border-radius: 12px; padding: 15px;
+        }
+        #meterLabel {
+            text-align: center; margin-bottom: 10px; font-size: 16px; font-weight: bold;
+        }
+        #meterBar {
+            width: 100%; height: 30px; background: #333; border-radius: 6px;
+            overflow: hidden; position: relative;
+        }
+        #meterFill {
+            width: 0%; height: 100%; transition: width 0.05s linear;
+            background: linear-gradient(90deg, #333 0%, #ef4444 10%, #fbbf24 50%, #4ade80 100%);
+        }
+        #attackInstruction {
+            text-align: center; margin-top: 10px; font-size: 13px; color: #888;
         }
         
         .damage-number {
-            position: absolute; font-size: 32px; font-weight: bold; color: #fff;
+            position: absolute; font-size: 28px; font-weight: bold; color: #ff4444;
             text-shadow: 0 0 10px rgba(0,0,0,0.8); pointer-events: none;
-            animation: floatUp 1s ease-out forwards;
+            animation: floatUp 1s ease-out forwards; z-index: 100;
         }
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-100px); }
+            100% { opacity: 0; transform: translateY(-80px); }
         }
-        .critical-hit { color: #ffd700; font-size: 48px; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        .critical-hit { color: #ffd700; font-size: 36px; }
+        .weak-hit { color: #666; font-size: 20px; }
+        
+        #battleInfo {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            text-align: center; font-size: 18px; background: rgba(26, 26, 26, 0.9);
+            padding: 12px 24px; border-radius: 8px; font-weight: bold;
+        }
         
         #spectatorNotice {
-            position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
             background: rgba(214, 158, 46, 0.2); border: 2px solid #d69e2e;
             padding: 15px 30px; border-radius: 8px; font-size: 16px;
         }
-        #debugInfo {
-            position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8);
-            padding: 10px; border-radius: 6px; font-size: 11px; font-family: monospace;
-            color: #4ade80; z-index: 1000;
+        
+        #resultsScreen h1 { margin-bottom: 30px; }
+        #prizeInfo { font-size: 24px; color: #ffd700; margin-bottom: 20px; }
+        .btn {
+            padding: 16px 48px; background: #d69e2e; border: 2px solid #b7791f;
+            border-radius: 8px; color: #000; font-weight: bold; font-size: 18px;
+            cursor: pointer; transition: all 0.2s;
         }
+        .btn:hover { background: #b7791f; transform: scale(1.05); }
     </style>
     <script src="relay-client.js"></script>
 </head>
 <body>
-    <div id="debugInfo"></div>
-    
     <!-- Lobby Screen -->
     <div id="lobbyScreen" class="screen active">
         <h1>⚔️ GLADIATORS TOURNAMENT</h1>
@@ -134,79 +141,62 @@
             <h3 style="margin-bottom: 15px; text-align: center;">Players in Lobby</h3>
             <div id="playersContainer"></div>
         </div>
-        <div style="margin-top: 20px; font-size: 14px; color: #888;">Tournament starts automatically when 2+ players join</div>
+        <div id="countdownTimer">Waiting for players...</div>
+        <div style="margin-top: 20px; font-size: 14px; color: #888; text-align: center;">
+            Tournament starts when timer reaches 0:00<br>
+            Join now to participate!
+        </div>
     </div>
     
     <!-- Battle Screen -->
     <div id="battleScreen" class="screen">
         <div id="battleArena">
-            <div id="battleInfo">Waiting for match to start...</div>
-            
+            <div id="battleInfo">FIGHT!</div>
             <div id="spectatorNotice" style="display: none;">👁️ SPECTATING</div>
             
-            <div id="player1" class="fighter">
-                <div class="fighter-name" id="p1Name">Player 1</div>
-                <div class="health-bar">
-                    <div class="health-fill" id="health1"></div>
-                    <div class="health-text" id="healthText1">100/100</div>
-                </div>
-            </div>
+            <div class="arena-circle"></div>
             
-            <div id="player2" class="fighter">
-                <div class="fighter-name" id="p2Name">Player 2</div>
-                <div class="health-bar">
-                    <div class="health-fill" id="health2"></div>
-                    <div class="health-text" id="healthText2">100/100</div>
+            <div id="attackMeter">
+                <div id="meterLabel">Swing Power</div>
+                <div id="meterBar">
+                    <div id="meterFill"></div>
                 </div>
+                <div id="attackInstruction">Use Arrow Keys to move • Click to attack when close</div>
             </div>
-            
-            <div id="attackTimer">
-                <div id="timerLabel">Click when the bar is FULL for max damage!</div>
-                <div id="timerBar">
-                    <div id="timerFill"></div>
-                    <div id="perfectZone"></div>
-                </div>
-            </div>
-            
-            <button id="attackBtn" onclick="attack()">ATTACK!</button>
         </div>
     </div>
     
     <!-- Results Screen -->
     <div id="resultsScreen" class="screen">
         <h1 id="resultTitle"></h1>
-        <div id="prizeInfo" style="font-size: 24px; color: #ffd700; margin-bottom: 20px;"></div>
-        <button class="btn" onclick="continueToNextMatch()">CONTINUE</button>
+        <div id="prizeInfo"></div>
+        <button class="btn" onclick="returnToLobby()">RETURN TO LOBBY</button>
     </div>
 
     <script>
         const RELAY_SERVER = 'wss://relayfah.onrender.com';
         const ROOM_ID = 'gladiators_global';
-        const HEARTBEAT_INTERVAL = 2000; // Request players every 2 seconds
+        const TOURNAMENT_WAIT_TIME = 5 * 60 * 1000; // 5 minutes
+        const ATTACK_CHARGE_TIME = 2500; // 2.5 seconds
+        const ARENA_RADIUS = 330;
+        const PLAYER_SPEED = 3;
+        const ATTACK_RANGE = 80;
         
         let relay, userProfile, myPlayerId;
         let allPlayers = [];
-        let gameState = { bracket: null, currentRound: 0, currentMatchIndex: 0, tournamentActive: false };
+        let tournamentStartTime = null;
+        let countdownInterval = null;
+        let gameState = { bracket: null, currentMatchIndex: 0, tournamentActive: false };
         let currentMatch = null, isSpectator = false;
+        
+        // Battle state
+        let players = new Map();
         let myHealth = 100, opponentHealth = 100;
-        let timerProgress = 0, timerInterval = null, canAttack = true;
-        let heartbeatInterval = null;
-
-        function updateDebug() {
-            const debug = document.getElementById('debugInfo');
-            debug.innerHTML = `
-                My ID: ${myPlayerId ? myPlayerId.substring(0, 8) : 'none'}<br>
-                Players: ${allPlayers.length}<br>
-                Tournament: ${gameState.tournamentActive}<br>
-                Connected: ${relay?.connected}
-            `;
-        }
-
-        async function init() {
-            loadUserProfile();
-            await connectToRelay();
-            startHeartbeat();
-        }
+        let keys = {};
+        let meterCharge = 0;
+        let canAttack = true;
+        let isCharging = false;
+        let chargeInterval = null;
 
         function loadUserProfile() {
             try {
@@ -223,16 +213,6 @@
                 userProfile = { username: 'guest' + Math.floor(Math.random() * 100000) };
             }
             myPlayerId = userProfile.username;
-            console.log('📱 Loaded user profile:', userProfile);
-        }
-
-        function startHeartbeat() {
-            // Request player list every 2 seconds
-            heartbeatInterval = setInterval(() => {
-                if (relay && relay.connected && !gameState.tournamentActive) {
-                    relay.send({ type: 'get_players' });
-                }
-            }, HEARTBEAT_INTERVAL);
         }
 
         async function connectToRelay() {
@@ -240,87 +220,73 @@
                 relay = new RelayClient(RELAY_SERVER);
                 await relay.connect();
                 
-                console.log('🔌 Connected to relay');
-                
                 relay.joinRoom(ROOM_ID, userProfile.username, userProfile.status || 'player');
                 
                 relay.on('joined', (data) => {
-                    console.log('✅ Joined room:', data);
-                    myPlayerId = userProfile.username; // ALWAYS use username from userProfile
-                    console.log('🆔 MY USERNAME:', myPlayerId);
+                    myPlayerId = userProfile.username;
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
-                    updateDebug();
                     
-                    console.log('🆔 My username as ID:', myPlayerId);
-                    
-                    // Immediate request for players
-                    setTimeout(() => {
-                        relay.send({ type: 'get_players' });
-                    }, 100);
+                    // Start countdown if this is the first player
+                    if (allPlayers.length === 1 && !tournamentStartTime) {
+                        startTournamentCountdown();
+                    }
                 });
                 
                 relay.on('player_joined', (data) => {
-                    console.log('👤 Player joined:', data);
                     relay.send({ type: 'get_players' });
                 });
                 
                 relay.on('player_left', (data) => {
-                    console.log('👋 Player left:', data);
                     allPlayers = allPlayers.filter(p => p.id !== data.player.id);
                     updatePlayerList(allPlayers);
-                    updateDebug();
                 });
                 
                 relay.on('players_update', (data) => {
-                    console.log('📋 Players update:', data.players);
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
-                    updateDebug();
-                    
-                    // Check if we should start
-                    if (!gameState.tournamentActive) {
-                        checkAutoStart();
-                    }
                 });
                 
                 relay.on('game_state_update', (data) => handleGameStateUpdate(data));
                 relay.on('player_action', (data) => handlePlayerAction(data));
                 
             } catch (error) {
-                console.error('❌ Failed to connect:', error);
+                console.error('Failed to connect:', error);
                 alert('Failed to connect to game server');
             }
         }
-        
-        function checkAutoStart() {
-            console.log(`🎮 Auto-start check: Players=${allPlayers.length}, Active=${gameState.tournamentActive}`);
+
+        function startTournamentCountdown() {
+            tournamentStartTime = Date.now() + TOURNAMENT_WAIT_TIME;
             
-            if (allPlayers.length >= 2 && !gameState.tournamentActive) {
-                console.log('🚀 STARTING TOURNAMENT - Setting flag and broadcasting');
-                gameState.tournamentActive = true;
-                updateDebug();
+            relay.send({
+                type: 'game_state',
+                state: { tournamentStartTime }
+            });
+            
+            updateCountdown();
+        }
+
+        function updateCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                if (!tournamentStartTime) return;
                 
-                const bracket = generateBracket(allPlayers);
-                gameState.bracket = bracket;
+                const remaining = Math.max(0, tournamentStartTime - Date.now());
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
                 
-                console.log('📤 Broadcasting start_tournament with bracket:', bracket);
+                document.getElementById('countdownTimer').textContent = 
+                    `Next Tournament: ${minutes}:${seconds.toString().padStart(2, '0')}`;
                 
-                // Broadcast tournament start
-                relay.sendPlayerAction('start_tournament', { bracket, tournamentActive: true });
-                
-                // Also update game state
-                relay.send({
-                    type: 'game_state',
-                    state: { bracket, tournamentActive: true }
-                });
-                
-                // Start locally too
-                console.log('🎮 Starting tournament locally');
-                setTimeout(() => {
-                    startTournament(bracket);
-                }, 500);
-            }
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    if (allPlayers.length >= 2 && !gameState.tournamentActive) {
+                        startTournament();
+                    }
+                }
+            }, 100);
         }
 
         function updatePlayerList(players) {
@@ -346,27 +312,44 @@
         }
 
         function handlePlayerAction(data) {
-            console.log('🎬 Player action received:', data.action, data);
-            
             if (data.action === 'start_tournament') {
-                console.log('🏁 Received start_tournament, current state:', gameState.tournamentActive);
                 if (!gameState.tournamentActive) {
-                    console.log('✅ Starting tournament now');
-                    startTournament(data.actionData.bracket);
-                } else {
-                    console.log('⚠️ Tournament already active, ignoring');
+                    receiveTournamentStart(data.actionData.bracket);
                 }
+            } else if (data.action === 'player_move' && currentMatch) {
+                updateOpponentPosition(data.playerId, data.actionData);
             } else if (data.action === 'attack' && currentMatch) {
-                if (isSpectator || data.playerId !== myPlayerId) {
-                    handleOpponentAttack(data.actionData, data.playerId);
-                }
+                handleOpponentAttack(data.actionData, data.playerId);
             } else if (data.action === 'match_end') {
                 showMatchResult(data.actionData);
             }
         }
 
-        function generateBracket(players) {
-            const shuffled = [...players].sort(() => Math.random() - 0.5);
+        function startTournament() {
+            gameState.tournamentActive = true;
+            const bracket = generateBracket(allPlayers);
+            gameState.bracket = bracket;
+            
+            relay.sendPlayerAction('start_tournament', { bracket, tournamentStartTime });
+            
+            setTimeout(() => {
+                showScreen('battleScreen');
+                startNextMatch();
+            }, 1000);
+        }
+
+        function receiveTournamentStart(bracket) {
+            gameState.tournamentActive = true;
+            gameState.bracket = bracket;
+            
+            setTimeout(() => {
+                showScreen('battleScreen');
+                startNextMatch();
+            }, 1000);
+        }
+
+        function generateBracket(playersList) {
+            const shuffled = [...playersList].sort(() => Math.random() - 0.5);
             const matches = [];
             
             for (let i = 0; i < shuffled.length; i += 2) {
@@ -374,16 +357,12 @@
                     matches.push({
                         p1: shuffled[i].username,
                         p2: shuffled[i + 1].username,
-                        p1Name: shuffled[i].username,
-                        p2Name: shuffled[i + 1].username,
                         winner: null
                     });
                 } else {
                     matches.push({
                         p1: shuffled[i].username,
                         p2: null,
-                        p1Name: shuffled[i].username,
-                        p2Name: 'BYE',
                         winner: shuffled[i].username
                     });
                 }
@@ -391,197 +370,280 @@
             return matches;
         }
 
-        function startTournament(bracket) {
-            console.log('🏁 Starting tournament with bracket:', bracket);
-            
-            // Stop heartbeat during tournament
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                heartbeatInterval = null;
-            }
-            
-            gameState.bracket = bracket;
-            gameState.currentMatchIndex = 0;
-            gameState.tournamentActive = true;
-            updateDebug();
-            showScreen('battleScreen');
-            setTimeout(() => startNextMatch(), 2000);
-        }
-
         function startNextMatch() {
             const matches = gameState.bracket.filter(m => !m.winner || m.p2 === null);
-            console.log('⚔️ Starting next match, remaining:', matches.length);
             
             if (matches.length === 0) {
-                // Tournament over
-                const winner = gameState.bracket.find(m => m.winner);
-                if (winner && winner.winner === myPlayerId) {
-                    awardPrize(calculatePrize(gameState.bracket.length + 1));
-                }
-                gameState.tournamentActive = false;
-                updateDebug();
-                showScreen('lobbyScreen');
-                gameState.bracket = null;
-                
-                // Restart heartbeat
-                startHeartbeat();
+                endTournament();
                 return;
             }
             
             currentMatch = matches[0];
             
-            console.log('🎯 Current match:', {
-                p1: currentMatch.p1,
-                p2: currentMatch.p2,
-                p1Name: currentMatch.p1Name,
-                p2Name: currentMatch.p2Name,
-                myPlayerId: myPlayerId
-            });
-            
-            // Check if we're in this match or spectating - RECALCULATE HERE
-            isSpectator = currentMatch.p1 !== myPlayerId && currentMatch.p2 !== myPlayerId;
-            console.log('🔍 SPECTATOR CHECK:');
-            console.log('  match.p1:', currentMatch.p1);
-            console.log('  match.p2:', currentMatch.p2);
-            console.log('  myPlayerId (from userProfile.username):', myPlayerId);
-            console.log('  👁️ AM I SPECTATOR?:', isSpectator);
-            console.log('👁️ Calculated spectator status:', isSpectator);
-            
             if (currentMatch.p2 === null) {
-                // Bye - instant win
                 currentMatch.winner = currentMatch.p1;
                 setTimeout(() => startNextMatch(), 1000);
                 return;
             }
             
+            isSpectator = currentMatch.p1 !== myPlayerId && currentMatch.p2 !== myPlayerId;
             startBattle(currentMatch);
         }
 
-function startBattle(match) {
-    myHealth = 100;
-    opponentHealth = 100;
-    // Track actual player positions
-    const amIPlayer1 = match.p1 === myPlayerId;
-    
-    console.log('⚔️ Starting battle:', {
-        match: match,
-        myPlayerId: myPlayerId,
-        p1: match.p1,
-        p2: match.p2,
-        amIPlayer1: amIPlayer1
-    });
-    
-    // Display names based on who you are
-    if (amIPlayer1) {
-        document.getElementById('p1Name').textContent = match.p1Name + ' (YOU)';
-        document.getElementById('p2Name').textContent = match.p2Name;
-    } else {
-        document.getElementById('p1Name').textContent = match.p1Name;
-        document.getElementById('p2Name').textContent = match.p2Name + ' (YOU)';
-    }
+        function startBattle(match) {
+            myHealth = 100;
+            opponentHealth = 100;
+            players.clear();
             
-            // Fix spectator detection - check against actual player IDs
-            isSpectator = match.p1 !== myPlayerId && match.p2 !== myPlayerId;
+            const arena = document.getElementById('battleArena');
+            arena.querySelectorAll('.player').forEach(el => el.remove());
             
-            console.log('👁️ Spectator status:', isSpectator);
+            const amIPlayer1 = match.p1 === myPlayerId;
+            
+            // Create player elements
+            const p1 = createPlayerElement(match.p1, '#3b82f6', -ARENA_RADIUS + 50, 0);
+            const p2 = createPlayerElement(match.p2, '#ef4444', ARENA_RADIUS - 50, 0);
+            
+            players.set(match.p1, { element: p1, x: -ARENA_RADIUS + 50, y: 0, health: 100 });
+            players.set(match.p2, { element: p2, x: ARENA_RADIUS - 50, y: 0, health: 100 });
             
             if (isSpectator) {
                 document.getElementById('spectatorNotice').style.display = 'block';
-                document.getElementById('attackBtn').classList.add('disabled');
-                document.getElementById('attackTimer').style.opacity = '0.5';
-                document.getElementById('battleInfo').textContent = `${match.p1Name} VS ${match.p2Name}`;
+                document.getElementById('attackMeter').style.opacity = '0.5';
             } else {
                 document.getElementById('spectatorNotice').style.display = 'none';
-                document.getElementById('attackBtn').classList.remove('disabled');
-                document.getElementById('attackTimer').style.opacity = '1';
-                document.getElementById('battleInfo').textContent = 'FIGHT!';
-                startTimer();
+                document.getElementById('attackMeter').style.opacity = '1';
+                startGameLoop();
             }
             
-            updateHealthBars();
+            document.getElementById('battleInfo').textContent = `${match.p1} VS ${match.p2}`;
         }
 
-        function startTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            timerProgress = 0;
+        function createPlayerElement(username, color, x, y) {
+            const player = document.createElement('div');
+            player.className = 'player';
+            player.style.background = color;
+            player.textContent = '⚔️';
+            
+            const nameTag = document.createElement('div');
+            nameTag.className = 'player-name';
+            nameTag.textContent = username + (username === myPlayerId ? ' (YOU)' : '');
+            player.appendChild(nameTag);
+            
+            const healthBar = document.createElement('div');
+            healthBar.className = 'health-bar';
+            healthBar.innerHTML = `
+                <div class="health-fill"></div>
+                <div class="health-text">100/100</div>
+            `;
+            player.appendChild(healthBar);
+            
+            updatePlayerPosition(player, x, y);
+            document.getElementById('battleArena').appendChild(player);
+            
+            return player;
+        }
+
+        function updatePlayerPosition(element, x, y) {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            element.style.left = (centerX + x - 20) + 'px';
+            element.style.top = (centerY + y - 20) + 'px';
+        }
+
+        function startGameLoop() {
+            document.addEventListener('keydown', (e) => keys[e.key] = true);
+            document.addEventListener('keyup', (e) => keys[e.key] = false);
+            document.addEventListener('click', handleAttack);
+            
+            meterCharge = 0;
             canAttack = true;
             
-            timerInterval = setInterval(() => {
-                timerProgress += 2;
-                if (timerProgress > 100) timerProgress = 0;
-                document.getElementById('timerFill').style.width = timerProgress + '%';
-            }, 20);
+            requestAnimationFrame(gameLoop);
         }
 
-        function attack() {
-            if (!canAttack || isSpectator || !relay || !relay.connected) return;
+        function gameLoop() {
+            if (!currentMatch || isSpectator) return;
             
-            let damage, isCritical = false;
-            if (timerProgress >= 90) {
-                damage = 25;
-                isCritical = true;
-            } else {
-                damage = Math.floor((timerProgress / 100) * 25);
+            const myData = players.get(myPlayerId);
+            if (!myData) return;
+            
+            let moved = false;
+            let dx = 0, dy = 0;
+            
+            if (keys['ArrowUp']) dy -= PLAYER_SPEED;
+            if (keys['ArrowDown']) dy += PLAYER_SPEED;
+            if (keys['ArrowLeft']) dx -= PLAYER_SPEED;
+            if (keys['ArrowRight']) dx += PLAYER_SPEED;
+            
+            if (dx !== 0 || dy !== 0) {
+                const newX = myData.x + dx;
+                const newY = myData.y + dy;
+                const distance = Math.sqrt(newX * newX + newY * newY);
+                
+                if (distance <= ARENA_RADIUS - 20) {
+                    myData.x = newX;
+                    myData.y = newY;
+                    updatePlayerPosition(myData.element, myData.x, myData.y);
+                    moved = true;
+                }
             }
             
-// Show damage on opponent's side (if I'm p1, damage goes to p2 = right side)
-const amIPlayer1 = currentMatch.p1 === myPlayerId;
-showDamageNumber(damage, isCritical, amIPlayer1); // If I'm p1, damage p2 (right)
-
-relay.sendPlayerAction('attack', { 
-    damage, 
-    critical: isCritical, 
-    target: currentMatch.p2 === myPlayerId ? currentMatch.p1 : currentMatch.p2 
-});
-
-opponentHealth = Math.max(0, opponentHealth - damage);
-updateHealthBars(amIPlayer1);
-            
-            if (opponentHealth <= 0) {
-                endMatch(true);
+            if (moved) {
+                relay.sendPlayerAction('player_move', { x: myData.x, y: myData.y });
             }
             
-            timerProgress = 0;
+            // Charge attack meter
+            if (canAttack && !isCharging) {
+                isCharging = true;
+                startCharging();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startCharging() {
+            if (chargeInterval) clearInterval(chargeInterval);
+            
+            chargeInterval = setInterval(() => {
+                if (meterCharge < 100) {
+                    meterCharge += (100 / (ATTACK_CHARGE_TIME / 50));
+                    if (meterCharge > 100) meterCharge = 100;
+                    document.getElementById('meterFill').style.width = meterCharge + '%';
+                }
+            }, 50);
+        }
+
+        function updateOpponentPosition(playerId, data) {
+            const playerData = players.get(playerId);
+            if (playerData) {
+                playerData.x = data.x;
+                playerData.y = data.y;
+                updatePlayerPosition(playerData.element, data.x, data.y);
+            }
+        }
+
+        function handleAttack() {
+            if (!canAttack || isSpectator || !currentMatch) return;
+            
+            const myData = players.get(myPlayerId);
+            const opponentId = currentMatch.p1 === myPlayerId ? currentMatch.p2 : currentMatch.p1;
+            const opponentData = players.get(opponentId);
+            
+            if (!myData || !opponentData) return;
+            
+            const distance = Math.sqrt(
+                Math.pow(myData.x - opponentData.x, 2) + 
+                Math.pow(myData.y - opponentData.y, 2)
+            );
+            
+            let damage = 0;
+            let hitType = 'miss';
+            
+            if (distance <= ATTACK_RANGE) {
+                if (meterCharge < 10) {
+                    damage = 1;
+                    hitType = 'weak';
+                } else if (meterCharge >= 90) {
+                    damage = 25;
+                    hitType = 'critical';
+                } else {
+                    damage = Math.floor((meterCharge / 100) * 25);
+                    hitType = 'normal';
+                }
+            }
+            
+            showSwordSwing(myData.element);
+            
+            relay.sendPlayerAction('attack', {
+                damage,
+                hitType,
+                target: opponentId,
+                attackerPos: { x: myData.x, y: myData.y }
+            });
+            
+            if (damage > 0) {
+                opponentHealth = Math.max(0, opponentHealth - damage);
+                updateHealth(opponentId, opponentHealth);
+                showDamageNumber(damage, hitType, opponentData.element);
+                
+                if (opponentHealth <= 0) {
+                    endMatch(true);
+                }
+            }
+            
+            // Reset meter
+            meterCharge = 0;
+            document.getElementById('meterFill').style.width = '0%';
+            canAttack = true;
         }
 
         function handleOpponentAttack(attackData, attackerId) {
-            const damage = attackData.damage;
-            const isCritical = attackData.critical;
+            const { damage, hitType, attackerPos } = attackData;
             
-if (isSpectator) {
-    const isP1Attack = attackerId === currentMatch.p1;
-    showDamageNumber(damage, isCritical, isP1Attack); // p1 attacks p2 (right)
-    
-    if (isP1Attack) {
-        opponentHealth = Math.max(0, opponentHealth - damage);
-    } else {
-        myHealth = Math.max(0, myHealth - damage);
-    }
-} else {
-    // Opponent attacked me - show damage on MY side
-    const amIPlayer1 = currentMatch.p1 === myPlayerId;
-    showDamageNumber(damage, isCritical, !amIPlayer1); // Damage on my side
-    myHealth = Math.max(0, myHealth - damage);
-}
-            
-            const amIPlayer1 = currentMatch.p1 === myPlayerId;
-updateHealthBars(amIPlayer1);
-            
-            if (myHealth <= 0 && !isSpectator) {
-                endMatch(false);
-            } else if ((isSpectator && myHealth <= 0) || (isSpectator && opponentHealth <= 0)) {
-                setTimeout(() => startNextMatch(), 2000);
+            if (isSpectator) {
+                const attackerData = players.get(attackerId);
+                const targetId = currentMatch.p1 === attackerId ? currentMatch.p2 : currentMatch.p1;
+                const targetData = players.get(targetId);
+                
+                if (attackerData) showSwordSwing(attackerData.element);
+                
+                if (damage > 0 && targetData) {
+                    targetData.health = Math.max(0, targetData.health - damage);
+                    updateHealth(targetId, targetData.health);
+                    showDamageNumber(damage, hitType, targetData.element);
+                }
+            } else {
+                const attackerData = players.get(attackerId);
+                if (attackerData) showSwordSwing(attackerData.element);
+                
+                if (damage > 0) {
+                    myHealth = Math.max(0, myHealth - damage);
+                    updateHealth(myPlayerId, myHealth);
+                    const myData = players.get(myPlayerId);
+                    if (myData) showDamageNumber(damage, hitType, myData.element);
+                    
+                    if (myHealth <= 0) {
+                        endMatch(false);
+                    }
+                }
             }
         }
 
-        function showDamageNumber(damage, isCritical, onPlayer2) {
+        function showSwordSwing(playerElement) {
+            const swing = document.createElement('div');
+            swing.className = 'sword-swing';
+            
+            const rect = playerElement.getBoundingClientRect();
+            swing.style.left = rect.left + rect.width / 2 + 'px';
+            swing.style.top = rect.top + rect.height / 2 + 'px';
+            swing.style.opacity = '1';
+            
+            document.body.appendChild(swing);
+            
+            setTimeout(() => swing.remove(), 200);
+        }
+
+        function updateHealth(playerId, health) {
+            const playerData = players.get(playerId);
+            if (!playerData) return;
+            
+            const healthFill = playerData.element.querySelector('.health-fill');
+            const healthText = playerData.element.querySelector('.health-text');
+            
+            healthFill.style.width = health + '%';
+            healthText.textContent = health + '/100';
+        }
+
+        function showDamageNumber(damage, hitType, playerElement) {
             const div = document.createElement('div');
-            div.className = 'damage-number' + (isCritical ? ' critical-hit' : '');
+            div.className = 'damage-number';
+            if (hitType === 'critical') div.classList.add('critical-hit');
+            if (hitType === 'weak') div.classList.add('weak-hit');
+            
             div.textContent = '-' + damage;
             
-            const fighter = onPlayer2 ? document.getElementById('player2') : document.getElementById('player1');
-            const rect = fighter.getBoundingClientRect();
-            
+            const rect = playerElement.getBoundingClientRect();
             div.style.left = rect.left + rect.width / 2 + 'px';
             div.style.top = rect.top + 'px';
             
@@ -589,46 +651,25 @@ updateHealthBars(amIPlayer1);
             setTimeout(() => div.remove(), 1000);
         }
 
-function updateHealthBars(amIPlayer1) {
-    // If I'm player 1, my health goes to left bar, opponent to right
-    // If I'm player 2, my health goes to right bar, opponent to left
-    if (amIPlayer1 === undefined) {
-        amIPlayer1 = currentMatch.p1 === myPlayerId;
-    }
-    
-    if (amIPlayer1) {
-        // I'm on the left
-        document.getElementById('health1').style.width = myHealth + '%';
-        document.getElementById('healthText1').textContent = myHealth + '/100';
-        document.getElementById('health2').style.width = opponentHealth + '%';
-        document.getElementById('healthText2').textContent = opponentHealth + '/100';
-    } else {
-        // I'm on the right
-        document.getElementById('health1').style.width = opponentHealth + '%';
-        document.getElementById('healthText1').textContent = opponentHealth + '/100';
-        document.getElementById('health2').style.width = myHealth + '%';
-        document.getElementById('healthText2').textContent = myHealth + '/100';
-    }
-}
-
         function endMatch(won) {
-            if (timerInterval) clearInterval(timerInterval);
+            if (chargeInterval) clearInterval(chargeInterval);
+            document.removeEventListener('click', handleAttack);
             
             currentMatch.winner = won ? myPlayerId : (currentMatch.p1 === myPlayerId ? currentMatch.p2 : currentMatch.p1);
             
-            relay.sendPlayerAction('match_end', { 
-                matchId: gameState.currentMatchIndex,
-                winner: currentMatch.winner,
-                winnerName: won ? userProfile.username : (currentMatch.p1 === myPlayerId ? currentMatch.p2Name : currentMatch.p1Name)
+            relay.sendPlayerAction('match_end', {
+                winner: currentMatch.winner
             });
             
-            showMatchResult({ won, winnerName: won ? userProfile.username : (currentMatch.p1 === myPlayerId ? currentMatch.p2Name : currentMatch.p1Name) });
+            setTimeout(() => {
+                showMatchResult({ won, winnerName: currentMatch.winner });
+            }, 1000);
         }
 
         function showMatchResult(result) {
             showScreen('resultsScreen');
             
-            if (result.won || result.winnerName === userProfile.username) {
+            if (result.won || result.winnerName === myPlayerId) {
                 document.getElementById('resultTitle').textContent = '🏆 VICTORY!';
                 document.getElementById('resultTitle').style.color = '#4ade80';
             } else {
@@ -637,11 +678,39 @@ function updateHealthBars(amIPlayer1) {
             }
             
             const remaining = gameState.bracket.filter(m => !m.winner || m.p2 === null).length - 1;
-            if (remaining === 0 && (result.won || result.winnerName === userProfile.username)) {
-                const prize = calculatePrize(gameState.bracket.length + 1);
-                document.getElementById('prizeInfo').textContent = `💰 You won ${prize} coins!`;
+            if (remaining === 0 && (result.won || result.winnerName === myPlayerId)) {
+                const prize = calculatePrize(allPlayers.length);
+                document.getElementById('prizeInfo').textContent = `💰 Tournament Winner! You earned ${prize} coins!`;
+                awardPrize(prize);
             } else {
                 document.getElementById('prizeInfo').textContent = remaining > 0 ? 'Next match starting soon...' : 'Tournament Over!';
+            }
+            
+            setTimeout(() => {
+                if (remaining > 0) {
+                    showScreen('battleScreen');
+                    startNextMatch();
+                } else {
+                    returnToLobby();
+                }
+            }, 3000);
+        }
+
+        function endTournament() {
+            gameState.tournamentActive = false;
+            gameState.bracket = null;
+            returnToLobby();
+        }
+
+        function returnToLobby() {
+            showScreen('lobbyScreen');
+            players.clear();
+            keys = {};
+            
+            // Restart countdown
+            tournamentStartTime = null;
+            if (allPlayers.length >= 1) {
+                startTournamentCountdown();
             }
         }
 
@@ -653,23 +722,25 @@ function updateHealthBars(amIPlayer1) {
             window.parent.postMessage({ type: 'updateCoins', coins: parseInt(localStorage.getItem(atob('X2NvaW5EYXRh').split('').reverse().join('')) || '10') + amount }, '*');
         }
 
-        function continueToNextMatch() {
-            showScreen('battleScreen');
-            setTimeout(() => startNextMatch(), 1000);
-        }
-
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
         function handleGameStateUpdate(data) {
-            console.log('📊 Game state update:', data);
+            if (data.state.tournamentStartTime && !tournamentStartTime) {
+                tournamentStartTime = data.state.tournamentStartTime;
+                updateCountdown();
+            }
             if (data.state.bracket) {
                 gameState.bracket = data.state.bracket;
                 gameState.tournamentActive = data.state.tournamentActive || false;
-                updateDebug();
             }
+        }
+
+        async function init() {
+            loadUserProfile();
+            await connectToRelay();
         }
 
         init();
