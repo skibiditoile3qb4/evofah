@@ -215,6 +215,7 @@
                     updatePlayerList(data.players);
                     
                     // Auto-start check on join
+                    //Brochacho?
                     setTimeout(() => {
                         relay.send({ type: 'get_players' });
                     }, 500);
