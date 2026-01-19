@@ -294,6 +294,32 @@ function startHeartbeat() {
         }
     }, HEARTBEAT_INTERVAL);
 }
+        let positionUpdateInterval = null;
+
+function startPositionUpdates() {
+    // Send position updates every 50ms (20 times per second) during battle
+    if (positionUpdateInterval) clearInterval(positionUpdateInterval);
+    
+    positionUpdateInterval = setInterval(() => {
+        if (relay && relay.connected && currentMatch && !isSpectator) {
+            const myData = players.get(myPlayerId);
+            if (myData) {
+                relay.sendPlayerAction('player_move', { 
+                    x: myData.x, 
+                    y: myData.y,
+                    timestamp: Date.now()
+                });
+            }
+        }
+    }, 50); // 50ms = 20 updates per second
+}
+
+function stopPositionUpdates() {
+    if (positionUpdateInterval) {
+        clearInterval(positionUpdateInterval);
+        positionUpdateInterval = null;
+    }
+}
 
 function startTournamentCountdown() {
     if (tournamentStartTime) return; // Already started
@@ -474,14 +500,15 @@ function updateCountdown() {
             players.set(match.p1, { element: p1, x: -ARENA_RADIUS + 50, y: 0, health: 100 });
             players.set(match.p2, { element: p2, x: ARENA_RADIUS - 50, y: 0, health: 100 });
             
-            if (isSpectator) {
-                document.getElementById('spectatorNotice').style.display = 'block';
-                document.getElementById('attackMeter').style.opacity = '0.5';
-            } else {
-                document.getElementById('spectatorNotice').style.display = 'none';
-                document.getElementById('attackMeter').style.opacity = '1';
-                startGameLoop();
-            }
+if (isSpectator) {
+    document.getElementById('spectatorNotice').style.display = 'block';
+    document.getElementById('attackMeter').style.opacity = '0.5';
+} else {
+    document.getElementById('spectatorNotice').style.display = 'none';
+    document.getElementById('attackMeter').style.opacity = '1';
+    startGameLoop();
+    startPositionUpdates(); // Start fast position broadcasting
+}
             
             document.getElementById('battleInfo').textContent = `${match.p1} VS ${match.p2}`;
         }
@@ -556,9 +583,7 @@ function updateCountdown() {
                 }
             }
             
-            if (moved) {
-                relay.sendPlayerAction('player_move', { x: myData.x, y: myData.y });
-            }
+
             
             // Charge attack meter
             if (canAttack && !isCharging) {
@@ -581,14 +606,23 @@ function updateCountdown() {
             }, 50);
         }
 
-        function updateOpponentPosition(playerId, data) {
-            const playerData = players.get(playerId);
-            if (playerData) {
-                playerData.x = data.x;
-                playerData.y = data.y;
-                updatePlayerPosition(playerData.element, data.x, data.y);
-            }
-        }
+function updateOpponentPosition(playerId, data) {
+    const playerData = players.get(playerId);
+    if (playerData) {
+        // Smooth interpolation for opponent movement
+        const startX = playerData.x;
+        const startY = playerData.y;
+        const targetX = data.x;
+        const targetY = data.y;
+        
+        playerData.x = targetX;
+        playerData.y = targetY;
+        
+        // Animate to new position smoothly
+        playerData.element.style.transition = 'left 0.05s linear, top 0.05s linear';
+        updatePlayerPosition(playerData.element, targetX, targetY);
+    }
+}
 
         function handleAttack() {
             if (!canAttack || isSpectator || !currentMatch) return;
@@ -718,9 +752,10 @@ function updateCountdown() {
             setTimeout(() => div.remove(), 1000);
         }
 
-        function endMatch(won) {
-            if (chargeInterval) clearInterval(chargeInterval);
-            document.removeEventListener('click', handleAttack);
+function endMatch(won) {
+    if (chargeInterval) clearInterval(chargeInterval);
+    stopPositionUpdates(); // Stop position broadcasting
+    document.removeEventListener('click', handleAttack);
             
             currentMatch.winner = won ? myPlayerId : (currentMatch.p1 === myPlayerId ? currentMatch.p2 : currentMatch.p1);
             
@@ -769,10 +804,11 @@ function updateCountdown() {
             returnToLobby();
         }
 
-        function returnToLobby() {
-            showScreen('lobbyScreen');
-            players.clear();
-            keys = {};
+function returnToLobby() {
+    stopPositionUpdates(); // Stop position updates
+    showScreen('lobbyScreen');
+    players.clear();
+    keys = {};
             
             // Restart countdown
             tournamentStartTime = null;
