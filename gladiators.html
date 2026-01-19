@@ -695,18 +695,23 @@ function handleAttack() {
         target: opponentClientId,  // USE opponentClientId instead of opponentId
         attackerPos: { x: myData.x, y: myData.y }
     });
-    
-    if (damage > 0) {
+   if (damage > 0) {
         opponentHealth = Math.max(0, opponentHealth - damage);
-        updateHealth(opponentClientId, opponentHealth);  // USE opponentClientId here too
+        updateHealth(opponentClientId, opponentHealth);
         showDamageNumber(damage, hitType, opponentData.element);
         
         if (opponentHealth <= 0) {
             endMatch(true);
         }
     }
+    
+    // Reset meter
+    meterCharge = 0;
+    document.getElementById('meterFill').style.width = '0%';
+    canAttack = true;
+}
 
-        function handleOpponentAttack(attackData, attackerId) {
+function handleOpponentAttack(attackData, attackerId) {
             const { damage, hitType, attackerPos } = attackData;
             
             if (isSpectator) {
@@ -721,21 +726,21 @@ function handleAttack() {
                     updateHealth(targetId, targetData.health);
                     showDamageNumber(damage, hitType, targetData.element);
                 }
-            } else {
-                const attackerData = players.get(attackerId);
-                if (attackerData) showSwordSwing(attackerData.element);
-                
-                if (damage > 0) {
-                    myHealth = Math.max(0, myHealth - damage);
-                    updateHealth(myPlayerId, myHealth);
-                    const myData = players.get(myPlayerId);
-                    if (myData) showDamageNumber(damage, hitType, myData.element);
-                    
-                    if (myHealth <= 0) {
-                        endMatch(false);
+                    } else {
+                        const attackerData = players.get(attackerId);
+                        if (attackerData) showSwordSwing(attackerData.element);
+                        
+                        if (damage > 0) {
+                            myHealth = Math.max(0, myHealth - damage);
+                            updateHealth(relay.clientId, myHealth);
+                            const myData = players.get(relay.clientId);
+                            if (myData) showDamageNumber(damage, hitType, myData.element);
+                            
+                            if (myHealth <= 0) {
+                                endMatch(false);
+                            }
+                        }
                     }
-                }
-            }
         }
 
         function showSwordSwing(playerElement) {
