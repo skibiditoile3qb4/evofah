@@ -222,12 +222,28 @@
                 relay.on('player_left', () => {
                     if (relay && relay.connected) relay.send({ type: 'get_players' });
                 });
-                relay.on('players_update', (data) => updatePlayerList(data.players));
+                relay.on('players_update', (data) => {
+                    updatePlayerList(data.players);
+                    checkAutoStart(data.players);
+                });
                 relay.on('game_state_update', (data) => handleGameStateUpdate(data));
                 relay.on('player_action', (data) => handlePlayerAction(data));
                 
             } catch (error) {
                 alert('Failed to connect to game server');
+            }
+        }
+        
+        function checkAutoStart(players) {
+            if (!relay || !relay.connected) return;
+            
+            const allReady = players.length >= 2 && 
+                           players.every(p => gameState.readyPlayers.includes(p.id));
+            
+            if (players.length >= 2 && players[0].id === myPlayerId && allReady && !gameState.bracket) {
+                const bracket = generateBracket(players);
+                gameState.bracket = bracket;
+                relay.sendPlayerAction('start_tournament', { bracket });
             }
         }
 
@@ -281,19 +297,6 @@
                 showMatchResult(data.actionData);
             }
         }
-
-        relay.on('players_update', (data) => {
-            updatePlayerList(data.players);
-            
-            const allReady = data.players.length >= 2 && 
-                           data.players.every(p => gameState.readyPlayers.includes(p.id));
-            
-            if (data.players.length >= 2 && data.players[0].id === myPlayerId && allReady && !gameState.bracket) {
-                const bracket = generateBracket(data.players);
-                gameState.bracket = bracket;
-                relay.sendPlayerAction('start_tournament', { bracket });
-            }
-        });
 
         function generateBracket(players) {
             const shuffled = [...players].sort(() => Math.random() - 0.5);
