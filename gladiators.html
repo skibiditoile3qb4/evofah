@@ -222,6 +222,7 @@
             } catch(e) {
                 userProfile = { username: 'guest' + Math.floor(Math.random() * 100000) };
             }
+            myPlayerId = userProfile.username;
             console.log('📱 Loaded user profile:', userProfile);
         }
 
