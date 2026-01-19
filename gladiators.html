@@ -216,8 +216,12 @@
                     updatePlayerList(data.players);
                 });
                 
-                relay.on('player_joined', () => relay.send({ type: 'get_players' }));
-                relay.on('player_left', () => relay.send({ type: 'get_players' }));
+                relay.on('player_joined', () => {
+                    if (relay && relay.connected) relay.send({ type: 'get_players' });
+                });
+                relay.on('player_left', () => {
+                    if (relay && relay.connected) relay.send({ type: 'get_players' });
+                });
                 relay.on('players_update', (data) => updatePlayerList(data.players));
                 relay.on('game_state_update', (data) => handleGameStateUpdate(data));
                 relay.on('player_action', (data) => handlePlayerAction(data));
@@ -246,6 +250,10 @@
         }
 
         function toggleReady() {
+            if (!relay || !relay.connected) {
+                alert('Not connected to server yet!');
+                return;
+            }
             isReady = !isReady;
             const btn = document.getElementById('readyBtn');
             btn.classList.toggle('ready', isReady);
@@ -262,7 +270,7 @@
                 } else {
                     gameState.readyPlayers = gameState.readyPlayers.filter(id => id !== data.playerId);
                 }
-                relay.send({ type: 'get_players' });
+                if (relay && relay.connected) relay.send({ type: 'get_players' });
             } else if (data.action === 'start_tournament') {
                 startTournament(data.actionData.bracket);
             } else if (data.action === 'attack' && currentMatch) {
@@ -384,7 +392,7 @@
         }
 
         function attack() {
-            if (!canAttack || isSpectator) return;
+            if (!canAttack || isSpectator || !relay || !relay.connected) return;
             
             let damage, isCritical = false;
             if (timerProgress >= 90) {
