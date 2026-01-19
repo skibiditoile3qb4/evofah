@@ -460,7 +460,7 @@
 function startBattle(match) {
     myHealth = 100;
     opponentHealth = 100;
-    
+    // Track actual player positions
     const amIPlayer1 = match.p1 === myPlayerId;
     
     console.log('⚔️ Starting battle:', {
@@ -524,17 +524,18 @@ function startBattle(match) {
                 damage = Math.floor((timerProgress / 100) * 25);
             }
             
+// Show damage on opponent's side (if I'm p1, damage goes to p2 = right side)
 const amIPlayer1 = currentMatch.p1 === myPlayerId;
 showDamageNumber(damage, isCritical, amIPlayer1); // If I'm p1, damage p2 (right)
-            
-            relay.sendPlayerAction('attack', { 
-                damage, 
-                critical: isCritical, 
-                target: currentMatch.p2 === myPlayerId ? currentMatch.p1 : currentMatch.p2 
-            });
-            
-            opponentHealth = Math.max(0, opponentHealth - damage);
-            updateHealthBars();
+
+relay.sendPlayerAction('attack', { 
+    damage, 
+    critical: isCritical, 
+    target: currentMatch.p2 === myPlayerId ? currentMatch.p1 : currentMatch.p2 
+});
+
+opponentHealth = Math.max(0, opponentHealth - damage);
+updateHealthBars(amIPlayer1);
             
             if (opponentHealth <= 0) {
                 endMatch(true);
@@ -563,7 +564,8 @@ if (isSpectator) {
     myHealth = Math.max(0, myHealth - damage);
 }
             
-            updateHealthBars();
+            const amIPlayer1 = currentMatch.p1 === myPlayerId;
+updateHealthBars(amIPlayer1);
             
             if (myHealth <= 0 && !isSpectator) {
                 endMatch(false);
@@ -587,12 +589,27 @@ if (isSpectator) {
             setTimeout(() => div.remove(), 1000);
         }
 
-        function updateHealthBars() {
-            document.getElementById('health1').style.width = myHealth + '%';
-            document.getElementById('healthText1').textContent = myHealth + '/100';
-            document.getElementById('health2').style.width = opponentHealth + '%';
-            document.getElementById('healthText2').textContent = opponentHealth + '/100';
-        }
+function updateHealthBars(amIPlayer1) {
+    // If I'm player 1, my health goes to left bar, opponent to right
+    // If I'm player 2, my health goes to right bar, opponent to left
+    if (amIPlayer1 === undefined) {
+        amIPlayer1 = currentMatch.p1 === myPlayerId;
+    }
+    
+    if (amIPlayer1) {
+        // I'm on the left
+        document.getElementById('health1').style.width = myHealth + '%';
+        document.getElementById('healthText1').textContent = myHealth + '/100';
+        document.getElementById('health2').style.width = opponentHealth + '%';
+        document.getElementById('healthText2').textContent = opponentHealth + '/100';
+    } else {
+        // I'm on the right
+        document.getElementById('health1').style.width = opponentHealth + '%';
+        document.getElementById('healthText1').textContent = opponentHealth + '/100';
+        document.getElementById('health2').style.width = myHealth + '%';
+        document.getElementById('healthText2').textContent = myHealth + '/100';
+    }
+}
 
         function endMatch(won) {
             if (timerInterval) clearInterval(timerInterval);
