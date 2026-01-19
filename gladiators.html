@@ -14,12 +14,6 @@
         .screen { display: none; width: 100vw; height: 100vh; padding: 20px; }
         .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        #backBtn {
-            position: fixed; top: 20px; left: 20px; padding: 12px 24px;
-            background: #1a1a1a; border: 1px solid #333; border-radius: 6px;
-            cursor: pointer; z-index: 1000;
-        }
-        
         h1 { font-size: 48px; margin-bottom: 20px; 
             background: linear-gradient(135deg, #ff4500 0%, #ffd700 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -126,8 +120,6 @@
     <script src="relay-client.js"></script>
 </head>
 <body>
-    <button id="backBtn" onclick="backToMenu()">← BACK TO MENU</button>
-    
     <!-- Lobby Screen -->
     <div id="lobbyScreen" class="screen active">
         <h1>⚔️ GLADIATORS TOURNAMENT</h1>
@@ -185,7 +177,8 @@
         const ROOM_ID = 'gladiators_global';
         
         let relay, userProfile, myPlayerId;
-        let gameState = { bracket: null, currentRound: 0, currentMatchIndex: 0 };
+        let allPlayers = [];
+        let gameState = { bracket: null, currentRound: 0, currentMatchIndex: 0, tournamentActive: false };
         let currentMatch = null, isSpectator = false;
         let myHealth = 100, opponentHealth = 100;
         let timerProgress = 0, timerInterval = null, canAttack = true;
@@ -211,40 +204,57 @@
                 relay.joinRoom(ROOM_ID, userProfile.username, userProfile.status || 'player');
                 
                 relay.on('joined', (data) => {
+                    console.log('Joined room:', data);
                     myPlayerId = relay.clientId;
-                    updatePlayerList(data.players);
+                    allPlayers = data.players || [];
+                    updatePlayerList(allPlayers);
                     
-                    // Auto-start check on join
-                    //Brochacho?
+                    // Request current player list from server
                     setTimeout(() => {
                         relay.send({ type: 'get_players' });
-                    }, 500);
+                    }, 200);
                 });
                 
-                relay.on('player_joined', () => {
-                    if (relay && relay.connected) relay.send({ type: 'get_players' });
+                relay.on('player_joined', (data) => {
+                    console.log('Player joined:', data);
+                    if (!allPlayers.find(p => p.id === data.player.id)) {
+                        allPlayers.push(data.player);
+                        updatePlayerList(allPlayers);
+                        checkAutoStart();
+                    }
+                    relay.send({ type: 'get_players' });
                 });
-                relay.on('player_left', () => {
-                    if (relay && relay.connected) relay.send({ type: 'get_players' });
+                
+                relay.on('player_left', (data) => {
+                    console.log('Player left:', data);
+                    allPlayers = allPlayers.filter(p => p.id !== data.player.id);
+                    updatePlayerList(allPlayers);
                 });
+                
                 relay.on('players_update', (data) => {
-                    updatePlayerList(data.players);
-                    checkAutoStart(data.players);
+                    console.log('Players update:', data);
+                    allPlayers = data.players || [];
+                    updatePlayerList(allPlayers);
+                    checkAutoStart();
                 });
+                
                 relay.on('game_state_update', (data) => handleGameStateUpdate(data));
                 relay.on('player_action', (data) => handlePlayerAction(data));
                 
             } catch (error) {
+                console.error('Failed to connect to game server:', error);
                 alert('Failed to connect to game server');
             }
         }
         
-        function checkAutoStart(players) {
-            if (!relay || !relay.connected) return;
+        function checkAutoStart() {
+            console.log('Check auto start:', allPlayers.length, gameState.tournamentActive);
             
-            // Auto-start when 2+ players and we're the host
-            if (players.length >= 2 && players[0].id === myPlayerId && !gameState.bracket) {
-                const bracket = generateBracket(players);
+            // Only start if we have 2+ players, not already in tournament, and we're the first player (host)
+            if (allPlayers.length >= 2 && !gameState.tournamentActive && allPlayers[0]?.id === myPlayerId) {
+                console.log('Starting tournament as host');
+                gameState.tournamentActive = true;
+                const bracket = generateBracket(allPlayers);
                 gameState.bracket = bracket;
                 relay.sendPlayerAction('start_tournament', { bracket });
             }
@@ -253,6 +263,11 @@
         function updatePlayerList(players) {
             const container = document.getElementById('playersContainer');
             container.innerHTML = '';
+            
+            if (players.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666;">Waiting for players...</div>';
+                return;
+            }
             
             players.forEach(player => {
                 const div = document.createElement('div');
@@ -268,6 +283,8 @@
         }
 
         function handlePlayerAction(data) {
+            console.log('Player action:', data);
+            
             if (data.action === 'start_tournament') {
                 startTournament(data.actionData.bracket);
             } else if (data.action === 'attack' && currentMatch) {
@@ -306,22 +323,27 @@
         }
 
         function startTournament(bracket) {
+            console.log('Starting tournament with bracket:', bracket);
             gameState.bracket = bracket;
             gameState.currentMatchIndex = 0;
+            gameState.tournamentActive = true;
             showScreen('battleScreen');
             setTimeout(() => startNextMatch(), 2000);
         }
 
         function startNextMatch() {
             const matches = gameState.bracket.filter(m => !m.winner || m.p2 === null);
+            console.log('Starting next match, remaining:', matches);
+            
             if (matches.length === 0) {
                 // Tournament over
                 const winner = gameState.bracket.find(m => m.winner);
-                if (winner.winner === myPlayerId) {
+                if (winner && winner.winner === myPlayerId) {
                     awardPrize(calculatePrize(gameState.bracket.length + 1));
                 }
+                gameState.tournamentActive = false;
                 showScreen('lobbyScreen');
-                gameState = { readyPlayers: [], bracket: null };
+                gameState.bracket = null;
                 return;
             }
             
@@ -386,16 +408,16 @@
                 damage = Math.floor((timerProgress / 100) * 25);
             }
             
-            showDamageNumber(damage, isCritical, currentMatch.p2 === myPlayerId);
+            const isP1 = currentMatch.p1 === myPlayerId;
+            showDamageNumber(damage, isCritical, !isP1);
             
-            relay.sendPlayerAction('attack', { damage, critical: isCritical, target: currentMatch.p2 === myPlayerId ? currentMatch.p1 : currentMatch.p2 });
+            relay.sendPlayerAction('attack', { 
+                damage, 
+                critical: isCritical, 
+                target: currentMatch.p2 === myPlayerId ? currentMatch.p1 : currentMatch.p2 
+            });
             
-            if (currentMatch.p1 === myPlayerId) {
-                opponentHealth = Math.max(0, opponentHealth - damage);
-            } else {
-                opponentHealth = Math.max(0, opponentHealth - damage);
-            }
-            
+            opponentHealth = Math.max(0, opponentHealth - damage);
             updateHealthBars();
             
             if (opponentHealth <= 0) {
@@ -410,7 +432,6 @@
             const isCritical = attackData.critical;
             
             if (isSpectator) {
-                // Show damage on the correct fighter for spectators
                 const isP1Attack = attackerId === currentMatch.p1;
                 showDamageNumber(damage, isCritical, !isP1Attack);
                 
@@ -420,7 +441,8 @@
                     myHealth = Math.max(0, myHealth - damage);
                 }
             } else {
-                showDamageNumber(damage, isCritical, currentMatch.p1 === myPlayerId);
+                const isP1 = currentMatch.p1 === myPlayerId;
+                showDamageNumber(damage, isCritical, isP1);
                 myHealth = Math.max(0, myHealth - damage);
             }
             
@@ -429,7 +451,6 @@
             if (myHealth <= 0 && !isSpectator) {
                 endMatch(false);
             } else if ((isSpectator && myHealth <= 0) || (isSpectator && opponentHealth <= 0)) {
-                // Spectator sees match end
                 setTimeout(() => startNextMatch(), 2000);
             }
         }
@@ -508,13 +529,10 @@
             document.getElementById(screenId).classList.add('active');
         }
 
-        function backToMenu() {
-            window.parent.postMessage({ type: 'backToMain' }, '*');
-        }
-
         function handleGameStateUpdate(data) {
             if (data.state.bracket) {
                 gameState.bracket = data.state.bracket;
+                gameState.tournamentActive = data.state.tournamentActive || false;
             }
         }
 
