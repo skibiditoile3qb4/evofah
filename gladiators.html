@@ -230,9 +230,14 @@
                     updatePlayerList(allPlayers);
                     
                     // Start countdown if this is the first player
-                    if (allPlayers.length === 1 && !tournamentStartTime) {
+                    if (allPlayers.length === 1 && !tournamentStartTime && !gameState.tournamentActive) {
                         startTournamentCountdown();
                     }
+                    
+                    // Request game state to sync countdown
+                    setTimeout(() => {
+                        relay.send({ type: 'get_players' });
+                    }, 100);
                 });
                 
                 relay.on('player_joined', (data) => {
@@ -277,11 +282,14 @@
         }
 
         function startTournamentCountdown() {
+            if (tournamentStartTime) return; // Already started
+            
             tournamentStartTime = Date.now() + TOURNAMENT_WAIT_TIME;
             
+            // Broadcast the start time to all players
             relay.send({
                 type: 'game_state',
-                state: { tournamentStartTime }
+                state: { tournamentStartTime, tournamentActive: false }
             });
             
             updateCountdown();
