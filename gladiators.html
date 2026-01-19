@@ -524,8 +524,8 @@ function startBattle(match) {
                 damage = Math.floor((timerProgress / 100) * 25);
             }
             
-            const isP1 = currentMatch.p1 === myPlayerId;
-            showDamageNumber(damage, isCritical, !isP1);
+const amIPlayer1 = currentMatch.p1 === myPlayerId;
+showDamageNumber(damage, isCritical, amIPlayer1); // If I'm p1, damage p2 (right)
             
             relay.sendPlayerAction('attack', { 
                 damage, 
@@ -547,20 +547,21 @@ function startBattle(match) {
             const damage = attackData.damage;
             const isCritical = attackData.critical;
             
-            if (isSpectator) {
-                const isP1Attack = attackerId === currentMatch.p1;
-                showDamageNumber(damage, isCritical, !isP1Attack);
-                
-                if (isP1Attack) {
-                    opponentHealth = Math.max(0, opponentHealth - damage);
-                } else {
-                    myHealth = Math.max(0, myHealth - damage);
-                }
-            } else {
-                const isP1 = currentMatch.p1 === myPlayerId;
-                showDamageNumber(damage, isCritical, isP1);
-                myHealth = Math.max(0, myHealth - damage);
-            }
+if (isSpectator) {
+    const isP1Attack = attackerId === currentMatch.p1;
+    showDamageNumber(damage, isCritical, isP1Attack); // p1 attacks p2 (right)
+    
+    if (isP1Attack) {
+        opponentHealth = Math.max(0, opponentHealth - damage);
+    } else {
+        myHealth = Math.max(0, myHealth - damage);
+    }
+} else {
+    // Opponent attacked me - show damage on MY side
+    const amIPlayer1 = currentMatch.p1 === myPlayerId;
+    showDamageNumber(damage, isCritical, !amIPlayer1); // Damage on my side
+    myHealth = Math.max(0, myHealth - damage);
+}
             
             updateHealthBars();
             
