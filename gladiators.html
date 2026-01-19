@@ -197,7 +197,6 @@
             debug.innerHTML = `
                 My ID: ${myPlayerId ? myPlayerId.substring(0, 8) : 'none'}<br>
                 Players: ${allPlayers.length}<br>
-                Am Host: ${allPlayers.length > 0 && allPlayers[0]?.id === myPlayerId}<br>
                 Tournament: ${gameState.tournamentActive}<br>
                 Connected: ${relay?.connected}
             `;
@@ -283,11 +282,9 @@
         }
         
         function checkAutoStart() {
-            const isHost = allPlayers.length > 0 && allPlayers[0]?.id === myPlayerId;
+            console.log(`🎮 Auto-start check: Players=${allPlayers.length}, Active=${gameState.tournamentActive}`);
             
-            console.log(`🎮 Auto-start check: Players=${allPlayers.length}, IsHost=${isHost}, Active=${gameState.tournamentActive}`);
-            
-            if (allPlayers.length >= 2 && !gameState.tournamentActive && isHost) {
+            if (allPlayers.length >= 2 && !gameState.tournamentActive) {
                 console.log('🚀 STARTING TOURNAMENT');
                 gameState.tournamentActive = true;
                 const bracket = generateBracket(allPlayers);
@@ -313,12 +310,11 @@
                 return;
             }
             
-            players.forEach((player, index) => {
+            players.forEach((player) => {
                 const div = document.createElement('div');
                 div.className = 'player-item';
-                const isHost = index === 0;
                 div.innerHTML = `
-                    <span style="font-weight: bold;">${player.username} ${isHost ? '👑' : ''}</span>
+                    <span style="font-weight: bold;">${player.username}</span>
                     <span style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #4ade80; color: #000;">
                         READY
                     </span>
