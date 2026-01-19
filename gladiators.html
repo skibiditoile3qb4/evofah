@@ -435,8 +435,22 @@
             myHealth = 100;
             opponentHealth = 100;
             
+            console.log('⚔️ Starting battle:', {
+                match: match,
+                myPlayerId: myPlayerId,
+                p1: match.p1,
+                p2: match.p2,
+                isP1: match.p1 === myPlayerId,
+                isP2: match.p2 === myPlayerId
+            });
+            
             document.getElementById('p1Name').textContent = match.p1Name;
             document.getElementById('p2Name').textContent = match.p2Name;
+            
+            // Fix spectator detection - check against actual player IDs
+            isSpectator = match.p1 !== myPlayerId && match.p2 !== myPlayerId;
+            
+            console.log('👁️ Spectator status:', isSpectator);
             
             if (isSpectator) {
                 document.getElementById('spectatorNotice').style.display = 'block';
