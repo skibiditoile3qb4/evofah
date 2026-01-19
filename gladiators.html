@@ -306,12 +306,12 @@ function startPositionUpdates() {
     if (positionUpdateInterval) clearInterval(positionUpdateInterval);
     
     let updateCount = 0;
-    positionUpdateInterval = setInterval(() => {
-        if (relay && relay.connected && currentMatch) {
-            if (!isSpectator) {
-                // Only send if I'm playing
-                const myData = players.get(myPlayerId);
-                if (myData) {
+positionUpdateInterval = setInterval(() => {
+    if (relay && relay.connected && currentMatch) {
+        if (!isSpectator) {
+            // Only send if I'm playing - use clientId
+            const myData = players.get(relay.clientId);
+            if (myData) {
                     updateCount++;
                     if (updateCount % 20 === 0) { // Log every 20 updates (1 second)
                         console.log('Sending position update:', myData.x, myData.y);
@@ -502,22 +502,32 @@ function handlePlayerAction(data) {
             startBattle(currentMatch);
         }
 
-        function startBattle(match) {
-            myHealth = 100;
-            opponentHealth = 100;
-            players.clear();
-            
-            const arena = document.getElementById('battleArena');
-            arena.querySelectorAll('.player').forEach(el => el.remove());
-            
-            const amIPlayer1 = match.p1 === myPlayerId;
-            
-            // Create player elements
-            const p1 = createPlayerElement(match.p1, '#3b82f6', -ARENA_RADIUS + 50, 0);
-            const p2 = createPlayerElement(match.p2, '#ef4444', ARENA_RADIUS - 50, 0);
-            
-            players.set(match.p1, { element: p1, x: -ARENA_RADIUS + 50, y: 0, health: 100 });
-            players.set(match.p2, { element: p2, x: ARENA_RADIUS - 50, y: 0, health: 100 });
+function startBattle(match) {
+    myHealth = 100;
+    opponentHealth = 100;
+    players.clear();
+    
+    const arena = document.getElementById('battleArena');
+    arena.querySelectorAll('.player').forEach(el => el.remove());
+    
+    console.log('Starting battle - my username:', myPlayerId, 'my clientId:', relay.clientId);
+    
+    const amIPlayer1 = match.p1 === myPlayerId;
+    
+    // Create player elements
+    const p1 = createPlayerElement(match.p1, '#3b82f6', -ARENA_RADIUS + 50, 0);
+    const p2 = createPlayerElement(match.p2, '#ef4444', ARENA_RADIUS - 50, 0);
+    
+    // Find clientIds for each player
+    const p1ClientId = allPlayers.find(p => p.username === match.p1)?.id || match.p1;
+    const p2ClientId = allPlayers.find(p => p.username === match.p2)?.id || match.p2;
+    
+    console.log('P1:', match.p1, 'clientId:', p1ClientId);
+    console.log('P2:', match.p2, 'clientId:', p2ClientId);
+    
+    // Store by clientId, not username
+    players.set(p1ClientId, { element: p1, x: -ARENA_RADIUS + 50, y: 0, health: 100, username: match.p1 });
+    players.set(p2ClientId, { element: p2, x: ARENA_RADIUS - 50, y: 0, health: 100, username: match.p2 });
             
 if (isSpectator) {
     document.getElementById('spectatorNotice').style.display = 'block';
@@ -577,11 +587,11 @@ function createPlayerElement(username, color, x, y) {
             requestAnimationFrame(gameLoop);
         }
 
-        function gameLoop() {
-            if (!currentMatch || isSpectator) return;
-            
-            const myData = players.get(myPlayerId);
-            if (!myData) return;
+function gameLoop() {
+    if (!currentMatch || isSpectator) return;
+    
+    const myData = players.get(relay.clientId);
+    if (!myData) return;
             
             let moved = false;
             let dx = 0, dy = 0;
@@ -643,12 +653,16 @@ function updateOpponentPosition(playerId, data) {
     }
 }
 
-        function handleAttack() {
-            if (!canAttack || isSpectator || !currentMatch) return;
-            
-            const myData = players.get(myPlayerId);
-            const opponentId = currentMatch.p1 === myPlayerId ? currentMatch.p2 : currentMatch.p1;
-            const opponentData = players.get(opponentId);
+function handleAttack() {
+    if (!canAttack || isSpectator || !currentMatch) return;
+    
+    const myData = players.get(relay.clientId);
+    
+    // Find opponent's clientId
+    const myUsername = myPlayerId;
+    const opponentUsername = currentMatch.p1 === myUsername ? currentMatch.p2 : currentMatch.p1;
+    const opponentClientId = allPlayers.find(p => p.username === opponentUsername)?.id;
+    const opponentData = players.get(opponentClientId);
             
             if (!myData || !opponentData) return;
             
