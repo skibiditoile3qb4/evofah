@@ -285,10 +285,14 @@
             console.log(`🎮 Auto-start check: Players=${allPlayers.length}, Active=${gameState.tournamentActive}`);
             
             if (allPlayers.length >= 2 && !gameState.tournamentActive) {
-                console.log('🚀 STARTING TOURNAMENT');
+                console.log('🚀 STARTING TOURNAMENT - Setting flag and broadcasting');
                 gameState.tournamentActive = true;
+                updateDebug();
+                
                 const bracket = generateBracket(allPlayers);
                 gameState.bracket = bracket;
+                
+                console.log('📤 Broadcasting start_tournament with bracket:', bracket);
                 
                 // Broadcast tournament start
                 relay.sendPlayerAction('start_tournament', { bracket, tournamentActive: true });
@@ -298,6 +302,12 @@
                     type: 'game_state',
                     state: { bracket, tournamentActive: true }
                 });
+                
+                // Start locally too
+                console.log('🎮 Starting tournament locally');
+                setTimeout(() => {
+                    startTournament(bracket);
+                }, 500);
             }
         }
 
@@ -324,11 +334,15 @@
         }
 
         function handlePlayerAction(data) {
-            console.log('🎬 Player action:', data.action);
+            console.log('🎬 Player action received:', data.action, data);
             
             if (data.action === 'start_tournament') {
+                console.log('🏁 Received start_tournament, current state:', gameState.tournamentActive);
                 if (!gameState.tournamentActive) {
+                    console.log('✅ Starting tournament now');
                     startTournament(data.actionData.bracket);
+                } else {
+                    console.log('⚠️ Tournament already active, ignoring');
                 }
             } else if (data.action === 'attack' && currentMatch) {
                 if (isSpectator || data.playerId !== myPlayerId) {
