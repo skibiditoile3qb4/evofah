@@ -116,10 +116,17 @@
             background: rgba(214, 158, 46, 0.2); border: 2px solid #d69e2e;
             padding: 15px 30px; border-radius: 8px; font-size: 16px;
         }
+        #debugInfo {
+            position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8);
+            padding: 10px; border-radius: 6px; font-size: 11px; font-family: monospace;
+            color: #4ade80; z-index: 1000;
+        }
     </style>
     <script src="relay-client.js"></script>
 </head>
 <body>
+    <div id="debugInfo"></div>
+    
     <!-- Lobby Screen -->
     <div id="lobbyScreen" class="screen active">
         <h1>⚔️ GLADIATORS TOURNAMENT</h1>
@@ -175,6 +182,7 @@
     <script>
         const RELAY_SERVER = 'wss://relayfah.onrender.com';
         const ROOM_ID = 'gladiators_global';
+        const HEARTBEAT_INTERVAL = 2000; // Request players every 2 seconds
         
         let relay, userProfile, myPlayerId;
         let allPlayers = [];
@@ -182,10 +190,23 @@
         let currentMatch = null, isSpectator = false;
         let myHealth = 100, opponentHealth = 100;
         let timerProgress = 0, timerInterval = null, canAttack = true;
+        let heartbeatInterval = null;
+
+        function updateDebug() {
+            const debug = document.getElementById('debugInfo');
+            debug.innerHTML = `
+                My ID: ${myPlayerId ? myPlayerId.substring(0, 8) : 'none'}<br>
+                Players: ${allPlayers.length}<br>
+                Am Host: ${allPlayers.length > 0 && allPlayers[0]?.id === myPlayerId}<br>
+                Tournament: ${gameState.tournamentActive}<br>
+                Connected: ${relay?.connected}
+            `;
+        }
 
         async function init() {
             loadUserProfile();
             await connectToRelay();
+            startHeartbeat();
         }
 
         function loadUserProfile() {
@@ -197,66 +218,89 @@
             }
         }
 
+        function startHeartbeat() {
+            // Request player list every 2 seconds
+            heartbeatInterval = setInterval(() => {
+                if (relay && relay.connected && !gameState.tournamentActive) {
+                    relay.send({ type: 'get_players' });
+                }
+            }, HEARTBEAT_INTERVAL);
+        }
+
         async function connectToRelay() {
             try {
                 relay = new RelayClient(RELAY_SERVER);
                 await relay.connect();
+                
+                console.log('🔌 Connected to relay');
+                
                 relay.joinRoom(ROOM_ID, userProfile.username, userProfile.status || 'player');
                 
                 relay.on('joined', (data) => {
-                    console.log('Joined room:', data);
+                    console.log('✅ Joined room:', data);
                     myPlayerId = relay.clientId;
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
+                    updateDebug();
                     
-                    // Request current player list from server
+                    // Immediate request for players
                     setTimeout(() => {
                         relay.send({ type: 'get_players' });
-                    }, 200);
+                    }, 100);
                 });
                 
                 relay.on('player_joined', (data) => {
-                    console.log('Player joined:', data);
-                    if (!allPlayers.find(p => p.id === data.player.id)) {
-                        allPlayers.push(data.player);
-                        updatePlayerList(allPlayers);
-                        checkAutoStart();
-                    }
+                    console.log('👤 Player joined:', data);
                     relay.send({ type: 'get_players' });
                 });
                 
                 relay.on('player_left', (data) => {
-                    console.log('Player left:', data);
+                    console.log('👋 Player left:', data);
                     allPlayers = allPlayers.filter(p => p.id !== data.player.id);
                     updatePlayerList(allPlayers);
+                    updateDebug();
                 });
                 
                 relay.on('players_update', (data) => {
-                    console.log('Players update:', data);
+                    console.log('📋 Players update:', data.players);
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
-                    checkAutoStart();
+                    updateDebug();
+                    
+                    // Check if we should start
+                    if (!gameState.tournamentActive) {
+                        checkAutoStart();
+                    }
                 });
                 
                 relay.on('game_state_update', (data) => handleGameStateUpdate(data));
                 relay.on('player_action', (data) => handlePlayerAction(data));
                 
             } catch (error) {
-                console.error('Failed to connect to game server:', error);
+                console.error('❌ Failed to connect:', error);
                 alert('Failed to connect to game server');
             }
         }
         
         function checkAutoStart() {
-            console.log('Check auto start:', allPlayers.length, gameState.tournamentActive);
+            const isHost = allPlayers.length > 0 && allPlayers[0]?.id === myPlayerId;
             
-            // Only start if we have 2+ players, not already in tournament, and we're the first player (host)
-            if (allPlayers.length >= 2 && !gameState.tournamentActive && allPlayers[0]?.id === myPlayerId) {
-                console.log('Starting tournament as host');
+            console.log(`🎮 Auto-start check: Players=${allPlayers.length}, IsHost=${isHost}, Active=${gameState.tournamentActive}`);
+            
+            if (allPlayers.length >= 2 && !gameState.tournamentActive && isHost) {
+                console.log('🚀 STARTING TOURNAMENT');
                 gameState.tournamentActive = true;
                 const bracket = generateBracket(allPlayers);
                 gameState.bracket = bracket;
-                relay.sendPlayerAction('start_tournament', { bracket });
+                
+                // Broadcast tournament start
+                relay.sendPlayerAction('start_tournament', { bracket, tournamentActive: true });
+                
+                // Also update game state
+                relay.send({
+                    type: 'game_state',
+                    state: { bracket, tournamentActive: true }
+                });
             }
         }
 
@@ -269,11 +313,12 @@
                 return;
             }
             
-            players.forEach(player => {
+            players.forEach((player, index) => {
                 const div = document.createElement('div');
                 div.className = 'player-item';
+                const isHost = index === 0;
                 div.innerHTML = `
-                    <span style="font-weight: bold;">${player.username}</span>
+                    <span style="font-weight: bold;">${player.username} ${isHost ? '👑' : ''}</span>
                     <span style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #4ade80; color: #000;">
                         READY
                     </span>
@@ -283,10 +328,12 @@
         }
 
         function handlePlayerAction(data) {
-            console.log('Player action:', data);
+            console.log('🎬 Player action:', data.action);
             
             if (data.action === 'start_tournament') {
-                startTournament(data.actionData.bracket);
+                if (!gameState.tournamentActive) {
+                    startTournament(data.actionData.bracket);
+                }
             } else if (data.action === 'attack' && currentMatch) {
                 if (isSpectator || data.playerId !== myPlayerId) {
                     handleOpponentAttack(data.actionData, data.playerId);
@@ -323,17 +370,25 @@
         }
 
         function startTournament(bracket) {
-            console.log('Starting tournament with bracket:', bracket);
+            console.log('🏁 Starting tournament with bracket:', bracket);
+            
+            // Stop heartbeat during tournament
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+            
             gameState.bracket = bracket;
             gameState.currentMatchIndex = 0;
             gameState.tournamentActive = true;
+            updateDebug();
             showScreen('battleScreen');
             setTimeout(() => startNextMatch(), 2000);
         }
 
         function startNextMatch() {
             const matches = gameState.bracket.filter(m => !m.winner || m.p2 === null);
-            console.log('Starting next match, remaining:', matches);
+            console.log('⚔️ Starting next match, remaining:', matches.length);
             
             if (matches.length === 0) {
                 // Tournament over
@@ -342,8 +397,12 @@
                     awardPrize(calculatePrize(gameState.bracket.length + 1));
                 }
                 gameState.tournamentActive = false;
+                updateDebug();
                 showScreen('lobbyScreen');
                 gameState.bracket = null;
+                
+                // Restart heartbeat
+                startHeartbeat();
                 return;
             }
             
@@ -530,9 +589,11 @@
         }
 
         function handleGameStateUpdate(data) {
+            console.log('📊 Game state update:', data);
             if (data.state.bracket) {
                 gameState.bracket = data.state.bracket;
                 gameState.tournamentActive = data.state.tournamentActive || false;
+                updateDebug();
             }
         }
 
