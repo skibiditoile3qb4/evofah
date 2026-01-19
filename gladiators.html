@@ -440,8 +440,8 @@
             // Check if we're in this match or spectating - RECALCULATE HERE
             isSpectator = currentMatch.p1 !== myPlayerId && currentMatch.p2 !== myPlayerId;
             console.log('🔍 SPECTATOR CHECK:');
-            console.log('  match.p1:', match.p1);
-            console.log('  match.p2:', match.p2);
+            console.log('  match.p1:', currentMatch.p1);
+            console.log('  match.p2:', currentMatch.p2);
             console.log('  myPlayerId (from userProfile.username):', myPlayerId);
             console.log('  👁️ AM I SPECTATOR?:', isSpectator);
             console.log('👁️ Calculated spectator status:', isSpectator);
