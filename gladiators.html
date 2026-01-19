@@ -197,6 +197,8 @@
         let canAttack = true;
         let isCharging = false;
         let chargeInterval = null;
+        let heartbeatInterval = null;
+        const HEARTBEAT_INTERVAL = 2000; // Request players every 2 seconds
 
         function loadUserProfile() {
             try {
@@ -245,15 +247,33 @@
                 relay.on('players_update', (data) => {
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
+                    
+                    // Start countdown if this is the first player and countdown not started
+                    if (allPlayers.length >= 1 && !tournamentStartTime && !gameState.tournamentActive) {
+                        // Check if we need to start countdown from game state
+                        relay.send({ type: 'get_players' });
+                    }
                 });
                 
                 relay.on('game_state_update', (data) => handleGameStateUpdate(data));
                 relay.on('player_action', (data) => handlePlayerAction(data));
                 
+                // Start heartbeat to keep player list in sync
+                startHeartbeat();
+                
             } catch (error) {
                 console.error('Failed to connect:', error);
                 alert('Failed to connect to game server');
             }
+        }
+
+        function startHeartbeat() {
+            // Request player list every 2 seconds when not in active tournament
+            heartbeatInterval = setInterval(() => {
+                if (relay && relay.connected && !gameState.tournamentActive) {
+                    relay.send({ type: 'get_players' });
+                }
+            }, HEARTBEAT_INTERVAL);
         }
 
         function startTournamentCountdown() {
@@ -327,6 +347,13 @@
 
         function startTournament() {
             gameState.tournamentActive = true;
+            
+            // Stop heartbeat during tournament
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+            
             const bracket = generateBracket(allPlayers);
             gameState.bracket = bracket;
             
@@ -341,6 +368,12 @@
         function receiveTournamentStart(bracket) {
             gameState.tournamentActive = true;
             gameState.bracket = bracket;
+            
+            // Stop heartbeat during tournament
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
             
             setTimeout(() => {
                 showScreen('battleScreen');
@@ -711,6 +744,11 @@
             tournamentStartTime = null;
             if (allPlayers.length >= 1) {
                 startTournamentCountdown();
+            }
+            
+            // Restart heartbeat
+            if (!heartbeatInterval) {
+                startHeartbeat();
             }
         }
 
