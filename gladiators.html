@@ -596,10 +596,11 @@ function gameLoop() {
             let moved = false;
             let dx = 0, dy = 0;
             
-            if (keys['ArrowUp']) dy -= PLAYER_SPEED;
-            if (keys['ArrowDown']) dy += PLAYER_SPEED;
-            if (keys['ArrowLeft']) dx -= PLAYER_SPEED;
-            if (keys['ArrowRight']) dx += PLAYER_SPEED;
+if (keys['ArrowUp'] || keys['w']) dy -= PLAYER_SPEED;
+if (keys['ArrowDown'] || keys['s']) dy += PLAYER_SPEED;
+if (keys['ArrowLeft'] || keys['a']) dx -= PLAYER_SPEED;
+if (keys['ArrowRight'] || keys['d']) dx += PLAYER_SPEED;
+
             
             if (dx !== 0 || dy !== 0) {
                 const newX = myData.x + dx;
