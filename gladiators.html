@@ -211,10 +211,18 @@
         function loadUserProfile() {
             try {
                 const stored = localStorage.getItem('userProfile');
-                userProfile = stored ? JSON.parse(stored) : { username: 'guest' + Math.floor(Math.random() * 100000) };
+                if (stored) {
+                    userProfile = JSON.parse(stored);
+                    if (!userProfile.username) {
+                        userProfile.username = 'guest' + Math.floor(Math.random() * 100000);
+                    }
+                } else {
+                    userProfile = { username: 'guest' + Math.floor(Math.random() * 100000) };
+                }
             } catch(e) {
                 userProfile = { username: 'guest' + Math.floor(Math.random() * 100000) };
             }
+            console.log('📱 Loaded user profile:', userProfile);
         }
 
         function startHeartbeat() {
@@ -237,10 +245,12 @@
                 
                 relay.on('joined', (data) => {
                     console.log('✅ Joined room:', data);
-                    myPlayerId = relay.clientId;
+                    myPlayerId = userProfile.username; // Use username as player ID
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
                     updateDebug();
+                    
+                    console.log('🆔 My username as ID:', myPlayerId);
                     
                     // Immediate request for players
                     setTimeout(() => {
@@ -418,8 +428,18 @@
             
             currentMatch = matches[0];
             
-            // Check if we're in this match or spectating
+            console.log('🎯 Current match:', {
+                p1: currentMatch.p1,
+                p2: currentMatch.p2,
+                p1Name: currentMatch.p1Name,
+                p2Name: currentMatch.p2Name,
+                myPlayerId: myPlayerId
+            });
+            
+            // Check if we're in this match or spectating - RECALCULATE HERE
             isSpectator = currentMatch.p1 !== myPlayerId && currentMatch.p2 !== myPlayerId;
+            
+            console.log('👁️ Calculated spectator status:', isSpectator);
             
             if (currentMatch.p2 === null) {
                 // Bye - instant win
