@@ -132,11 +132,10 @@
     <div id="lobbyScreen" class="screen active">
         <h1>⚔️ GLADIATORS TOURNAMENT</h1>
         <div id="playerList">
-            <h3 style="margin-bottom: 15px; text-align: center;">Waiting for Players...</h3>
+            <h3 style="margin-bottom: 15px; text-align: center;">Players in Lobby</h3>
             <div id="playersContainer"></div>
         </div>
-        <button id="readyBtn" class="btn" onclick="toggleReady()">READY UP</button>
-        <div style="margin-top: 20px; font-size: 14px; color: #888;">Tournament starts when all players are ready (min 2)</div>
+        <div style="margin-top: 20px; font-size: 14px; color: #888;">Tournament starts automatically when 2+ players join</div>
     </div>
     
     <!-- Battle Screen -->
@@ -185,8 +184,8 @@
         const RELAY_SERVER = 'wss://relayfah.onrender.com';
         const ROOM_ID = 'gladiators_global';
         
-        let relay, userProfile, myPlayerId, isReady = false;
-        let gameState = { readyPlayers: [], bracket: null, currentRound: 0, currentMatchIndex: 0 };
+        let relay, userProfile, myPlayerId;
+        let gameState = { bracket: null, currentRound: 0, currentMatchIndex: 0 };
         let currentMatch = null, isSpectator = false;
         let myHealth = 100, opponentHealth = 100;
         let timerProgress = 0, timerInterval = null, canAttack = true;
@@ -214,6 +213,11 @@
                 relay.on('joined', (data) => {
                     myPlayerId = relay.clientId;
                     updatePlayerList(data.players);
+                    
+                    // Auto-start check on join
+                    setTimeout(() => {
+                        relay.send({ type: 'get_players' });
+                    }, 500);
                 });
                 
                 relay.on('player_joined', () => {
@@ -237,10 +241,8 @@
         function checkAutoStart(players) {
             if (!relay || !relay.connected) return;
             
-            const allReady = players.length >= 2 && 
-                           players.every(p => gameState.readyPlayers.includes(p.id));
-            
-            if (players.length >= 2 && players[0].id === myPlayerId && allReady && !gameState.bracket) {
+            // Auto-start when 2+ players and we're the host
+            if (players.length >= 2 && players[0].id === myPlayerId && !gameState.bracket) {
                 const bracket = generateBracket(players);
                 gameState.bracket = bracket;
                 relay.sendPlayerAction('start_tournament', { bracket });
@@ -254,40 +256,18 @@
             players.forEach(player => {
                 const div = document.createElement('div');
                 div.className = 'player-item';
-                const ready = gameState.readyPlayers.includes(player.id);
                 div.innerHTML = `
                     <span style="font-weight: bold;">${player.username}</span>
-                    <span class="${ready ? 'status-ready' : ''}" style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background: ${ready ? '#4ade80' : '#333'}; color: ${ready ? '#000' : '#ccc'};">
-                        ${ready ? 'READY' : 'NOT READY'}
+                    <span style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #4ade80; color: #000;">
+                        READY
                     </span>
                 `;
                 container.appendChild(div);
             });
         }
 
-        function toggleReady() {
-            if (!relay || !relay.connected) {
-                alert('Not connected to server yet!');
-                return;
-            }
-            isReady = !isReady;
-            const btn = document.getElementById('readyBtn');
-            btn.classList.toggle('ready', isReady);
-            btn.textContent = isReady ? 'READY!' : 'READY UP';
-            relay.sendPlayerAction('ready', { ready: isReady });
-        }
-
         function handlePlayerAction(data) {
-            if (data.action === 'ready') {
-                if (data.actionData.ready) {
-                    if (!gameState.readyPlayers.includes(data.playerId)) {
-                        gameState.readyPlayers.push(data.playerId);
-                    }
-                } else {
-                    gameState.readyPlayers = gameState.readyPlayers.filter(id => id !== data.playerId);
-                }
-                if (relay && relay.connected) relay.send({ type: 'get_players' });
-            } else if (data.action === 'start_tournament') {
+            if (data.action === 'start_tournament') {
                 startTournament(data.actionData.bracket);
             } else if (data.action === 'attack' && currentMatch) {
                 if (isSpectator || data.playerId !== myPlayerId) {
