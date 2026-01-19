@@ -176,7 +176,7 @@
     <script>
         const RELAY_SERVER = 'wss://relayfah.onrender.com';
         const ROOM_ID = 'gladiators_global';
-        const TOURNAMENT_WAIT_TIME = 5 * 60 * 1000; // 5 minutes
+        const TOURNAMENT_WAIT_TIME = 1 * 60 * 1000; // 5 minutes
         const ATTACK_CHARGE_TIME = 2500; // 2.5 seconds
         const ARENA_RADIUS = 330;
         const PLAYER_SPEED = 3;
@@ -301,14 +301,17 @@ function startPositionUpdates() {
     if (positionUpdateInterval) clearInterval(positionUpdateInterval);
     
     positionUpdateInterval = setInterval(() => {
-        if (relay && relay.connected && currentMatch && !isSpectator) {
-            const myData = players.get(myPlayerId);
-            if (myData) {
-                relay.sendPlayerAction('player_move', { 
-                    x: myData.x, 
-                    y: myData.y,
-                    timestamp: Date.now()
-                });
+        if (relay && relay.connected && currentMatch) {
+            if (!isSpectator) {
+                // Only send if I'm playing
+                const myData = players.get(myPlayerId);
+                if (myData) {
+                    relay.sendPlayerAction('player_move', { 
+                        x: myData.x, 
+                        y: myData.y,
+                        timestamp: Date.now()
+                    });
+                }
             }
         }
     }, 50); // 50ms = 20 updates per second
@@ -507,17 +510,19 @@ if (isSpectator) {
     document.getElementById('spectatorNotice').style.display = 'none';
     document.getElementById('attackMeter').style.opacity = '1';
     startGameLoop();
-    startPositionUpdates(); // Start fast position broadcasting
 }
+// Always start position updates for everyone (players and spectators)
+startPositionUpdates();
             
             document.getElementById('battleInfo').textContent = `${match.p1} VS ${match.p2}`;
         }
 
-        function createPlayerElement(username, color, x, y) {
-            const player = document.createElement('div');
-            player.className = 'player';
-            player.style.background = color;
-            player.textContent = '⚔️';
+function createPlayerElement(username, color, x, y) {
+    const player = document.createElement('div');
+    player.className = 'player';
+    player.style.background = color;
+    player.style.transition = 'left 0.05s linear, top 0.05s linear'; // Add smooth movement
+    player.textContent = '⚔️';
             
             const nameTag = document.createElement('div');
             nameTag.className = 'player-name';
@@ -606,21 +611,13 @@ if (isSpectator) {
             }, 50);
         }
 
+
 function updateOpponentPosition(playerId, data) {
     const playerData = players.get(playerId);
     if (playerData) {
-        // Smooth interpolation for opponent movement
-        const startX = playerData.x;
-        const startY = playerData.y;
-        const targetX = data.x;
-        const targetY = data.y;
-        
-        playerData.x = targetX;
-        playerData.y = targetY;
-        
-        // Animate to new position smoothly
-        playerData.element.style.transition = 'left 0.05s linear, top 0.05s linear';
-        updatePlayerPosition(playerData.element, targetX, targetY);
+        playerData.x = data.x;
+        playerData.y = data.y;
+        updatePlayerPosition(playerData.element, data.x, data.y);
     }
 }
 
