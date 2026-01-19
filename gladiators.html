@@ -239,10 +239,16 @@
                         relay.send({ type: 'get_players' });
                     }, 100);
                 });
-                
-                relay.on('player_joined', (data) => {
-                    relay.send({ type: 'get_players' });
-                });
+relay.on('player_joined', (data) => {
+    // Send our timer to the new player
+    if (tournamentStartTime && !gameState.tournamentActive) {
+        relay.send({
+            type: 'game_state',
+            state: { tournamentStartTime, tournamentActive: false }
+        });
+    }
+    relay.send({ type: 'get_players' });
+});
                 
                 relay.on('player_left', (data) => {
                     allPlayers = allPlayers.filter(p => p.id !== data.player.id);
@@ -253,8 +259,14 @@ relay.on('players_update', (data) => {
     allPlayers = data.players || [];
     updatePlayerList(allPlayers);
     
-    // Start countdown if players exist and countdown not started
-    if (allPlayers.length >= 1 && !tournamentStartTime && !gameState.tournamentActive) {
+    // Sync tournament timer if provided (always use earliest time)
+    if (data.tournamentStartTime) {
+        if (!tournamentStartTime || data.tournamentStartTime < tournamentStartTime) {
+            tournamentStartTime = data.tournamentStartTime;
+            updateCountdown();
+        }
+    } else if (allPlayers.length >= 1 && !tournamentStartTime && !gameState.tournamentActive) {
+        // Only start new countdown if no timer exists anywhere
         startTournamentCountdown();
     }
 });
@@ -271,28 +283,34 @@ relay.on('players_update', (data) => {
             }
         }
 
-        function startHeartbeat() {
-            // Request player list every 2 seconds when not in active tournament
-            heartbeatInterval = setInterval(() => {
-                if (relay && relay.connected && !gameState.tournamentActive) {
-                    relay.send({ type: 'get_players' });
-                }
-            }, HEARTBEAT_INTERVAL);
-        }
-
-        function startTournamentCountdown() {
-            if (tournamentStartTime) return; // Already started
-            
-            tournamentStartTime = Date.now() + TOURNAMENT_WAIT_TIME;
-            
-            // Broadcast the start time to all players
-            relay.send({
-                type: 'game_state',
-                state: { tournamentStartTime, tournamentActive: false }
+function startHeartbeat() {
+    // Request player list every 2 seconds when not in active tournament
+    heartbeatInterval = setInterval(() => {
+        if (relay && relay.connected && !gameState.tournamentActive) {
+            relay.send({ 
+                type: 'get_players',
+                myTournamentStartTime: tournamentStartTime 
             });
-            
-            updateCountdown();
         }
+    }, HEARTBEAT_INTERVAL);
+}
+
+function startTournamentCountdown() {
+    if (tournamentStartTime) return; // Already started
+    
+    tournamentStartTime = Date.now() + TOURNAMENT_WAIT_TIME;
+    
+    // Broadcast the start time to all players
+    relay.send({
+        type: 'game_state',
+        state: { 
+            tournamentStartTime, 
+            tournamentActive: false 
+        }
+    });
+    
+    updateCountdown();
+}
 
 function updateCountdown() {
     if (countdownInterval) clearInterval(countdownInterval);
@@ -782,16 +800,18 @@ function updateCountdown() {
         }
 
         function handleGameStateUpdate(data) {
-            if (data.state.tournamentStartTime && !tournamentStartTime) {
-                tournamentStartTime = data.state.tournamentStartTime;
-                updateCountdown();
-            }
-            if (data.state.bracket) {
-                gameState.bracket = data.state.bracket;
-                gameState.tournamentActive = data.state.tournamentActive || false;
-            }
+    if (data.state.tournamentStartTime) {
+        // Always sync to the earliest timer (lowest value = soonest tournament)
+        if (!tournamentStartTime || data.state.tournamentStartTime < tournamentStartTime) {
+            tournamentStartTime = data.state.tournamentStartTime;
+            updateCountdown();
         }
-
+    }
+    if (data.state.bracket) {
+        gameState.bracket = data.state.bracket;
+        gameState.tournamentActive = data.state.tournamentActive || false;
+    }
+}
         async function init() {
             loadUserProfile();
             await connectToRelay();
