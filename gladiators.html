@@ -272,7 +272,10 @@ relay.on('players_update', (data) => {
 });
                 
                 relay.on('game_state_update', (data) => handleGameStateUpdate(data));
-                relay.on('player_action', (data) => handlePlayerAction(data));
+                relay.on('player_action', (data) => {
+    console.log('RAW player_action event received:', JSON.stringify(data));
+    handlePlayerAction(data);
+});
                 
                 // Start heartbeat to keep player list in sync
                 startHeartbeat();
@@ -297,15 +300,22 @@ function startHeartbeat() {
         let positionUpdateInterval = null;
 
 function startPositionUpdates() {
+    console.log('Starting position updates, isSpectator:', isSpectator, 'myPlayerId:', myPlayerId);
+    
     // Send position updates every 50ms (20 times per second) during battle
     if (positionUpdateInterval) clearInterval(positionUpdateInterval);
     
+    let updateCount = 0;
     positionUpdateInterval = setInterval(() => {
         if (relay && relay.connected && currentMatch) {
             if (!isSpectator) {
                 // Only send if I'm playing
                 const myData = players.get(myPlayerId);
                 if (myData) {
+                    updateCount++;
+                    if (updateCount % 20 === 0) { // Log every 20 updates (1 second)
+                        console.log('Sending position update:', myData.x, myData.y);
+                    }
                     relay.sendPlayerAction('player_move', { 
                         x: myData.x, 
                         y: myData.y,
@@ -394,19 +404,25 @@ function updateCountdown() {
             });
         }
 
-        function handlePlayerAction(data) {
-            if (data.action === 'start_tournament') {
-                if (!gameState.tournamentActive) {
-                    receiveTournamentStart(data.actionData.bracket);
-                }
-            } else if (data.action === 'player_move' && currentMatch) {
-                updateOpponentPosition(data.playerId, data.actionData);
-            } else if (data.action === 'attack' && currentMatch) {
-                handleOpponentAttack(data.actionData, data.playerId);
-            } else if (data.action === 'match_end') {
-                showMatchResult(data.actionData);
-            }
+function handlePlayerAction(data) {
+    console.log('Received player action:', data.action, 'from:', data.playerId, 'my ID:', myPlayerId);
+    
+    if (data.action === 'start_tournament') {
+        if (!gameState.tournamentActive) {
+            receiveTournamentStart(data.actionData.bracket);
         }
+    } else if (data.action === 'player_move' && currentMatch) {
+        console.log('Processing move for:', data.playerId, 'position:', data.actionData);
+        // Don't update my own position from server
+        if (data.playerId !== myPlayerId) {
+            updateOpponentPosition(data.playerId, data.actionData);
+        }
+    } else if (data.action === 'attack' && currentMatch) {
+        handleOpponentAttack(data.actionData, data.playerId);
+    } else if (data.action === 'match_end') {
+        showMatchResult(data.actionData);
+    }
+}
 
         function startTournament() {
             gameState.tournamentActive = true;
@@ -613,11 +629,17 @@ function createPlayerElement(username, color, x, y) {
 
 
 function updateOpponentPosition(playerId, data) {
+    console.log('Updating opponent position:', playerId, data);
     const playerData = players.get(playerId);
+    console.log('Player data found:', !!playerData, 'All players:', Array.from(players.keys()));
+    
     if (playerData) {
+        console.log('Old position:', playerData.x, playerData.y, 'New position:', data.x, data.y);
         playerData.x = data.x;
         playerData.y = data.y;
         updatePlayerPosition(playerData.element, data.x, data.y);
+    } else {
+        console.error('No player data for:', playerId);
     }
 }
 
