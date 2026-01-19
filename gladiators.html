@@ -224,15 +224,15 @@
                 
                 relay.joinRoom(ROOM_ID, userProfile.username, userProfile.status || 'player');
                 
-                relay.on('joined', (data) => {
-                    myPlayerId = userProfile.username;
-                    allPlayers = data.players || [];
-                    updatePlayerList(allPlayers);
-                    
-                    // Start countdown if this is the first player
-                    if (allPlayers.length === 1 && !tournamentStartTime && !gameState.tournamentActive) {
-                        startTournamentCountdown();
-                    }
+            relay.on('joined', (data) => {
+                myPlayerId = userProfile.username;
+                allPlayers = data.players || [];
+                updatePlayerList(allPlayers);
+                
+                // Start countdown if players are in lobby
+                if (allPlayers.length >= 1 && !tournamentStartTime && !gameState.tournamentActive) {
+                    startTournamentCountdown();
+                }
                     
                     // Request game state to sync countdown
                     setTimeout(() => {
@@ -249,16 +249,15 @@
                     updatePlayerList(allPlayers);
                 });
                 
-                relay.on('players_update', (data) => {
-                    allPlayers = data.players || [];
-                    updatePlayerList(allPlayers);
-                    
-                    // Start countdown if this is the first player and countdown not started
-                    if (allPlayers.length >= 1 && !tournamentStartTime && !gameState.tournamentActive) {
-                        // Check if we need to start countdown from game state
-                        relay.send({ type: 'get_players' });
-                    }
-                });
+relay.on('players_update', (data) => {
+    allPlayers = data.players || [];
+    updatePlayerList(allPlayers);
+    
+    // Start countdown if players exist and countdown not started
+    if (allPlayers.length >= 1 && !tournamentStartTime && !gameState.tournamentActive) {
+        startTournamentCountdown();
+    }
+});
                 
                 relay.on('game_state_update', (data) => handleGameStateUpdate(data));
                 relay.on('player_action', (data) => handlePlayerAction(data));
@@ -295,10 +294,19 @@
             updateCountdown();
         }
 
-        function updateCountdown() {
-            if (countdownInterval) clearInterval(countdownInterval);
-            
-            countdownInterval = setInterval(() => {
+function updateCountdown() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    // Immediately update display once before starting interval
+    if (tournamentStartTime) {
+        const remaining = Math.max(0, tournamentStartTime - Date.now());
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        document.getElementById('countdownTimer').textContent = 
+            `Next Tournament: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    countdownInterval = setInterval(() => {
                 if (!tournamentStartTime) return;
                 
                 const remaining = Math.max(0, tournamentStartTime - Date.now());
