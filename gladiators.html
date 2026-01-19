@@ -245,7 +245,8 @@
                 
                 relay.on('joined', (data) => {
                     console.log('✅ Joined room:', data);
-                    myPlayerId = userProfile.username; // Use username as player ID
+                    myPlayerId = userProfile.username; // ALWAYS use username from userProfile
+                    console.log('🆔 MY USERNAME:', myPlayerId);
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
                     updateDebug();
@@ -370,19 +371,19 @@
             for (let i = 0; i < shuffled.length; i += 2) {
                 if (i + 1 < shuffled.length) {
                     matches.push({
-                        p1: shuffled[i].id,
-                        p2: shuffled[i + 1].id,
+                        p1: shuffled[i].username,
+                        p2: shuffled[i + 1].username,
                         p1Name: shuffled[i].username,
                         p2Name: shuffled[i + 1].username,
                         winner: null
                     });
                 } else {
                     matches.push({
-                        p1: shuffled[i].id,
+                        p1: shuffled[i].username,
                         p2: null,
                         p1Name: shuffled[i].username,
                         p2Name: 'BYE',
-                        winner: shuffled[i].id
+                        winner: shuffled[i].username
                     });
                 }
             }
@@ -438,7 +439,11 @@
             
             // Check if we're in this match or spectating - RECALCULATE HERE
             isSpectator = currentMatch.p1 !== myPlayerId && currentMatch.p2 !== myPlayerId;
-            
+            console.log('🔍 SPECTATOR CHECK:');
+            console.log('  match.p1:', match.p1);
+            console.log('  match.p2:', match.p2);
+            console.log('  myPlayerId (from userProfile.username):', myPlayerId);
+            console.log('  👁️ AM I SPECTATOR?:', isSpectator);
             console.log('👁️ Calculated spectator status:', isSpectator);
             
             if (currentMatch.p2 === null) {
