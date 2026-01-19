@@ -663,54 +663,48 @@ function handleAttack() {
     const opponentUsername = currentMatch.p1 === myUsername ? currentMatch.p2 : currentMatch.p1;
     const opponentClientId = allPlayers.find(p => p.username === opponentUsername)?.id;
     const opponentData = players.get(opponentClientId);
-            
-            if (!myData || !opponentData) return;
-            
-            const distance = Math.sqrt(
-                Math.pow(myData.x - opponentData.x, 2) + 
-                Math.pow(myData.y - opponentData.y, 2)
-            );
-            
-            let damage = 0;
-            let hitType = 'miss';
-            
-            if (distance <= ATTACK_RANGE) {
-                if (meterCharge < 10) {
-                    damage = 1;
-                    hitType = 'weak';
-                } else if (meterCharge >= 90) {
-                    damage = 25;
-                    hitType = 'critical';
-                } else {
-                    damage = Math.floor((meterCharge / 100) * 25);
-                    hitType = 'normal';
-                }
-            }
-            
-            showSwordSwing(myData.element);
-            
-            relay.sendPlayerAction('attack', {
-                damage,
-                hitType,
-                target: opponentId,
-                attackerPos: { x: myData.x, y: myData.y }
-            });
-            
-            if (damage > 0) {
-                opponentHealth = Math.max(0, opponentHealth - damage);
-                updateHealth(opponentId, opponentHealth);
-                showDamageNumber(damage, hitType, opponentData.element);
-                
-                if (opponentHealth <= 0) {
-                    endMatch(true);
-                }
-            }
-            
-            // Reset meter
-            meterCharge = 0;
-            document.getElementById('meterFill').style.width = '0%';
-            canAttack = true;
+    
+    if (!myData || !opponentData) return;
+    
+    const distance = Math.sqrt(
+        Math.pow(myData.x - opponentData.x, 2) + 
+        Math.pow(myData.y - opponentData.y, 2)
+    );
+    
+    let damage = 0;
+    let hitType = 'miss';
+    
+    if (distance <= ATTACK_RANGE) {
+        if (meterCharge < 10) {
+            damage = 1;
+            hitType = 'weak';
+        } else if (meterCharge >= 90) {
+            damage = 25;
+            hitType = 'critical';
+        } else {
+            damage = Math.floor((meterCharge / 100) * 25);
+            hitType = 'normal';
         }
+    }
+    
+    showSwordSwing(myData.element);
+    
+    relay.sendPlayerAction('attack', {
+        damage,
+        hitType,
+        target: opponentClientId,  // USE opponentClientId instead of opponentId
+        attackerPos: { x: myData.x, y: myData.y }
+    });
+    
+    if (damage > 0) {
+        opponentHealth = Math.max(0, opponentHealth - damage);
+        updateHealth(opponentClientId, opponentHealth);  // USE opponentClientId here too
+        showDamageNumber(damage, hitType, opponentData.element);
+        
+        if (opponentHealth <= 0) {
+            endMatch(true);
+        }
+    }
 
         function handleOpponentAttack(attackData, attackerId) {
             const { damage, hitType, attackerPos } = attackData;
