@@ -457,21 +457,28 @@
             startBattle(currentMatch);
         }
 
-        function startBattle(match) {
-            myHealth = 100;
-            opponentHealth = 100;
-            
-            console.log('⚔️ Starting battle:', {
-                match: match,
-                myPlayerId: myPlayerId,
-                p1: match.p1,
-                p2: match.p2,
-                isP1: match.p1 === myPlayerId,
-                isP2: match.p2 === myPlayerId
-            });
-            
-            document.getElementById('p1Name').textContent = match.p1Name;
-            document.getElementById('p2Name').textContent = match.p2Name;
+function startBattle(match) {
+    myHealth = 100;
+    opponentHealth = 100;
+    
+    const amIPlayer1 = match.p1 === myPlayerId;
+    
+    console.log('⚔️ Starting battle:', {
+        match: match,
+        myPlayerId: myPlayerId,
+        p1: match.p1,
+        p2: match.p2,
+        amIPlayer1: amIPlayer1
+    });
+    
+    // Display names based on who you are
+    if (amIPlayer1) {
+        document.getElementById('p1Name').textContent = match.p1Name + ' (YOU)';
+        document.getElementById('p2Name').textContent = match.p2Name;
+    } else {
+        document.getElementById('p1Name').textContent = match.p1Name;
+        document.getElementById('p2Name').textContent = match.p2Name + ' (YOU)';
+    }
             
             // Fix spectator detection - check against actual player IDs
             isSpectator = match.p1 !== myPlayerId && match.p2 !== myPlayerId;
