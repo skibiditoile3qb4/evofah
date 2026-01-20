@@ -130,6 +130,7 @@
         }
         .btn:hover { background: #b7791f; transform: scale(1.05); }
     </style>
+    <script src="relay-client.js"></script>
 </head>
 <body>
     <!-- Lobby Screen -->
@@ -174,7 +175,7 @@
     <script>
         const RELAY_SERVER = 'wss://relayfah.onrender.com';
         const ROOM_ID = 'gladiators_global';
-        const TOURNAMENT_WAIT_TIME = 1 * 60 * 1000; // 1 minute
+        const TOURNAMENT_WAIT_TIME = 1 * 60 * 1000;
         const ATTACK_CHARGE_TIME = 2500;
         const PLAYER_SPEED = 3;
         const ATTACK_RANGE = 80;
@@ -229,7 +230,6 @@
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
                     
-                    // Check if tournament is already active - if so, DON'T start countdown
                     if (!gameState.tournamentActive && allPlayers.length >= 1 && !tournamentStartTime) {
                         startTournamentCountdown();
                     }
@@ -240,7 +240,6 @@
                 });
 
                 relay.on('player_joined', (data) => {
-                    // Broadcast current tournament state to new player
                     if (gameState.tournamentActive) {
                         relay.send({
                             type: 'game_state',
@@ -263,13 +262,11 @@
                     allPlayers = allPlayers.filter(p => p.id !== data.player.id);
                     updatePlayerList(allPlayers);
                     
-                    // Check if disconnected player was in current match
                     if (currentMatch && disconnectedPlayer) {
                         const wasInMatch = disconnectedPlayer.username === currentMatch.p1 || 
                                          disconnectedPlayer.username === currentMatch.p2;
                         
                         if (wasInMatch && !isSpectator) {
-                            // I win by default
                             setTimeout(() => {
                                 endMatch(true);
                             }, 500);
@@ -281,7 +278,6 @@
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
                     
-                    // Sync tournament state
                     if (data.tournamentActive) {
                         if (!gameState.tournamentActive) {
                             gameState.tournamentActive = true;
@@ -337,17 +333,14 @@
                 }
             }, 50);
             
-            // Start disconnect check
             startDisconnectCheck();
         }
 
         function startDisconnectCheck() {
             if (disconnectCheckInterval) clearInterval(disconnectCheckInterval);
             
-            let lastOpponentUpdate = Date.now();
             const opponentTimestamps = new Map();
             
-            // Listen for opponent movements to track their activity
             const originalUpdateOpponent = updateOpponentPosition;
             window.updateOpponentPosition = function(playerId, data) {
                 opponentTimestamps.set(playerId, Date.now());
@@ -357,7 +350,6 @@
             disconnectCheckInterval = setInterval(() => {
                 if (!currentMatch || isSpectator) return;
                 
-                // Find opponent's clientId
                 const myUsername = myPlayerId;
                 const opponentUsername = currentMatch.p1 === myUsername ? currentMatch.p2 : currentMatch.p1;
                 const opponentClientId = allPlayers.find(p => p.username === opponentUsername)?.id;
@@ -366,7 +358,6 @@
                     const lastUpdate = opponentTimestamps.get(opponentClientId) || Date.now();
                     const timeSinceUpdate = Date.now() - lastUpdate;
                     
-                    // If no update in 5 seconds, opponent disconnected
                     if (timeSinceUpdate > DISCONNECT_CHECK_TIME) {
                         console.log('Opponent disconnected - auto win');
                         clearInterval(disconnectCheckInterval);
@@ -502,7 +493,6 @@
                 heartbeatInterval = null;
             }
             
-            // Check if I'm in any match
             const amIPlaying = bracket.some(m => m.p1 === myPlayerId || m.p2 === myPlayerId);
             
             if (amIPlaying) {
@@ -511,7 +501,6 @@
                     startNextMatch();
                 }, 1000);
             } else {
-                // I'm a spectator - just watch
                 setTimeout(() => {
                     showScreen('battleScreen');
                     isSpectator = true;
@@ -576,7 +565,6 @@
             opponentHealth = 100;
             players.clear();
             
-            // Reset attack meter state
             meterCharge = 0;
             canAttack = true;
             isCharging = false;
@@ -589,7 +577,6 @@
             const arena = document.getElementById('battleArena');
             arena.querySelectorAll('.player').forEach(el => el.remove());
             
-            // Place players in opposite corners
             const maxX = window.innerWidth / 2 - 100;
             const maxY = window.innerHeight / 2 - 150;
             
@@ -662,12 +649,10 @@
         }
 
         function startGameLoop() {
-            // Remove old event listeners to prevent duplicates
             document.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('keyup', handleKeyUp);
             document.removeEventListener('click', handleAttack);
             
-            // Add fresh event listeners
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
             document.addEventListener('click', handleAttack);
@@ -881,12 +866,10 @@
             }
             stopPositionUpdates();
             
-            // Clean up event listeners
             document.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('keyup', handleKeyUp);
             document.removeEventListener('click', handleAttack);
             
-            // Reset meter state
             meterCharge = 0;
             canAttack = true;
             isCharging = false;
@@ -981,7 +964,6 @@
 
         function handleGameStateUpdate(data) {
             if (data.state.tournamentActive) {
-                // Tournament is active - join as spectator if not in bracket
                 if (!gameState.tournamentActive) {
                     gameState.tournamentActive = true;
                     if (data.state.bracket) {
@@ -992,7 +974,6 @@
                         );
                         
                         if (!amIPlaying) {
-                            // Join as spectator
                             showScreen('battleScreen');
                             isSpectator = true;
                             document.getElementById('spectatorNotice').style.display = 'block';
