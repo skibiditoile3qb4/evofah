@@ -576,6 +576,16 @@
             opponentHealth = 100;
             players.clear();
             
+            // Reset attack meter state
+            meterCharge = 0;
+            canAttack = true;
+            isCharging = false;
+            if (chargeInterval) {
+                clearInterval(chargeInterval);
+                chargeInterval = null;
+            }
+            document.getElementById('meterFill').style.width = '0%';
+            
             const arena = document.getElementById('battleArena');
             arena.querySelectorAll('.player').forEach(el => el.remove());
             
@@ -652,14 +662,29 @@
         }
 
         function startGameLoop() {
-            document.addEventListener('keydown', (e) => keys[e.key] = true);
-            document.addEventListener('keyup', (e) => keys[e.key] = false);
+            // Remove old event listeners to prevent duplicates
+            document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('keyup', handleKeyUp);
+            document.removeEventListener('click', handleAttack);
+            
+            // Add fresh event listeners
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
             document.addEventListener('click', handleAttack);
             
             meterCharge = 0;
             canAttack = true;
+            isCharging = false;
             
             requestAnimationFrame(gameLoop);
+        }
+
+        function handleKeyDown(e) {
+            keys[e.key] = true;
+        }
+
+        function handleKeyUp(e) {
+            keys[e.key] = false;
         }
 
         function gameLoop() {
@@ -850,9 +875,22 @@
         }
 
         function endMatch(won) {
-            if (chargeInterval) clearInterval(chargeInterval);
+            if (chargeInterval) {
+                clearInterval(chargeInterval);
+                chargeInterval = null;
+            }
             stopPositionUpdates();
+            
+            // Clean up event listeners
+            document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('keyup', handleKeyUp);
             document.removeEventListener('click', handleAttack);
+            
+            // Reset meter state
+            meterCharge = 0;
+            canAttack = true;
+            isCharging = false;
+            document.getElementById('meterFill').style.width = '0%';
             
             currentMatch.winner = won ? myPlayerId : (currentMatch.p1 === myPlayerId ? currentMatch.p2 : currentMatch.p1);
             
