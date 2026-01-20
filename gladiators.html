@@ -1,4 +1,18 @@
-<!DOCTYPE html>
+<script>
+        // RelayClient implementation
+        class RelayClient {
+            constructor(url) {
+                this.url = url;
+                this.ws = null;
+                this.connected = false;
+                this.clientId = null;
+                this.eventHandlers = {};
+            }
+
+            async connect() {
+                return new Promise((resolve, reject) => {
+                    this.ws = new WebSocket(this.url);
+                    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -130,7 +144,6 @@
         }
         .btn:hover { background: #b7791f; transform: scale(1.05); }
     </style>
-    <script src="relay-client.js"></script>
 </head>
 <body>
     <!-- Lobby Screen -->
@@ -197,7 +210,9 @@
         let chargeInterval = null;
         let heartbeatInterval = null;
         let positionUpdateInterval = null;
+        let disconnectCheckInterval = null;
         const HEARTBEAT_INTERVAL = 2000;
+        const DISCONNECT_CHECK_TIME = 5000;
 
         function loadUserProfile() {
             try {
@@ -228,7 +243,8 @@
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
                     
-                    if (allPlayers.length >= 1 && !tournamentStartTime && !gameState.tournamentActive) {
+                    // Check if tournament is already active - if so, DON'T start countdown
+                    if (!gameState.tournamentActive && allPlayers.length >= 1 && !tournamentStartTime) {
                         startTournamentCountdown();
                     }
                     
@@ -238,7 +254,16 @@
                 });
 
                 relay.on('player_joined', (data) => {
-                    if (tournamentStartTime && !gameState.tournamentActive) {
+                    // Broadcast current tournament state to new player
+                    if (gameState.tournamentActive) {
+                        relay.send({
+                            type: 'game_state',
+                            state: { 
+                                tournamentActive: true,
+                                bracket: gameState.bracket 
+                            }
+                        });
+                    } else if (tournamentStartTime) {
                         relay.send({
                             type: 'game_state',
                             state: { tournamentStartTime, tournamentActive: false }
@@ -248,20 +273,42 @@
                 });
                 
                 relay.on('player_left', (data) => {
+                    const disconnectedPlayer = allPlayers.find(p => p.id === data.player.id);
                     allPlayers = allPlayers.filter(p => p.id !== data.player.id);
                     updatePlayerList(allPlayers);
+                    
+                    // Check if disconnected player was in current match
+                    if (currentMatch && disconnectedPlayer) {
+                        const wasInMatch = disconnectedPlayer.username === currentMatch.p1 || 
+                                         disconnectedPlayer.username === currentMatch.p2;
+                        
+                        if (wasInMatch && !isSpectator) {
+                            // I win by default
+                            setTimeout(() => {
+                                endMatch(true);
+                            }, 500);
+                        }
+                    }
                 });
                 
                 relay.on('players_update', (data) => {
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
                     
-                    if (data.tournamentStartTime) {
+                    // Sync tournament state
+                    if (data.tournamentActive) {
+                        if (!gameState.tournamentActive) {
+                            gameState.tournamentActive = true;
+                            if (data.bracket) {
+                                gameState.bracket = data.bracket;
+                            }
+                        }
+                    } else if (data.tournamentStartTime) {
                         if (!tournamentStartTime || data.tournamentStartTime < tournamentStartTime) {
                             tournamentStartTime = data.tournamentStartTime;
                             updateCountdown();
                         }
-                    } else if (allPlayers.length >= 1 && !tournamentStartTime && !gameState.tournamentActive) {
+                    } else if (!gameState.tournamentActive && allPlayers.length >= 1 && !tournamentStartTime) {
                         startTournamentCountdown();
                     }
                 });
@@ -303,12 +350,54 @@
                     }
                 }
             }, 50);
+            
+            // Start disconnect check
+            startDisconnectCheck();
+        }
+
+        function startDisconnectCheck() {
+            if (disconnectCheckInterval) clearInterval(disconnectCheckInterval);
+            
+            let lastOpponentUpdate = Date.now();
+            const opponentTimestamps = new Map();
+            
+            // Listen for opponent movements to track their activity
+            const originalUpdateOpponent = updateOpponentPosition;
+            window.updateOpponentPosition = function(playerId, data) {
+                opponentTimestamps.set(playerId, Date.now());
+                originalUpdateOpponent(playerId, data);
+            };
+            
+            disconnectCheckInterval = setInterval(() => {
+                if (!currentMatch || isSpectator) return;
+                
+                // Find opponent's clientId
+                const myUsername = myPlayerId;
+                const opponentUsername = currentMatch.p1 === myUsername ? currentMatch.p2 : currentMatch.p1;
+                const opponentClientId = allPlayers.find(p => p.username === opponentUsername)?.id;
+                
+                if (opponentClientId) {
+                    const lastUpdate = opponentTimestamps.get(opponentClientId) || Date.now();
+                    const timeSinceUpdate = Date.now() - lastUpdate;
+                    
+                    // If no update in 5 seconds, opponent disconnected
+                    if (timeSinceUpdate > DISCONNECT_CHECK_TIME) {
+                        console.log('Opponent disconnected - auto win');
+                        clearInterval(disconnectCheckInterval);
+                        endMatch(true);
+                    }
+                }
+            }, 1000);
         }
 
         function stopPositionUpdates() {
             if (positionUpdateInterval) {
                 clearInterval(positionUpdateInterval);
                 positionUpdateInterval = null;
+            }
+            if (disconnectCheckInterval) {
+                clearInterval(disconnectCheckInterval);
+                disconnectCheckInterval = null;
             }
         }
 
@@ -427,10 +516,23 @@
                 heartbeatInterval = null;
             }
             
-            setTimeout(() => {
-                showScreen('battleScreen');
-                startNextMatch();
-            }, 1000);
+            // Check if I'm in any match
+            const amIPlaying = bracket.some(m => m.p1 === myPlayerId || m.p2 === myPlayerId);
+            
+            if (amIPlaying) {
+                setTimeout(() => {
+                    showScreen('battleScreen');
+                    startNextMatch();
+                }, 1000);
+            } else {
+                // I'm a spectator - just watch
+                setTimeout(() => {
+                    showScreen('battleScreen');
+                    isSpectator = true;
+                    document.getElementById('spectatorNotice').style.display = 'block';
+                    document.getElementById('battleInfo').textContent = 'TOURNAMENT IN PROGRESS';
+                }, 1000);
+            }
         }
 
         function generateBracket(playersList) {
@@ -491,10 +593,14 @@
             const arena = document.getElementById('battleArena');
             arena.querySelectorAll('.player').forEach(el => el.remove());
             
-            const p1X = Math.random() * 400 - 200;
-            const p1Y = Math.random() * 400 - 200;
-            const p2X = Math.random() * 400 - 200;
-            const p2Y = Math.random() * 400 - 200;
+            // Place players in opposite corners
+            const maxX = window.innerWidth / 2 - 100;
+            const maxY = window.innerHeight / 2 - 150;
+            
+            const p1X = -maxX;
+            const p1Y = -maxY;
+            const p2X = maxX;
+            const p2Y = maxY;
             
             const p1 = createPlayerElement(match.p1, '#3b82f6', p1X, p1Y);
             const p2 = createPlayerElement(match.p2, '#ef4444', p2X, p2Y);
@@ -850,15 +956,31 @@
         }
 
         function handleGameStateUpdate(data) {
-            if (data.state.tournamentStartTime) {
+            if (data.state.tournamentActive) {
+                // Tournament is active - join as spectator if not in bracket
+                if (!gameState.tournamentActive) {
+                    gameState.tournamentActive = true;
+                    if (data.state.bracket) {
+                        gameState.bracket = data.state.bracket;
+                        
+                        const amIPlaying = data.state.bracket.some(m => 
+                            m.p1 === myPlayerId || m.p2 === myPlayerId
+                        );
+                        
+                        if (!amIPlaying) {
+                            // Join as spectator
+                            showScreen('battleScreen');
+                            isSpectator = true;
+                            document.getElementById('spectatorNotice').style.display = 'block';
+                            document.getElementById('battleInfo').textContent = 'TOURNAMENT IN PROGRESS';
+                        }
+                    }
+                }
+            } else if (data.state.tournamentStartTime) {
                 if (!tournamentStartTime || data.state.tournamentStartTime < tournamentStartTime) {
                     tournamentStartTime = data.state.tournamentStartTime;
                     updateCountdown();
                 }
-            }
-            if (data.state.bracket) {
-                gameState.bracket = data.state.bracket;
-                gameState.tournamentActive = data.state.tournamentActive || false;
             }
         }
 
