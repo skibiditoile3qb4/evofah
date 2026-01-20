@@ -230,7 +230,7 @@
                     allPlayers = data.players || [];
                     updatePlayerList(allPlayers);
                     
-                    if (!gameState.tournamentActive && allPlayers.length >= 1 && !tournamentStartTime) {
+                    if (!gameState.tournamentActive && allPlayers.length >= 2 && !tournamentStartTime) {
                         startTournamentCountdown();
                     }
                     
@@ -290,7 +290,7 @@
                             tournamentStartTime = data.tournamentStartTime;
                             updateCountdown();
                         }
-                    } else if (!gameState.tournamentActive && allPlayers.length >= 1 && !tournamentStartTime) {
+                    } else if (!gameState.tournamentActive && allPlayers.length >= 2 && !tournamentStartTime) {
                         startTournamentCountdown();
                     }
                 });
@@ -938,7 +938,7 @@
             gameState.currentMatchIndex = 0;
             
             tournamentStartTime = null;
-            if (allPlayers.length >= 1) {
+            if (allPlayers.length >= 2) {
                 startTournamentCountdown();
             }
             
