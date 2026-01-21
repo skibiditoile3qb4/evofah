@@ -2132,24 +2132,24 @@ swordStyle.textContent = `
 `;
 document.head.appendChild(swordStyle);
 
-        document.getElementById('devInput').addEventListener('input', (e) => {
+document.getElementById('devInput').addEventListener('input', (e) => {
     const code = e.target.value;
 
-    if (code === 'vedabcd') {
+    if (code === 'alpha100x') {
         coins += 100;
         setCoins(coins);
         updateCoinDisplay();
         e.target.value = '';
 
-   } else if (code === 'imanadmin' + userProfile.username) {
-    isAdmin = true;
-    alert('admin granted!');
-    userProfile.status = 'admin';
-    saveUserProfile(userProfile);
-    updateUserDisplay();
-    e.target.value = '';
+    } else if (code === 'sudo' + userProfile.username) {
+        isAdmin = true;
+        alert('admin granted!');
+        userProfile.status = 'admin';
+        saveUserProfile(userProfile);
+        updateUserDisplay();
+        e.target.value = '';
 
-    } else if (code === 'vedefgh') {
+    } else if (code === 'beta200y') {
         userProfile.adsDisabled = !userProfile.adsDisabled;
         saveUserProfile(userProfile);
 
@@ -2160,16 +2160,22 @@ document.head.appendChild(swordStyle);
         alert(userProfile.adsDisabled ? '✅ Ads disabled!' : '✅ Ads enabled!');
         e.target.value = '';
 
-    } else if (code === 'vedijkl') {
+    } else if (code === 'gamma300z') {
         adIntervalTime = 10000;
         lastAdTime = Date.now();
         alert('✅ Ad interval set to 10 seconds!');
         e.target.value = '';
-    }  else if (code === 'vedmnop') {
+    } else if (code === 'delta999w') {
         coins = 999999999;
         setCoins(coins);
         updateCoinDisplay();
         alert('💰 Infinite coins activated!');
+        e.target.value = '';
+    } else if (code === 'omega888v') {
+        userProfile.gems = 999999999;
+        saveUserProfile(userProfile);
+        updateCoinDisplay();
+        alert('💎 Infinite gems activated!');
         e.target.value = '';
     }
 });
