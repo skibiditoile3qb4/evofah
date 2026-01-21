@@ -637,6 +637,21 @@
     border-left-color: #ffd700;
     background: linear-gradient(90deg, #0a0a0a 0%, rgba(255, 215, 0, 0.1) 100%);
 }
+        .chat-nametag-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+    font-weight: bold;
+}
+.chat-nametag-badge.warhero {
+    background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%);
+    color: #fff;
+}
+.chat-nametag-badge.donator {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #000;
+}
 
     </style>
     <script src="PlayerSphere.js"></script>
@@ -817,16 +832,28 @@ function getUserProfile() {
                 profile.unlockedGames = [];
             }
 
-            // ----- EQUIPPED COSMETICS -----
-            if (!profile.equippedCosmetics) {
-                profile.equippedCosmetics = {
-                    color: 'default',
-                    hat: 'none',
-                    face: 'none',
-                    effect: 'none',
-                    sword: 'none'
-                };
-            }
+if (!profile.equippedCosmetics) {
+    profile.equippedCosmetics = {
+        color: 'default',
+        hat: 'none',
+        face: 'none',
+        effect: 'none',
+        sword: 'none'
+    };
+}
+
+// Nametag system
+if (!profile.nametag) {
+    profile.nametag = {
+        equipped: 'none',
+        unlocked: ['none']
+    };
+}
+
+// Track donations
+if (typeof profile.totalDonated === 'undefined') {
+    profile.totalDonated = 0;
+}
 // ----- REBIRTH DATA -----
             if (!profile.rebirthData) {
                 profile.rebirthData = {
@@ -892,6 +919,27 @@ function getUserProfile() {
     saveUserProfile(newProfile);
     return newProfile;
 }
+
+        function checkNametags() {
+    const totalDonated = userProfile.totalDonated || 0;
+    const gladiatorElo = parseInt(localStorage.getItem('gladiator_elo_' + userProfile.username) || '1000');
+
+    if (totalDonated >= 100000 && !userProfile.nametag.unlocked.includes('donator')) {
+        userProfile.nametag.unlocked.push('donator');
+        saveUserProfile(userProfile);
+        alert('🎖️ Nametag Unlocked: DONATOR');
+    }
+    
+
+    if (gladiatorElo >= 1500 && !userProfile.nametag.unlocked.includes('warhero')) {
+        userProfile.nametag.unlocked.push('warhero');
+        saveUserProfile(userProfile);
+        alert('⚔️ Nametag Unlocked: WARHERO');
+    }
+}
+
+// Check nametags periodically
+setInterval(checkNametags, 5000);
 
         function saveUserProfile(profile) {
             try {
@@ -2472,13 +2520,18 @@ function displayChatMessage(message, shouldScroll = true) {
     
     const statusClass = message.status || 'player';
     
-    msgDiv.innerHTML = `
-        <div>
-            <span class="chat-username">${escapeHtml(message.username)}</span>
-            <span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>
-        </div>
-        <span class="chat-text">${escapeHtml(message.message)}</span>
-    `;
+const nametagHtml = message.nametag && message.nametag !== 'none' 
+    ? `<span class="chat-nametag-badge ${message.nametag}">${message.nametag.toUpperCase()}</span>` 
+    : '';
+
+msgDiv.innerHTML = `
+    <div>
+        <span class="chat-username">${escapeHtml(message.username)}</span>
+        <span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>
+        ${nametagHtml}
+    </div>
+    <span class="chat-text">${escapeHtml(message.message)}</span>
+`;
     
     messagesContainer.appendChild(msgDiv);
     
@@ -2522,7 +2575,11 @@ function sendChatMessage() {
     const message = input.value.trim();
     
     if (message && relay && relay.connected) {
-        relay.sendChat(message);
+        relay.send({
+            type: 'chat',
+            message,
+            nametag: userProfile.nametag.equipped
+        });
         input.value = '';
     }
 }
@@ -2564,15 +2621,21 @@ if (localStorage.getItem('good') === '1') {
     }
     
     // Deduct from sender
-    if (type === 'coins') {
-        coins -= amount;
-        setCoins(coins);
-        updateCoinDisplay();
-    } else {
-        userProfile.gems -= amount;
-        saveUserProfile(userProfile);
-        updateCoinDisplay();
-    }
+// Deduct from sender
+if (type === 'coins') {
+    coins -= amount;
+    setCoins(coins);
+    updateCoinDisplay();
+} else {
+    userProfile.gems -= amount;
+    saveUserProfile(userProfile);
+    updateCoinDisplay();
+}
+
+// Track total donated for nametag unlock
+userProfile.totalDonated = (userProfile.totalDonated || 0) + amount;
+saveUserProfile(userProfile);
+checkNametags();}
     
     // Send donation through relay
     if (relay && relay.connected) {
