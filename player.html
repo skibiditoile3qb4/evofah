@@ -218,6 +218,7 @@
                 <button class="tab active" data-tab="stats">📊 Stats</button>
                 <button class="tab" data-tab="cosmetics">🎨 Cosmetics</button>
                 <button class="tab" data-tab="potions">🧪 Potions</button>
+                <button class="tab" data-tab="nametags">🎖️ Nametags</button>
             </div>
 
             <!-- Stats Tab -->
@@ -282,6 +283,10 @@
                 
                 <div id="activePotionEffects"></div>
             </div>
+            <div class="tab-content" id="nametags">
+    <h3 style="margin-bottom: 20px; color: #d69e2e;">🎖️ Nametags</h3>
+    <div class="cosmetics-grid" id="nametagsGrid"></div>
+</div>
         </div>
     </div>
 </div>
@@ -660,6 +665,38 @@ cosmetics.swords.forEach(item => {
     // Show active effects
     updateActivePotionDisplay();
 }
+        function renderNametags() {
+    const nametags = [
+        { id: 'none', name: 'None', description: 'No nametag' },
+        { id: 'warhero', name: 'War Hero', description: 'Reach 1500 ELO in Gladiators' },
+        { id: 'donator', name: 'Donator', description: 'Donate 100,000+ coins/gems' }
+    ];
+    
+    const grid = document.getElementById('nametagsGrid');
+    grid.innerHTML = '';
+    
+    nametags.forEach(tag => {
+        const owned = userProfile.nametag.unlocked.includes(tag.id);
+        const equipped = userProfile.nametag.equipped === tag.id;
+        
+        const div = document.createElement('div');
+        div.className = 'cosmetic-item' + (equipped ? ' equipped' : '') + (!owned ? ' locked' : '');
+        div.innerHTML = `
+            <div class="cosmetic-preview" style="font-size: 36px;">🎖️</div>
+            <div class="cosmetic-name">${tag.name}</div>
+            <div style="font-size: 11px; color: #666; margin: 5px 0;">${tag.description}</div>
+            <div class="cosmetic-status">${equipped ? 'EQUIPPED' : owned ? 'Click to equip' : 'LOCKED'}</div>
+        `;
+        if (owned) {
+            div.onclick = () => {
+                userProfile.nametag.equipped = tag.id;
+                saveUserProfile(userProfile);
+                renderNametags();
+            };
+        }
+        grid.appendChild(div);
+    });
+}
 
 function updateActivePotionDisplay() {
     const container = document.getElementById('activePotionEffects');
@@ -763,6 +800,7 @@ function equipCosmetic(type, id) {
         // Initialize
         loadProfileData();
         renderCosmetics();
+        renderNametags();
     </script>
 </body>
 </html>
