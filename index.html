@@ -2574,25 +2574,25 @@ if (type === 'coins') {
 // Track total donated for nametag unlock
 userProfile.totalDonated = (userProfile.totalDonated || 0) + amount;
 saveUserProfile(userProfile);
-checkNametags();}
+checkNametags();
     
-    // Send donation through relay
-    if (relay && relay.connected) {
-        relay.send({
-            type: 'donation',
-            targetUsername: username,
-            amount: amount,
-            donationType: type,
-            from: userProfile.username
-        });
-        
-        addSystemMessage(`You sent ${amount} ${type} to ${username}`);
-    }
+// Send donation through relay
+if (relay && relay.connected) {
+    relay.send({
+        type: 'donation',
+        targetUsername: username,
+        amount: amount,
+        donationType: type,
+        from: userProfile.username
+    });
     
-    // Clear form
-    document.getElementById('globalDonateUsername').value = '';
-    document.getElementById('globalDonateAmount').value = '';
+    addSystemMessage(`You sent ${amount} ${type} to ${username}`);
 }
+
+// Clear form
+document.getElementById('globalDonateUsername').value = '';
+document.getElementById('globalDonateAmount').value = '';
+} 
 
 // Update the initChat function to handle donations
 // Add this inside the relay.on handlers (around line 1250):
