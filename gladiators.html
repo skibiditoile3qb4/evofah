@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gladiators Tournament</title>
+    <title>Gladiator Arena - ELO Ranked</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -19,20 +19,42 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         
-        #playerList {
-            background: #1a1a1a; border: 2px solid #333; border-radius: 12px;
-            padding: 20px; min-width: 400px; margin-bottom: 20px; max-height: 400px; overflow-y: auto;
+        #eloDisplay {
+            font-size: 32px; font-weight: bold; color: #ffd700;
+            margin-bottom: 30px; text-align: center;
         }
-        .player-item {
-            padding: 12px; background: #0a0a0a; border-left: 3px solid #d69e2e;
-            border-radius: 6px; margin-bottom: 10px; display: flex;
-            justify-content: space-between; align-items: center;
+        .elo-label { font-size: 16px; color: #888; margin-bottom: 5px; }
+        
+        #queueStatus {
+            background: #1a1a1a; border: 2px solid #333; border-radius: 12px;
+            padding: 30px; min-width: 400px; text-align: center;
         }
         
-        #countdownTimer {
-            font-size: 32px; font-weight: bold; color: #ffd700;
-            margin-top: 20px; text-align: center;
+        #findMatchBtn {
+            padding: 20px 60px; background: #d69e2e; border: 2px solid #b7791f;
+            border-radius: 8px; color: #000; font-weight: bold; font-size: 20px;
+            cursor: pointer; transition: all 0.2s; margin: 20px 0;
         }
+        #findMatchBtn:hover { background: #b7791f; transform: scale(1.05); }
+        #findMatchBtn:disabled { 
+            background: #444; border-color: #333; color: #666; 
+            cursor: not-allowed; transform: scale(1);
+        }
+        
+        #queueMessage {
+            font-size: 18px; color: #888; margin-top: 15px;
+            min-height: 30px;
+        }
+        
+        #leaderboard {
+            background: #1a1a1a; border: 2px solid #333; border-radius: 12px;
+            padding: 20px; max-width: 500px; margin-top: 20px; max-height: 300px; overflow-y: auto;
+        }
+        .leaderboard-entry {
+            padding: 10px; background: #0a0a0a; border-radius: 6px;
+            margin-bottom: 8px; display: flex; justify-content: space-between;
+        }
+        .leaderboard-rank { color: #d69e2e; font-weight: bold; margin-right: 10px; }
         
         #battleArena {
             width: 100%; height: 100%; background: #1a1a1a;
@@ -46,10 +68,10 @@
         }
         
         .player {
-    position: absolute; width: 40px; height: 40px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; z-index: 10;
-}
+            position: absolute; width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; z-index: 10;
+        }
         
         .player-name {
             position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
@@ -115,14 +137,11 @@
             padding: 12px 24px; border-radius: 8px; font-weight: bold; z-index: 50;
         }
         
-        #spectatorNotice {
-            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
-            background: rgba(214, 158, 46, 0.2); border: 2px solid #d69e2e;
-            padding: 15px 30px; border-radius: 8px; font-size: 16px; z-index: 50;
-        }
-        
         #resultsScreen h1 { margin-bottom: 30px; }
-        #prizeInfo { font-size: 24px; color: #ffd700; margin-bottom: 20px; }
+        #eloChange { font-size: 28px; margin: 20px 0; font-weight: bold; }
+        .elo-gain { color: #4ade80; }
+        .elo-loss { color: #ef4444; }
+        #resultStats { font-size: 16px; color: #888; margin-bottom: 20px; }
         .btn {
             padding: 16px 48px; background: #d69e2e; border: 2px solid #b7791f;
             border-radius: 8px; color: #000; font-weight: bold; font-size: 18px;
@@ -135,15 +154,21 @@
 <body>
     <!-- Lobby Screen -->
     <div id="lobbyScreen" class="screen active">
-        <h1>⚔️ GLADIATORS TOURNAMENT</h1>
-        <div id="playerList">
-            <h3 style="margin-bottom: 15px; text-align: center;">Players in Lobby</h3>
-            <div id="playersContainer"></div>
+        <h1>⚔️ GLADIATOR ARENA</h1>
+        
+        <div id="eloDisplay">
+            <div class="elo-label">Your ELO Rating</div>
+            <div id="eloValue">1000</div>
         </div>
-        <div id="countdownTimer">Waiting for players...</div>
-        <div style="margin-top: 20px; font-size: 14px; color: #888; text-align: center;">
-            Tournament starts when timer reaches 0:00<br>
-            Join now to participate!
+        
+        <div id="queueStatus">
+            <button id="findMatchBtn" onclick="toggleQueue()">FIND MATCH</button>
+            <div id="queueMessage"></div>
+        </div>
+        
+        <div id="leaderboard">
+            <h3 style="margin-bottom: 15px; text-align: center;">Top Players</h3>
+            <div id="leaderboardList"></div>
         </div>
     </div>
     
@@ -151,7 +176,6 @@
     <div id="battleScreen" class="screen">
         <div id="battleArena">
             <div id="battleInfo">FIGHT!</div>
-            <div id="spectatorNotice" style="display: none;">👁️ SPECTATING</div>
             
             <div class="arena-box"></div>
             
@@ -160,7 +184,7 @@
                 <div id="meterBar">
                     <div id="meterFill"></div>
                 </div>
-                <div id="attackInstruction">Use Arrow Keys to move • Click to attack when close</div>
+                <div id="attackInstruction">Arrow Keys to move • Click to attack when close</div>
             </div>
         </div>
     </div>
@@ -168,24 +192,23 @@
     <!-- Results Screen -->
     <div id="resultsScreen" class="screen">
         <h1 id="resultTitle"></h1>
-        <div id="prizeInfo"></div>
+        <div id="eloChange"></div>
+        <div id="resultStats"></div>
         <button class="btn" onclick="returnToLobby()">RETURN TO LOBBY</button>
     </div>
 
     <script>
         const RELAY_SERVER = 'wss://relayfah.onrender.com';
-        const ROOM_ID = 'gladiators_global';
-        const TOURNAMENT_WAIT_TIME = 1 * 60 * 1000;
+        const ROOM_ID = 'gladiator_arena_elo';
         const ATTACK_CHARGE_TIME = 2500;
         const PLAYER_SPEED = 3;
         const ATTACK_RANGE = 80;
+        const K_FACTOR = 32;
         
         let relay, userProfile, myPlayerId;
-        let allPlayers = [];
-        let tournamentStartTime = null;
-        let countdownInterval = null;
-        let gameState = { bracket: null, currentMatchIndex: 0, tournamentActive: false };
-        let currentMatch = null, isSpectator = false;
+        let myElo = 1000;
+        let inQueue = false;
+        let currentMatch = null;
         
         // Battle state
         let players = new Map();
@@ -195,27 +218,39 @@
         let canAttack = true;
         let isCharging = false;
         let chargeInterval = null;
-        let heartbeatInterval = null;
         let positionUpdateInterval = null;
-        let disconnectCheckInterval = null;
-        const HEARTBEAT_INTERVAL = 2000;
-        const DISCONNECT_CHECK_TIME = 5000;
+        let heartbeatInterval = null;
+        let leaderboardUpdateInterval = null;
 
         function loadUserProfile() {
-            try {
-                const stored = localStorage.getItem('userProfile');
-                if (stored) {
-                    userProfile = JSON.parse(stored);
-                    if (!userProfile.username) {
-                        userProfile.username = 'guest' + Math.floor(Math.random() * 100000);
-                    }
-                } else {
-                    userProfile = { username: 'guest' + Math.floor(Math.random() * 100000) };
-                }
-            } catch(e) {
-                userProfile = { username: 'guest' + Math.floor(Math.random() * 100000) };
+            const storedElo = localStorage.getItem('gladiator_elo');
+            if (storedElo) {
+                myElo = parseInt(storedElo);
+            } else {
+                myElo = 1000;
+                localStorage.setItem('gladiator_elo', '1000');
             }
-            myPlayerId = userProfile.username;
+            
+            const storedName = localStorage.getItem('gladiator_username');
+            if (storedName) {
+                myPlayerId = storedName;
+            } else {
+                myPlayerId = 'gladiator' + Math.floor(Math.random() * 100000);
+                localStorage.setItem('gladiator_username', myPlayerId);
+            }
+            
+            userProfile = { username: myPlayerId };
+            updateEloDisplay();
+        }
+
+        function updateEloDisplay() {
+            document.getElementById('eloValue').textContent = myElo;
+        }
+
+        function saveElo(newElo) {
+            myElo = newElo;
+            localStorage.setItem('gladiator_elo', newElo.toString());
+            updateEloDisplay();
         }
 
         async function connectToRelay() {
@@ -223,82 +258,33 @@
                 relay = new RelayClient(RELAY_SERVER);
                 await relay.connect();
                 
-                relay.joinRoom(ROOM_ID, userProfile.username, userProfile.status || 'player');
+                relay.joinRoom(ROOM_ID, myPlayerId, JSON.stringify({ elo: myElo }));
                 
                 relay.on('joined', (data) => {
-                    myPlayerId = userProfile.username;
-                    allPlayers = data.players || [];
-                    updatePlayerList(allPlayers);
-                    
-                    if (!gameState.tournamentActive && allPlayers.length >= 2 && !tournamentStartTime) {
-                        startTournamentCountdown();
-                    }
-                    
-                    setTimeout(() => {
-                        relay.send({ type: 'get_players' });
-                    }, 100);
+                    updateLeaderboard();
                 });
 
                 relay.on('player_joined', (data) => {
-                    if (gameState.tournamentActive) {
-                        relay.send({
-                            type: 'game_state',
-                            state: { 
-                                tournamentActive: true,
-                                bracket: gameState.bracket 
-                            }
-                        });
-                    } else if (tournamentStartTime) {
-                        relay.send({
-                            type: 'game_state',
-                            state: { tournamentStartTime, tournamentActive: false }
-                        });
-                    }
-                    relay.send({ type: 'get_players' });
+                    updateLeaderboard();
                 });
                 
                 relay.on('player_left', (data) => {
-                    const disconnectedPlayer = allPlayers.find(p => p.id === data.player.id);
-                    allPlayers = allPlayers.filter(p => p.id !== data.player.id);
-                    updatePlayerList(allPlayers);
+                    updateLeaderboard();
                     
-                    if (currentMatch && disconnectedPlayer) {
-                        const wasInMatch = disconnectedPlayer.username === currentMatch.p1 || 
-                                         disconnectedPlayer.username === currentMatch.p2;
-                        
-                        if (wasInMatch && !isSpectator) {
-                            setTimeout(() => {
-                                endMatch(true);
-                            }, 500);
-                        }
+                    if (currentMatch && data.player.username === currentMatch.opponent) {
+                        endMatch(true, true);
                     }
                 });
                 
                 relay.on('players_update', (data) => {
-                    allPlayers = data.players || [];
-                    updatePlayerList(allPlayers);
-                    
-                    if (data.tournamentActive) {
-                        if (!gameState.tournamentActive) {
-                            gameState.tournamentActive = true;
-                            if (data.bracket) {
-                                gameState.bracket = data.bracket;
-                            }
-                        }
-                    } else if (data.tournamentStartTime) {
-                        if (!tournamentStartTime || data.tournamentStartTime < tournamentStartTime) {
-                            tournamentStartTime = data.tournamentStartTime;
-                            updateCountdown();
-                        }
-                    } else if (!gameState.tournamentActive && allPlayers.length >= 2 && !tournamentStartTime) {
-                        startTournamentCountdown();
-                    }
+                    const allPlayers = data.players || [];
+                    displayLeaderboard(allPlayers);
                 });
                 
-                relay.on('game_state_update', (data) => handleGameStateUpdate(data));
                 relay.on('player_action', (data) => handlePlayerAction(data));
                 
                 startHeartbeat();
+                startLeaderboardUpdates();
                 
             } catch (error) {
                 console.error('Failed to connect:', error);
@@ -308,259 +294,153 @@
 
         function startHeartbeat() {
             heartbeatInterval = setInterval(() => {
-                if (relay && relay.connected && !gameState.tournamentActive) {
+                if (relay && relay.connected) {
                     relay.send({ 
-                        type: 'get_players',
-                        myTournamentStartTime: tournamentStartTime 
+                        type: 'heartbeat',
+                        elo: myElo,
+                        inQueue: inQueue,
+                        inMatch: !!currentMatch
                     });
                 }
-            }, HEARTBEAT_INTERVAL);
+            }, 3000);
         }
 
-        function startPositionUpdates() {
-            if (positionUpdateInterval) clearInterval(positionUpdateInterval);
-            
-            positionUpdateInterval = setInterval(() => {
-                if (relay && relay.connected && currentMatch && !isSpectator) {
-                    const myData = players.get(relay.clientId);
-                    if (myData) {
-                        relay.sendPlayerAction('player_move', { 
-                            x: myData.x, 
-                            y: myData.y,
-                            timestamp: Date.now()
-                        });
-                    }
+        function startLeaderboardUpdates() {
+            leaderboardUpdateInterval = setInterval(() => {
+                if (relay && relay.connected && !currentMatch) {
+                    updateLeaderboard();
                 }
-            }, 50);
-            
-            startDisconnectCheck();
+            }, 5000);
         }
 
-        function startDisconnectCheck() {
-            if (disconnectCheckInterval) clearInterval(disconnectCheckInterval);
-            
-            const opponentTimestamps = new Map();
-            
-            const originalUpdateOpponent = updateOpponentPosition;
-            window.updateOpponentPosition = function(playerId, data) {
-                opponentTimestamps.set(playerId, Date.now());
-                originalUpdateOpponent(playerId, data);
-            };
-            
-            disconnectCheckInterval = setInterval(() => {
-                if (!currentMatch || isSpectator) return;
-                
-                const myUsername = myPlayerId;
-                const opponentUsername = currentMatch.p1 === myUsername ? currentMatch.p2 : currentMatch.p1;
-                const opponentClientId = allPlayers.find(p => p.username === opponentUsername)?.id;
-                
-                if (opponentClientId) {
-                    const lastUpdate = opponentTimestamps.get(opponentClientId) || Date.now();
-                    const timeSinceUpdate = Date.now() - lastUpdate;
-                    
-                    if (timeSinceUpdate > DISCONNECT_CHECK_TIME) {
-                        console.log('Opponent disconnected - auto win');
-                        clearInterval(disconnectCheckInterval);
-                        endMatch(true);
-                    }
-                }
-            }, 1000);
+        function updateLeaderboard() {
+            relay.send({ type: 'get_players' });
         }
 
-        function stopPositionUpdates() {
-            if (positionUpdateInterval) {
-                clearInterval(positionUpdateInterval);
-                positionUpdateInterval = null;
-            }
-            if (disconnectCheckInterval) {
-                clearInterval(disconnectCheckInterval);
-                disconnectCheckInterval = null;
-            }
-        }
-
-        function startTournamentCountdown() {
-            if (tournamentStartTime) return;
+        function displayLeaderboard(allPlayers) {
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
             
-            tournamentStartTime = Date.now() + TOURNAMENT_WAIT_TIME;
-            
-            relay.send({
-                type: 'game_state',
-                state: { 
-                    tournamentStartTime, 
-                    tournamentActive: false 
-                }
+            const playersWithElo = allPlayers.map(p => {
+                let elo = 1000;
+                try {
+                    const parsed = JSON.parse(p.status);
+                    elo = parsed.elo || 1000;
+                } catch(e) {}
+                return { username: p.username, elo };
             });
             
-            updateCountdown();
-        }
-
-        function updateCountdown() {
-            if (countdownInterval) clearInterval(countdownInterval);
+            playersWithElo.sort((a, b) => b.elo - a.elo);
             
-            if (tournamentStartTime) {
-                const remaining = Math.max(0, tournamentStartTime - Date.now());
-                const minutes = Math.floor(remaining / 60000);
-                const seconds = Math.floor((remaining % 60000) / 1000);
-                document.getElementById('countdownTimer').textContent = 
-                    `Next Tournament: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-            }
+            const top10 = playersWithElo.slice(0, 10);
             
-            countdownInterval = setInterval(() => {
-                if (!tournamentStartTime) return;
-                
-                const remaining = Math.max(0, tournamentStartTime - Date.now());
-                const minutes = Math.floor(remaining / 60000);
-                const seconds = Math.floor((remaining % 60000) / 1000);
-                
-                document.getElementById('countdownTimer').textContent = 
-                    `Next Tournament: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-                
-                if (remaining <= 0) {
-                    clearInterval(countdownInterval);
-                    if (allPlayers.length >= 2 && !gameState.tournamentActive) {
-                        startTournament();
-                    } else {
-                        tournamentStartTime = null;
-                        startTournamentCountdown();
-                    }
-                }
-            }, 100);
-        }
-
-        function updatePlayerList(players) {
-            const container = document.getElementById('playersContainer');
-            container.innerHTML = '';
-            
-            if (players.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #666;">Waiting for players...</div>';
-                return;
-            }
-            
-            players.forEach((player) => {
-                const div = document.createElement('div');
-                div.className = 'player-item';
-                div.innerHTML = `
-                    <span style="font-weight: bold;">${player.username}</span>
-                    <span style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #4ade80; color: #000;">
-                        READY
-                    </span>
+            top10.forEach((p, idx) => {
+                const entry = document.createElement('div');
+                entry.className = 'leaderboard-entry';
+                entry.innerHTML = `
+                    <div>
+                        <span class="leaderboard-rank">#${idx + 1}</span>
+                        <span>${p.username}${p.username === myPlayerId ? ' (You)' : ''}</span>
+                    </div>
+                    <div style="color: #ffd700; font-weight: bold;">${p.elo}</div>
                 `;
-                container.appendChild(div);
+                list.appendChild(entry);
             });
+        }
+
+        function toggleQueue() {
+            if (inQueue) {
+                leaveQueue();
+            } else {
+                joinQueue();
+            }
+        }
+
+        function joinQueue() {
+            inQueue = true;
+            document.getElementById('findMatchBtn').textContent = 'CANCEL';
+            document.getElementById('queueMessage').textContent = 'Searching for opponent...';
+            
+            relay.sendPlayerAction('join_queue', { elo: myElo, username: myPlayerId });
+        }
+
+        function leaveQueue() {
+            inQueue = false;
+            document.getElementById('findMatchBtn').textContent = 'FIND MATCH';
+            document.getElementById('queueMessage').textContent = '';
+            
+            relay.sendPlayerAction('leave_queue', {});
         }
 
         function handlePlayerAction(data) {
-            if (data.action === 'start_tournament') {
-                if (!gameState.tournamentActive) {
-                    receiveTournamentStart(data.actionData.bracket);
+            const action = data.action;
+            
+            if (action === 'join_queue') {
+                if (inQueue && !currentMatch && data.playerId !== relay.clientId) {
+                    const opponentData = data.actionData;
+                    startMatch(data.playerId, opponentData);
                 }
-            } else if (data.action === 'player_move' && currentMatch) {
-                if (data.playerId !== myPlayerId) {
+            } else if (action === 'match_start' && data.actionData.opponentId === relay.clientId) {
+                acceptMatch(data.playerId, data.actionData);
+            } else if (action === 'player_move' && currentMatch) {
+                if (data.playerId === currentMatch.opponentId) {
                     updateOpponentPosition(data.playerId, data.actionData);
                 }
-            } else if (data.action === 'attack' && currentMatch) {
-                handleOpponentAttack(data.actionData, data.playerId);
-            } else if (data.action === 'match_end') {
-                showMatchResult(data.actionData);
-            }
-        }
-
-        function startTournament() {
-            gameState.tournamentActive = true;
-            
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                heartbeatInterval = null;
-            }
-            
-            const bracket = generateBracket(allPlayers);
-            gameState.bracket = bracket;
-            
-            relay.sendPlayerAction('start_tournament', { bracket, tournamentStartTime });
-            
-            setTimeout(() => {
-                showScreen('battleScreen');
-                startNextMatch();
-            }, 1000);
-        }
-
-        function receiveTournamentStart(bracket) {
-            gameState.tournamentActive = true;
-            gameState.bracket = bracket;
-            
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-                heartbeatInterval = null;
-            }
-            
-            const amIPlaying = bracket.some(m => m.p1 === myPlayerId || m.p2 === myPlayerId);
-            
-            if (amIPlaying) {
-                setTimeout(() => {
-                    showScreen('battleScreen');
-                    startNextMatch();
-                }, 1000);
-            } else {
-                setTimeout(() => {
-                    showScreen('battleScreen');
-                    isSpectator = true;
-                    document.getElementById('spectatorNotice').style.display = 'block';
-                    document.getElementById('battleInfo').textContent = 'TOURNAMENT IN PROGRESS';
-                }, 1000);
-            }
-        }
-
-        function generateBracket(playersList) {
-            const shuffled = [...playersList].sort(() => Math.random() - 0.5);
-            const matches = [];
-            
-            for (let i = 0; i < shuffled.length; i += 2) {
-                if (i + 1 < shuffled.length) {
-                    matches.push({
-                        p1: shuffled[i].username,
-                        p2: shuffled[i + 1].username,
-                        winner: null
-                    });
-                } else {
-                    matches.push({
-                        p1: shuffled[i].username,
-                        p2: null,
-                        winner: shuffled[i].username
-                    });
+            } else if (action === 'attack' && currentMatch) {
+                if (data.playerId === currentMatch.opponentId) {
+                    handleOpponentAttack(data.actionData, data.playerId);
+                }
+            } else if (action === 'match_end' && currentMatch) {
+                if (data.playerId === currentMatch.opponentId) {
+                    receiveMatchEnd(data.actionData);
                 }
             }
-            return matches;
         }
 
-        function startNextMatch() {
-            const matches = gameState.bracket.filter(m => !m.winner);
+        function startMatch(opponentId, opponentData) {
+            inQueue = false;
+            document.getElementById('findMatchBtn').textContent = 'FIND MATCH';
+            document.getElementById('queueMessage').textContent = '';
             
-            if (matches.length === 0) {
-                const winners = gameState.bracket.filter(m => m.winner).map(m => m.winner);
-                
-                if (winners.length === 1) {
-                    endTournament();
-                    return;
-                } else if (winners.length > 1) {
-                    gameState.bracket = generateBracket(winners.map(w => ({ username: w })));
-                    startNextMatch();
-                    return;
-                }
-            }
+            const opponentUsername = opponentData.username || 'Unknown';
+            const opponentElo = opponentData.elo || 1000;
             
-            currentMatch = matches[0];
+            currentMatch = {
+                opponent: opponentUsername,
+                opponentId: opponentId,
+                opponentElo: opponentElo,
+                matchId: Date.now() + '_' + Math.random()
+            };
             
-            if (currentMatch.p2 === null) {
-                currentMatch.winner = currentMatch.p1;
-                setTimeout(() => startNextMatch(), 1000);
-                return;
-            }
+            relay.sendPlayerAction('match_start', {
+                opponentId: opponentId,
+                opponent: opponentUsername,
+                myUsername: myPlayerId,
+                myElo: myElo,
+                matchId: currentMatch.matchId
+            });
             
-            isSpectator = currentMatch.p1 !== myPlayerId && currentMatch.p2 !== myPlayerId;
-            startBattle(currentMatch);
+            showScreen('battleScreen');
+            initBattle();
         }
 
-        function startBattle(match) {
+        function acceptMatch(opponentId, matchData) {
+            inQueue = false;
+            document.getElementById('findMatchBtn').textContent = 'FIND MATCH';
+            document.getElementById('queueMessage').textContent = '';
+            
+            currentMatch = {
+                opponent: matchData.myUsername,
+                opponentId: opponentId,
+                opponentElo: matchData.myElo || 1000,
+                matchId: matchData.matchId
+            };
+            
+            showScreen('battleScreen');
+            initBattle();
+        }
+
+        function initBattle() {
             myHealth = 100;
             opponentHealth = 100;
             players.clear();
@@ -580,40 +460,28 @@
             const maxX = window.innerWidth / 2 - 100;
             const maxY = window.innerHeight / 2 - 150;
             
-            const p1X = -maxX;
-            const p1Y = -maxY;
-            const p2X = maxX;
-            const p2Y = maxY;
+            const myX = -maxX;
+            const myY = -maxY;
+            const oppX = maxX;
+            const oppY = maxY;
             
-            const p1 = createPlayerElement(match.p1, '#3b82f6', p1X, p1Y);
-            const p2 = createPlayerElement(match.p2, '#ef4444', p2X, p2Y);
+            const myEl = createPlayerElement(myPlayerId, '#3b82f6', myX, myY);
+            const oppEl = createPlayerElement(currentMatch.opponent, '#ef4444', oppX, oppY);
             
-            let p1ClientId = null;
-            let p2ClientId = null;
+            players.set(relay.clientId, { 
+                element: myEl, x: myX, y: myY, health: 100, 
+                username: myPlayerId, lastUpdate: Date.now() 
+            });
+            players.set(currentMatch.opponentId, { 
+                element: oppEl, x: oppX, y: oppY, health: 100, 
+                username: currentMatch.opponent, lastUpdate: Date.now() 
+            });
             
-            for (let player of allPlayers) {
-                if (player.username === match.p1) p1ClientId = player.id;
-                if (player.username === match.p2) p2ClientId = player.id;
-            }
+            document.getElementById('battleInfo').textContent = 
+                `${myPlayerId} (${myElo}) VS ${currentMatch.opponent} (${currentMatch.opponentElo})`;
             
-            if (!p1ClientId) p1ClientId = match.p1;
-            if (!p2ClientId) p2ClientId = match.p2;
-            
-            players.set(p1ClientId, { element: p1, x: p1X, y: p1Y, health: 100, username: match.p1 });
-            players.set(p2ClientId, { element: p2, x: p2X, y: p2Y, health: 100, username: match.p2 });
-            
-            if (isSpectator) {
-                document.getElementById('spectatorNotice').style.display = 'block';
-                document.getElementById('attackMeter').style.opacity = '0.5';
-            } else {
-                document.getElementById('spectatorNotice').style.display = 'none';
-                document.getElementById('attackMeter').style.opacity = '1';
-                startGameLoop();
-            }
-            
+            startGameLoop();
             startPositionUpdates();
-            
-            document.getElementById('battleInfo').textContent = `${match.p1} VS ${match.p2}`;
         }
 
         function createPlayerElement(username, color, x, y) {
@@ -673,7 +541,7 @@
         }
 
         function gameLoop() {
-            if (!currentMatch || isSpectator) return;
+            if (!currentMatch) return;
             
             const myData = players.get(relay.clientId);
             if (!myData) return;
@@ -719,25 +587,54 @@
             }, 50);
         }
 
+        function startPositionUpdates() {
+            if (positionUpdateInterval) clearInterval(positionUpdateInterval);
+            
+            positionUpdateInterval = setInterval(() => {
+                if (relay && relay.connected && currentMatch) {
+                    const myData = players.get(relay.clientId);
+                    if (myData) {
+                        relay.sendPlayerAction('player_move', { 
+                            x: myData.x, 
+                            y: myData.y,
+                            timestamp: Date.now()
+                        });
+                    }
+                    
+                    const oppData = players.get(currentMatch.opponentId);
+                    if (oppData) {
+                        const timeSinceUpdate = Date.now() - oppData.lastUpdate;
+                        if (timeSinceUpdate > 5000) {
+                            endMatch(true, true);
+                        }
+                    }
+                }
+            }, 50);
+        }
+
+        function stopPositionUpdates() {
+            if (positionUpdateInterval) {
+                clearInterval(positionUpdateInterval);
+                positionUpdateInterval = null;
+            }
+        }
+
         function updateOpponentPosition(playerId, data) {
             const playerData = players.get(playerId);
             
             if (playerData) {
                 playerData.x = data.x;
                 playerData.y = data.y;
+                playerData.lastUpdate = Date.now();
                 updatePlayerPosition(playerData.element, data.x, data.y);
             }
         }
 
         function handleAttack() {
-            if (!canAttack || isSpectator || !currentMatch) return;
+            if (!canAttack || !currentMatch) return;
             
             const myData = players.get(relay.clientId);
-            
-            const myUsername = myPlayerId;
-            const opponentUsername = currentMatch.p1 === myUsername ? currentMatch.p2 : currentMatch.p1;
-            const opponentClientId = allPlayers.find(p => p.username === opponentUsername)?.id;
-            const opponentData = players.get(opponentClientId);
+            const opponentData = players.get(currentMatch.opponentId);
             
             if (!myData || !opponentData) return;
             
@@ -767,17 +664,16 @@
             relay.sendPlayerAction('attack', {
                 damage,
                 hitType,
-                target: opponentClientId,
                 attackerPos: { x: myData.x, y: myData.y }
             });
             
             if (damage > 0) {
                 opponentHealth = Math.max(0, opponentHealth - damage);
-                updateHealth(opponentClientId, opponentHealth);
+                updateHealth(currentMatch.opponentId, opponentHealth);
                 showDamageNumber(damage, hitType, opponentData.element);
                 
                 if (opponentHealth <= 0) {
-                    endMatch(true);
+                    endMatch(true, false);
                 }
             }
             
@@ -789,31 +685,17 @@
         function handleOpponentAttack(attackData, attackerId) {
             const { damage, hitType } = attackData;
             
-            if (isSpectator) {
-                const attackerData = players.get(attackerId);
-                const targetId = currentMatch.p1 === attackerId ? currentMatch.p2 : currentMatch.p1;
-                const targetData = players.get(targetId);
+            const attackerData = players.get(attackerId);
+            if (attackerData) showSwordSwing(attackerData.element);
+            
+            if (damage > 0) {
+                myHealth = Math.max(0, myHealth - damage);
+                updateHealth(relay.clientId, myHealth);
+                const myData = players.get(relay.clientId);
+                if (myData) showDamageNumber(damage, hitType, myData.element);
                 
-                if (attackerData) showSwordSwing(attackerData.element);
-                
-                if (damage > 0 && targetData) {
-                    targetData.health = Math.max(0, targetData.health - damage);
-                    updateHealth(targetId, targetData.health);
-                    showDamageNumber(damage, hitType, targetData.element);
-                }
-            } else {
-                const attackerData = players.get(attackerId);
-                if (attackerData) showSwordSwing(attackerData.element);
-                
-                if (damage > 0) {
-                    myHealth = Math.max(0, myHealth - damage);
-                    updateHealth(relay.clientId, myHealth);
-                    const myData = players.get(relay.clientId);
-                    if (myData) showDamageNumber(damage, hitType, myData.element);
-                    
-                    if (myHealth <= 0) {
-                        endMatch(false);
-                    }
+                if (myHealth <= 0) {
+                    endMatch(false, false);
                 }
             }
         }
@@ -859,7 +741,15 @@
             setTimeout(() => div.remove(), 1000);
         }
 
-        function endMatch(won) {
+        function calculateEloChange(myElo, oppElo, won) {
+            const expectedScore = 1 / (1 + Math.pow(10, (oppElo - myElo) / 400));
+            const actualScore = won ? 1 : 0;
+            return Math.round(K_FACTOR * (actualScore - expectedScore));
+        }
+
+        function endMatch(won, disconnected) {
+            if (!currentMatch) return;
+            
             if (chargeInterval) {
                 clearInterval(chargeInterval);
                 chargeInterval = null;
@@ -870,26 +760,27 @@
             document.removeEventListener('keyup', handleKeyUp);
             document.removeEventListener('click', handleAttack);
             
-            meterCharge = 0;
-            canAttack = true;
-            isCharging = false;
-            document.getElementById('meterFill').style.width = '0%';
-            
-            currentMatch.winner = won ? myPlayerId : (currentMatch.p1 === myPlayerId ? currentMatch.p2 : currentMatch.p1);
+            const eloChange = calculateEloChange(myElo, currentMatch.opponentElo, won);
+            const newElo = myElo + eloChange;
             
             relay.sendPlayerAction('match_end', {
-                winner: currentMatch.winner
+                winner: won ? myPlayerId : currentMatch.opponent,
+                myElo: newElo,
+                eloChange: eloChange,
+                disconnected: disconnected
             });
             
-            setTimeout(() => {
-                showMatchResult({ won, winnerName: currentMatch.winner });
-            }, 1000);
+            showMatchResult(won, eloChange, newElo, disconnected);
         }
 
-        function showMatchResult(result) {
+        function receiveMatchEnd(data) {
+            // Match ended by opponent, just acknowledge
+        }
+
+        function showMatchResult(won, eloChange, newElo, disconnected) {
             showScreen('resultsScreen');
             
-            if (result.won || result.winnerName === myPlayerId) {
+            if (won) {
                 document.getElementById('resultTitle').textContent = '🏆 VICTORY!';
                 document.getElementById('resultTitle').style.color = '#4ade80';
             } else {
@@ -897,34 +788,20 @@
                 document.getElementById('resultTitle').style.color = '#ef4444';
             }
             
-            const remainingMatches = gameState.bracket.filter(m => !m.winner).length - 1;
-            const allWinners = gameState.bracket.filter(m => m.winner).map(m => m.winner);
-            const needsNextRound = allWinners.length > 1 && remainingMatches === 0;
+            const eloChangeEl = document.getElementById('eloChange');
+            eloChangeEl.className = eloChange >= 0 ? 'elo-gain' : 'elo-loss';
+            eloChangeEl.textContent = `${eloChange >= 0 ? '+' : ''}${eloChange} ELO`;
             
-            if (needsNextRound || remainingMatches > 0) {
-                document.getElementById('prizeInfo').textContent = 'Next match starting soon...';
-            } else if (allWinners.length === 1 && (result.won || result.winnerName === myPlayerId)) {
-                const prize = calculatePrize(allPlayers.length);
-                document.getElementById('prizeInfo').textContent = `💰 Tournament Winner! You earned ${prize} coins!`;
-                awardPrize(prize);
-            } else {
-                document.getElementById('prizeInfo').textContent = 'Tournament Over!';
-            }
+            document.getElementById('resultStats').textContent = 
+                `Previous: ${myElo} → New: ${newElo}` + 
+                (disconnected ? ' (Opponent Disconnected)' : '');
             
-            setTimeout(() => {
-                if (remainingMatches > 0 || needsNextRound) {
-                    showScreen('battleScreen');
-                    startNextMatch();
-                } else {
-                    returnToLobby();
-                }
-            }, 3000);
-        }
-
-        function endTournament() {
-            gameState.tournamentActive = false;
-            gameState.bracket = null;
-            returnToLobby();
+            saveElo(newElo);
+            
+            relay.send({ 
+                type: 'update_status',
+                status: JSON.stringify({ elo: newElo })
+            });
         }
 
         function returnToLobby() {
@@ -933,60 +810,24 @@
             players.clear();
             keys = {};
             currentMatch = null;
-            gameState.tournamentActive = false;
-            gameState.bracket = null;
-            gameState.currentMatchIndex = 0;
+            meterCharge = 0;
+            canAttack = true;
+            isCharging = false;
             
-            tournamentStartTime = null;
-            if (allPlayers.length >= 2) {
-                startTournamentCountdown();
+            if (chargeInterval) {
+                clearInterval(chargeInterval);
+                chargeInterval = null;
             }
             
-            if (!heartbeatInterval) {
-                startHeartbeat();
-            }
+            document.getElementById('findMatchBtn').textContent = 'FIND MATCH';
+            document.getElementById('queueMessage').textContent = '';
             
-            relay.send({ type: 'get_players' });
-        }
-
-        function calculatePrize(playerCount) {
-            return Math.floor(50 * Math.pow(playerCount, 1.5));
-        }
-
-        function awardPrize(amount) {
-            window.parent.postMessage({ type: 'updateCoins', coins: parseInt(localStorage.getItem(atob('X2NvaW5EYXRh').split('').reverse().join('')) || '10') + amount }, '*');
+            updateLeaderboard();
         }
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
-        }
-
-        function handleGameStateUpdate(data) {
-            if (data.state.tournamentActive) {
-                if (!gameState.tournamentActive) {
-                    gameState.tournamentActive = true;
-                    if (data.state.bracket) {
-                        gameState.bracket = data.state.bracket;
-                        
-                        const amIPlaying = data.state.bracket.some(m => 
-                            m.p1 === myPlayerId || m.p2 === myPlayerId
-                        );
-                        
-                        if (!amIPlaying) {
-                            showScreen('battleScreen');
-                            isSpectator = true;
-                            document.getElementById('spectatorNotice').style.display = 'block';
-                            document.getElementById('battleInfo').textContent = 'TOURNAMENT IN PROGRESS';
-                        }
-                    }
-                }
-            } else if (data.state.tournamentStartTime) {
-                if (!tournamentStartTime || data.state.tournamentStartTime < tournamentStartTime) {
-                    tournamentStartTime = data.state.tournamentStartTime;
-                    updateCountdown();
-                }
-            }
         }
 
         async function init() {
