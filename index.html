@@ -698,18 +698,8 @@
             <div id="gameList"></div>
             <div class="dev-section">
                 <input type="text" id="devInput" placeholder="Dev code">
+              
                 
-                <div style="margin-top: 15px;">
-                    <button id="getSeedBtn" style="display: block; width: 100%;">Get My Obfuscated Seed</button>
-                    <div id="userSeedDisplay" style="display: none; margin-top: 10px; padding: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; font-family: monospace; word-break: break-all; cursor: pointer;" title="Click to copy"></div>
-                    <small style="display: block; text-align: center;">Give this seed to the admin for a coin code.</small>
-                </div>
-                
-                
-                <div style="margin-top: 15px;">
-                    <input type="text" id="coinCodeInput" placeholder="Enter code from admin" style="width: 100%; margin-bottom: 10px; padding: 12px 16px; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 14px;">
-                    <button id="redeemCoinCodeBtn" style="display: block; width: 100%;">Redeem Coin Code</button>
-                </div>
             </div>
         </div>
     </div>
@@ -2229,58 +2219,7 @@ document.getElementById('devInput').addEventListener('input', (e) => {
 });
 
 
-        document.getElementById('getSeedBtn').addEventListener('click', () => {
-            const seed = getCurrentSeed();
-            const obfuscated = obfuscateSeedUser(seed);
-            document.getElementById('userSeedDisplay').textContent = obfuscated;
-            document.getElementById('userSeedDisplay').style.display = 'block';
-        });
-
-        document.getElementById('userSeedDisplay').addEventListener('click', function() {
-            navigator.clipboard.writeText(this.textContent);
-            const original = this.textContent;
-            this.textContent = 'Copied!';
-            setTimeout(() => {
-                this.textContent = original;
-            }, 1000);
-        });
-
-        
-document.getElementById('redeemCoinCodeBtn').addEventListener('click', () => {
-    const code = document.getElementById('coinCodeInput').value.trim();
-    
-    if (!code) {
-        alert('Please enter a code');
-        return;
-    }
-    
-    const result = validateCoinCode(code);
-    
-if (result.valid) {
-    if (result.type === 'coins') {
-        coins += result.coins;
-        setCoins(coins);
-        updateCoinDisplay();
-        alert(`✅ Successfully redeemed ${result.coins} coins!`);
-        document.getElementById('coinCodeInput').value = '';
-        
-    } else if (result.type === 'ban') {
-        console.log('Ban detected!', result);
-        document.getElementById('coinCodeInput').value = '';
-        const banStatus = checkBanStatus();
-        console.log('Ban status:', banStatus);
-        if (banStatus && banStatus.banned) {
-            showBanScreen(banStatus);
-            document.getElementById('mainView').style.pointerEvents = 'none';
-        } else {
-            console.error('Ban status not found after setting ban data');
-        }
-    }
-} else {
-    alert('❌ ' + result.message);
-}
-});
-        document.getElementById('shopBtn').addEventListener('click', () => {
+   document.getElementById('shopBtn').addEventListener('click', () => {
             window.location.href = 'shop.html';
         });
 
