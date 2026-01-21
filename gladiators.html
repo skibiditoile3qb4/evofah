@@ -201,7 +201,7 @@
         const RELAY_SERVER = 'wss://relayfah.onrender.com';
         const ROOM_ID = 'gladiator_arena_elo';
         const ATTACK_CHARGE_TIME = 2500;
-        const PLAYER_SPEED = 3;
+        const PLAYER_SPEED = 5;
         const ATTACK_RANGE = 80;
         const K_FACTOR = 32;
         
@@ -223,23 +223,31 @@
         let leaderboardUpdateInterval = null;
 
         function loadUserProfile() {
-            const storedElo = localStorage.getItem('gladiator_elo');
+            try {
+                const stored = localStorage.getItem('userProfile');
+                if (stored) {
+                    userProfile = JSON.parse(stored);
+                    if (!userProfile.username) {
+                        userProfile.username = 'Player' + Math.floor(Math.random() * 10000);
+                    }
+                } else {
+                    userProfile = { username: 'Player' + Math.floor(Math.random() * 10000) };
+                    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                }
+            } catch(e) {
+                userProfile = { username: 'Player' + Math.floor(Math.random() * 10000) };
+            }
+            
+            myPlayerId = userProfile.username;
+            
+            const storedElo = localStorage.getItem('gladiator_elo_' + myPlayerId);
             if (storedElo) {
                 myElo = parseInt(storedElo);
             } else {
                 myElo = 1000;
-                localStorage.setItem('gladiator_elo', '1000');
+                localStorage.setItem('gladiator_elo_' + myPlayerId, '1000');
             }
             
-            const storedName = localStorage.getItem('gladiator_username');
-            if (storedName) {
-                myPlayerId = storedName;
-            } else {
-                myPlayerId = 'gladiator' + Math.floor(Math.random() * 100000);
-                localStorage.setItem('gladiator_username', myPlayerId);
-            }
-            
-            userProfile = { username: myPlayerId };
             updateEloDisplay();
         }
 
@@ -249,7 +257,7 @@
 
         function saveElo(newElo) {
             myElo = newElo;
-            localStorage.setItem('gladiator_elo', newElo.toString());
+            localStorage.setItem('gladiator_elo_' + myPlayerId, newElo.toString());
             updateEloDisplay();
         }
 
@@ -460,10 +468,21 @@
             const maxX = window.innerWidth / 2 - 100;
             const maxY = window.innerHeight / 2 - 150;
             
-            const myX = -maxX;
-            const myY = -maxY;
-            const oppX = maxX;
-            const oppY = maxY;
+            // Determine who goes where based on clientId comparison
+            const amIPlayer1 = relay.clientId < currentMatch.opponentId;
+            
+            let myX, myY, oppX, oppY;
+            if (amIPlayer1) {
+                myX = -maxX;
+                myY = -maxY;
+                oppX = maxX;
+                oppY = maxY;
+            } else {
+                myX = maxX;
+                myY = maxY;
+                oppX = -maxX;
+                oppY = -maxY;
+            }
             
             const myEl = createPlayerElement(myPlayerId, '#3b82f6', myX, myY);
             const oppEl = createPlayerElement(currentMatch.opponent, '#ef4444', oppX, oppY);
@@ -609,7 +628,7 @@
                         }
                     }
                 }
-            }, 50);
+            }, 33);
         }
 
         function stopPositionUpdates() {
@@ -829,7 +848,7 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
-//hi
+
         async function init() {
             loadUserProfile();
             await connectToRelay();
