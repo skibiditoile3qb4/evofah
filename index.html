@@ -2503,18 +2503,26 @@ function displayChatMessage(message, shouldScroll = true) {
     
     const statusClass = message.status || 'player';
     
-const nametagHtml = message.nametag && message.nametag !== 'none' 
-    ? `<span class="chat-nametag-badge ${message.nametag}">${message.nametag.toUpperCase()}</span>` 
-    : '';
-
-msgDiv.innerHTML = `
-    <div>
-        <span class="chat-username">${escapeHtml(message.username)}</span>
-        <span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>
-        ${nametagHtml}
-    </div>
-    <span class="chat-text">${escapeHtml(message.message)}</span>
-`;
+    // Debug log to see what we're receiving
+    console.log('Chat message received:', message);
+    
+    // Create nametag badge HTML
+    let nametagHtml = '';
+    if (message.nametag && message.nametag !== 'none') {
+        nametagHtml = `<span class="chat-nametag-badge ${message.nametag}">${message.nametag.toUpperCase()}</span>`;
+    }
+    
+    // Create status badge HTML (always show)
+    const statusHtml = `<span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>`;
+    
+    msgDiv.innerHTML = `
+        <div>
+            <span class="chat-username">${escapeHtml(message.username)}</span>
+            ${statusHtml}
+            ${nametagHtml}
+        </div>
+        <span class="chat-text">${escapeHtml(message.message)}</span>
+    `;
     
     messagesContainer.appendChild(msgDiv);
     
@@ -2531,6 +2539,7 @@ function addSystemMessage(text) {
     messagesContainer.appendChild(msgDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -2558,14 +2567,18 @@ function sendChatMessage() {
     const message = input.value.trim();
     
     if (message && relay && relay.connected) {
+        // Debug log to see what we're sending
+        console.log('Sending nametag:', userProfile.nametag.equipped);
+        
         relay.send({
             type: 'chat',
-            message,
+            message: message,
             nametag: userProfile.nametag.equipped
         });
         input.value = '';
     }
 }
+
 
 // Event listeners
 document.getElementById('chatToggleBtn').addEventListener('click', toggleChat);
