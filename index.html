@@ -822,29 +822,33 @@ function getUserProfile() {
                 profile.unlockedGames = [];
             }
 
-if (!profile.equippedCosmetics) {
-    profile.equippedCosmetics = {
-        color: 'default',
-        hat: 'none',
-        face: 'none',
-        effect: 'none',
-        sword: 'none'
-    };
-}
+            if (!profile.equippedCosmetics) {
+                profile.equippedCosmetics = {
+                    color: 'default',
+                    hat: 'none',
+                    face: 'none',
+                    effect: 'none',
+                    sword: 'none'
+                };
+            }
 
-// Nametag system
-if (!profile.nametag) {
-    profile.nametag = {
-        equipped: 'none',
-        unlocked: ['none']
-    };
-}
+            // ✅ NAMETAG INITIALIZATION (CRITICAL FOR CHAT)
+            if (!profile.nametag) {
+                profile.nametag = {
+                    equipped: 'none',
+                    unlocked: ['none']
+                };
+            }
+            // Ensure nametag has both properties
+            if (!profile.nametag.equipped) profile.nametag.equipped = 'none';
+            if (!Array.isArray(profile.nametag.unlocked)) profile.nametag.unlocked = ['none'];
 
-// Track donations
-if (typeof profile.totalDonated === 'undefined') {
-    profile.totalDonated = 0;
-}
-// ----- REBIRTH DATA -----
+            // Track donations
+            if (typeof profile.totalDonated === 'undefined') {
+                profile.totalDonated = 0;
+            }
+
+            // ----- REBIRTH DATA -----
             if (!profile.rebirthData) {
                 profile.rebirthData = {
                     tier: 0,
@@ -855,8 +859,8 @@ if (typeof profile.totalDonated === 'undefined') {
             
             if (typeof profile.gems === 'undefined') profile.gems = 0;
             if (!profile.gemUpgrades) {
-    profile.gemUpgrades = {};
-}
+                profile.gemUpgrades = {};
+            }
            
             // ----- OWNED COSMETICS -----
             if (!profile.ownedCosmetics) {
@@ -887,7 +891,7 @@ if (typeof profile.totalDonated === 'undefined') {
     // FIRST-TIME USER
     // =============================
     const newProfile = {
-        username: generateGuestUsername(), // 🎲 RANDOM
+        username: generateGuestUsername(),
         status: 'player',
         unlockedGames: [],
         equippedCosmetics: {
@@ -903,7 +907,12 @@ if (typeof profile.totalDonated === 'undefined') {
             faces: ['none'],
             effects: ['none'],
             swords: ['none']
-        }
+        },
+        nametag: {
+            equipped: 'none',
+            unlocked: ['none']
+        },
+        totalDonated: 0
     };
 
     saveUserProfile(newProfile);
