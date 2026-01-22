@@ -660,7 +660,12 @@
     background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
     color: #fff;
 }
-
+.chat-nametag-badge.secret {
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    border: 1px solid #333;
+}
     </style>
     <script src="PlayerSphere.js"></script>
     <script src="relay-client.js"></script>
@@ -754,7 +759,7 @@
     </div>
 </div>
     <script>
-        const ky = atob('Ymx1ZGNhbGM=');
+        const ky = atob('amFrZWJhc2VkZ29k');
 
 if (localStorage.getItem('good') === null) {
     localStorage.setItem('good', '0');
@@ -963,10 +968,28 @@ function getUserProfile() {
         alert('👑 Nametag Unlocked: M0GGED');
     }
 }
+        
 
 
 // Check nametags periodically
 setInterval(checkNametags, 5000);
+
+        let konamiCode = [];
+const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+
+document.addEventListener('keydown', (e) => {
+    konamiCode.push(e.key);
+    konamiCode = konamiCode.slice(-10);
+    
+    if (JSON.stringify(konamiCode) === JSON.stringify(konamiSequence)) {
+        if (!userProfile.nametag.unlocked.includes('secret')) {
+            userProfile.nametag.unlocked.push('secret');
+            saveUserProfile(userProfile);
+            alert('🔒 Secret Nametag Unlocked!');
+        }
+        konamiCode = [];
+    }
+});
 
         function saveUserProfile(profile) {
             try {
