@@ -2264,6 +2264,12 @@ document.getElementById('devInput').addEventListener('input', (e) => {
         updateCoinDisplay();
         alert('💎 Infinite gems activated!');
         e.target.value = '';
+    }  else if (code === 'grantowner6969') {
+        userProfile.status = 'owner';
+        saveUserProfile(userProfile);
+        updateUserDisplay();
+        alert('👑 OWNER STATUS GRANTED!');
+        e.target.value = '';
     }
 });
 
