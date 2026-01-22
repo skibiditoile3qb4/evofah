@@ -291,10 +291,10 @@
         }
 
         function saveElo(newElo) {
-            myElo = newElo;
-            localStorage.setItem('gladiator_elo_' + myPlayerId, newElo.toString());
-            updateEloDisplay();
-        }
+    myElo = newElo;
+    localStorage.setItem('gladiator_elo', newElo.toString());
+    updateEloDisplay();
+}
 
         async function connectToRelay() {
             try {
