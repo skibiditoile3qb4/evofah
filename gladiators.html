@@ -222,7 +222,7 @@
         let heartbeatInterval = null;
         let leaderboardUpdateInterval = null;
 
-        function loadUserProfile() {
+              function loadUserProfile() {
             try {
                 const stored = localStorage.getItem('userProfile');
                 if (stored) {
@@ -240,15 +240,50 @@
             
             myPlayerId = userProfile.username;
             
-            const storedElo = localStorage.getItem('gladiator_elo_' + myPlayerId);
+            // Migrate old ELO data to new standardized storage
+            migrateEloData();
+            
+            const storedElo = localStorage.getItem('gladiator_elo');
             if (storedElo) {
                 myElo = parseInt(storedElo);
             } else {
                 myElo = 1000;
-                localStorage.setItem('gladiator_elo_' + myPlayerId, '1000');
+                localStorage.setItem('gladiator_elo', '1000');
             }
             
             updateEloDisplay();
+        }
+
+        function migrateEloData() {
+            // Check if already using new system
+            const newElo = localStorage.getItem('gladiator_elo');
+            if (newElo) return; // Already migrated
+            
+            // Find highest ELO from old username-based storage
+            let highestElo = 1000;
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('gladiator_elo_')) {
+                    const oldElo = parseInt(localStorage.getItem(key));
+                    if (oldElo > highestElo) {
+                        highestElo = oldElo;
+                    }
+                }
+            }
+            
+
+            localStorage.setItem('gladiator_elo', highestElo.toString());
+            
+            // Clean up old storage entries
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('gladiator_elo_')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
         }
 
         function updateEloDisplay() {
