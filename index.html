@@ -2429,6 +2429,41 @@ async function initChat() {
             updateOnlineCount();
         });
         
+        // ADD THIS ENTIRE BLOCK HERE
+        relay.on('donation', (data) => {
+            if (data.targetUsername === userProfile.username) {
+                // Receive donation
+                if (data.donationType === 'coins') {
+                    coins += data.amount;
+                    setCoins(coins);
+                    updateCoinDisplay();
+                } else {
+                    userProfile.gems = (userProfile.gems || 0) + data.amount;
+                    saveUserProfile(userProfile);
+                    updateCoinDisplay();
+                }
+                
+                const messagesContainer = document.getElementById('chatMessages');
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'chat-message donation';
+                
+                msgDiv.innerHTML = `
+                    <div>
+                        <span class="chat-username">💰 GIFT RECEIVED</span>
+                    </div>
+                    <span class="chat-text">${escapeHtml(data.from)} sent you ${data.amount} ${data.donationType}!</span>
+                `;
+                
+                messagesContainer.appendChild(msgDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                if (!chatOpen) {
+                    unreadMessages++;
+                    document.getElementById('chatToggleBtn').classList.add('has-unread');
+                }
+            }
+        });
+        
     } catch (error) {
         console.error('Failed to connect to chat:', error);
         addSystemMessage('Failed to connect to chat server');
@@ -2594,43 +2629,7 @@ document.getElementById('globalDonateUsername').value = '';
 document.getElementById('globalDonateAmount').value = '';
 } 
 
-// Update the initChat function to handle donations
-// Add this inside the relay.on handlers (around line 1250):
 
-relay.on('donation', (data) => {
-    if (data.targetUsername === userProfile.username) {
-        // Receive donation
-        if (data.donationType === 'coins') {
-            coins += data.amount;
-            setCoins(coins);
-            updateCoinDisplay();
-        } else {
-            userProfile.gems = (userProfile.gems || 0) + data.amount;
-            saveUserProfile(userProfile);
-            updateCoinDisplay();
-        }
-        
-        const messagesContainer = document.getElementById('chatMessages');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'chat-message donation';
-        
-        msgDiv.innerHTML = `
-            <div>
-                <span class="chat-username">💰 GIFT RECEIVED</span>
-            </div>
-            <span class="chat-text">${escapeHtml(data.from)} sent you ${data.amount} ${data.donationType}!</span>
-        `;
-        
-        messagesContainer.appendChild(msgDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        // Show notification if chat is closed
-        if (!chatOpen) {
-            unreadMessages++;
-            document.getElementById('chatToggleBtn').classList.add('has-unread');
-        }
-    }
-});
     </script>
     <script src="visualizer.js"></script>
 </body>
