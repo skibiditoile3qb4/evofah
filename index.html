@@ -1752,7 +1752,7 @@ setInterval(() => {
             if (isLocked) {
                 if (gemCost) {
                     // Gem-locked game
-                    if (confirm(`Unlock ${formatGameName(game)} for ${gemCost} gems?`)) {
+                    if (confirm(`Unlock ${formatGameName(game)} for ${gemCost} gems? The game may run slow or take long to load.`)) {
                         if (userProfile.gems >= gemCost) {
                             userProfile.gems -= gemCost;
                             saveUserProfile(userProfile);
