@@ -56,34 +56,13 @@
             margin-bottom: 15px;
             color: #d69e2e;
         }
-        .code-item {
-            background: #0a0a0a;
-            border: 1px solid #333;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .code-item h3 {
+        .section h3 {
             font-size: 16px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            margin-top: 15px;
             color: #fff;
         }
-        .code-item p {
-            font-size: 14px;
-            color: #888;
-            margin-bottom: 5px;
-        }
-        .code-box {
-            background: #1a1a1a;
-            border: 1px solid #555;
-            border-radius: 4px;
-            padding: 8px;
-            font-family: monospace;
-            font-size: 13px;
-            color: #d69e2e;
-            margin-top: 8px;
-        }
-        input {
+        input, select {
             width: 100%;
             padding: 12px 16px;
             background: #0a0a0a;
@@ -94,7 +73,7 @@
             outline: none;
             margin-bottom: 10px;
         }
-        input:focus {
+        input:focus, select:focus {
             border-color: #555;
         }
         button {
@@ -132,10 +111,28 @@
             text-align: center;
             margin-top: 5px;
         }
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .connection-status.connected {
+            background: #2d5f2e;
+            border: 1px solid #38a169;
+        }
+        .connection-status.disconnected {
+            background: #5f2d2d;
+            border: 1px solid #c53030;
+        }
     </style>
-    <script src="relay-client.js"></script>
 </head>
 <body>
+    <div class="connection-status disconnected" id="connectionStatus">⚠️ Connecting...</div>
+    
     <div class="container">
         <a href="index.html" class="back-btn">← Back to Home</a>
         
@@ -156,7 +153,7 @@
                     <option value="owner">Owner</option>
                 </select>
                 <button class="success" id="promoteBtn">Set Rank</button>
-                <small>Changes take effect on their next login</small>
+                <small>User must be online for this to work</small>
             </div>
             
             <div class="section">
@@ -164,6 +161,7 @@
                 <input type="text" id="permBanUsername" placeholder="Username">
                 <input type="number" id="permBanDays" placeholder="Days (0 = permanent)">
                 <button class="danger" id="permBanBtn">Ban User</button>
+                <small>User must be online to receive ban</small>
             </div>
         </div>
         
@@ -206,8 +204,8 @@
             </div>
             
             <div class="section">
-                <h2>📊 Recent Chat Logs</h2>
-                <button id="viewLogsBtn">View Last 50 Messages</button>
+                <h2>📊 Recent Admin Actions</h2>
+                <button id="viewLogsBtn">View Last 50 Actions</button>
                 <div id="logDisplay" style="background: #0a0a0a; padding: 10px; border-radius: 6px; margin-top: 10px; max-height: 300px; overflow-y: auto; display: none;"></div>
             </div>
         </div>
@@ -218,202 +216,7 @@
         </div>
     </div>
     
-    <script>
-        function getUserProfile() {
-            try {
-                const stored = localStorage.getItem('userProfile');
-                if (stored) {
-                    return JSON.parse(stored);
-                }
-            } catch(e) {}
-            return { status: 'player' };
-        }
-
-        const userProfile = getUserProfile();
-        const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
-        
-        if (!staffRanks.includes(userProfile.status)) {
-            document.getElementById('accessDenied').style.display = 'block';
-            document.getElementById('panelTitle').textContent = '🚫 ACCESS DENIED';
-        } else {
-            // Set panel title
-            const titles = {
-                owner: '👑 OWNER PANEL',
-                'sr.admin': '⚡ SR. ADMIN PANEL',
-                admin: '🛡️ ADMIN PANEL',
-                moderator: '🔰 MODERATOR PANEL'
-            };
-            document.getElementById('panelTitle').textContent = titles[userProfile.status];
-            
-            // Show appropriate sections
-            if (userProfile.status === 'owner') {
-                document.getElementById('ownerSection').style.display = 'block';
-                document.getElementById('srAdminSection').style.display = 'block';
-                document.getElementById('adminSection').style.display = 'block';
-                document.getElementById('moderatorSection').style.display = 'block';
-            } else if (userProfile.status === 'sr.admin') {
-                document.getElementById('srAdminSection').style.display = 'block';
-                document.getElementById('adminSection').style.display = 'block';
-                document.getElementById('moderatorSection').style.display = 'block';
-            } else if (userProfile.status === 'admin') {
-                document.getElementById('adminSection').style.display = 'block';
-                document.getElementById('moderatorSection').style.display = 'block';
-            } else if (userProfile.status === 'moderator') {
-                document.getElementById('moderatorSection').style.display = 'block';
-            }
-        }
-        
-        // OWNER: Promote/Demote
-        document.getElementById('promoteBtn')?.addEventListener('click', () => {
-            const username = document.getElementById('promoteUsername').value.trim();
-            const rank = document.getElementById('promoteRank').value;
-            
-            if (!username) {
-                alert('Enter a username');
-                return;
-            }
-            
-            if (!confirm(`Set ${username}'s rank to ${rank}?`)) {
-                return;
-            }
-            
-            // Store rank change
-            const rankChanges = JSON.parse(localStorage.getItem('_rankChanges') || '{}');
-            rankChanges[username] = rank;
-            localStorage.setItem('_rankChanges', JSON.stringify(rankChanges));
-            
-            alert(`✅ ${username} will be ${rank} on next login`);
-            document.getElementById('promoteUsername').value = '';
-        });
-        
-        // OWNER: Permanent Ban
-        document.getElementById('permBanBtn')?.addEventListener('click', () => {
-            const username = document.getElementById('permBanUsername').value.trim();
-            const days = parseInt(document.getElementById('permBanDays').value) || 0;
-            
-            if (!username) {
-                alert('Enter a username');
-                return;
-            }
-            
-            if (!confirm(`Ban ${username} for ${days === 0 ? 'PERMANENT' : days + ' days'}?`)) {
-                return;
-            }
-            
-            const banData = {
-                until: days === 0 ? 9999999999999 : Date.now() + (days * 24 * 60 * 60 * 1000),
-                bannedBy: userProfile.username,
-                reason: 'Owner ban'
-            };
-            
-            localStorage.setItem(`_ban_${username}`, JSON.stringify(banData));
-            alert(`✅ ${username} banned`);
-            
-            document.getElementById('permBanUsername').value = '';
-            document.getElementById('permBanDays').value = '';
-        });
-        
-        // SR. ADMIN: Ban
-        document.getElementById('srBanBtn')?.addEventListener('click', () => {
-            const username = document.getElementById('srBanUsername').value.trim();
-            const days = Math.min(parseInt(document.getElementById('srBanDays').value) || 1, 30);
-            
-            if (!username) {
-                alert('Enter a username');
-                return;
-            }
-            
-            // Check if target is sr.admin or owner
-            const targetProfile = JSON.parse(localStorage.getItem('userProfile_' + username) || '{}');
-            if (targetProfile.status === 'sr.admin' || targetProfile.status === 'owner') {
-                alert('Cannot ban Sr. Admins or Owner');
-                return;
-            }
-            
-            if (!confirm(`Ban ${username} for ${days} days?`)) {
-                return;
-            }
-            
-            const banData = {
-                until: Date.now() + (days * 24 * 60 * 60 * 1000),
-                bannedBy: userProfile.username,
-                reason: 'Sr. Admin ban'
-            };
-            
-            localStorage.setItem(`_ban_${username}`, JSON.stringify(banData));
-            alert(`✅ ${username} banned for ${days} days`);
-            
-            document.getElementById('srBanUsername').value = '';
-            document.getElementById('srBanDays').value = '';
-        });
-        
-        // ADMIN: Ban
-        document.getElementById('adminBanBtn')?.addEventListener('click', () => {
-            const username = document.getElementById('adminBanUsername').value.trim();
-            const days = Math.min(parseInt(document.getElementById('adminBanDays').value) || 1, 7);
-            
-            if (!username) {
-                alert('Enter a username');
-                return;
-            }
-            
-            // Check if target is staff
-            const targetProfile = JSON.parse(localStorage.getItem('userProfile_' + username) || '{}');
-            const staffRanks = ['moderator', 'admin', 'sr.admin', 'owner'];
-            if (staffRanks.includes(targetProfile.status)) {
-                alert('Cannot ban staff members');
-                return;
-            }
-            
-            if (!confirm(`Ban ${username} for ${days} days?`)) {
-                return;
-            }
-            
-            const banData = {
-                until: Date.now() + (days * 24 * 60 * 60 * 1000),
-                bannedBy: userProfile.username,
-                reason: 'Admin ban'
-            };
-            
-            localStorage.setItem(`_ban_${username}`, JSON.stringify(banData));
-            alert(`✅ ${username} banned for ${days} days`);
-            
-            document.getElementById('adminBanUsername').value = '';
-            document.getElementById('adminBanDays').value = '';
-        });
-        
-        // MODERATOR: Mute
-        document.getElementById('muteBtn')?.addEventListener('click', () => {
-            const username = document.getElementById('muteUsername').value.trim();
-            const hours = Math.min(parseInt(document.getElementById('muteHours').value) || 1, 24);
-            
-            if (!username) {
-                alert('Enter a username');
-                return;
-            }
-            
-            if (!confirm(`Mute ${username} for ${hours} hours?`)) {
-                return;
-            }
-            
-            const muteData = {
-                until: Date.now() + (hours * 60 * 60 * 1000),
-                mutedBy: userProfile.username
-            };
-            
-            localStorage.setItem(`_mute_${username}`, JSON.stringify(muteData));
-            alert(`✅ ${username} muted for ${hours} hours`);
-            
-            document.getElementById('muteUsername').value = '';
-            document.getElementById('muteHours').value = '';
-        });
-        
-        // View Logs (placeholder - you'd connect to relay server)
-        document.getElementById('viewLogsBtn')?.addEventListener('click', () => {
-            const logDisplay = document.getElementById('logDisplay');
-            logDisplay.style.display = 'block';
-            logDisplay.innerHTML = '<p style="color: #888;">Log viewing requires server connection. Check relay server logs.</p>';
-        });
-    </script>
+    <script src="relay-client.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>
