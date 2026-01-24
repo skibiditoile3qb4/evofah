@@ -13,26 +13,26 @@ class RelayClient {
     this.reconnectDelay = 2000;
     
     // Event handlers
-// Event handlers
-this.handlers = {
-  connected: [],
-  disconnected: [],
-  chat_message: [],
-  player_joined: [],
-  player_left: [],
-  game_state_update: [],
-  player_action: [],
-  error: [],
-  donation: [],
-  kick: [],
-  disband: [],
-  players_update: [],
-  banned: [],           // ✅ ADD THIS
-  muted: [],            // ✅ ADD THIS
-  rank_changed: [],     // ✅ ADD THIS
-  admin_action_result: [], // ✅ ADD THIS for admin panel
-  admin_logs: []        // ✅ ADD THIS for admin panel
-};
+    this.handlers = {
+      connected: [],
+      disconnected: [],
+      chat_message: [],
+      player_joined: [],
+      player_left: [],
+      game_state_update: [],
+      player_action: [],
+      error: [],
+      donation: [],
+      kick: [],
+      disband: [],
+      players_update: [],
+      banned: [],           // ✅ ADDED
+      muted: [],            // ✅ ADDED
+      rank_changed: [],     // ✅ ADDED
+      admin_action_result: [], // ✅ ADDED
+      admin_logs: []        // ✅ ADDED
+    };
+  }
   
   connect() {
     return new Promise((resolve, reject) => {
@@ -105,16 +105,16 @@ this.handlers = {
   }
   
   // Room Management
-joinRoom(room, username, status) {
+  joinRoom(room, username, status) {
     this.room = room;
     this.username = username;
     this.send({
-        type: 'join',
-        room,
-        username,
-        status: status || 'player'  // ADD THIS LINE
+      type: 'join',
+      room,
+      username,
+      status: status || 'player'
     });
-}
+  }
   
   leaveRoom() {
     this.send({ type: 'leave' });
