@@ -788,6 +788,21 @@ if (localStorage.getItem('good') === null) {
         checkAndResetAbsurdMoney();
         applyStaffBenefits();
         checkRankChanges();
+        
+        // ✅ ADD BAN CHECK
+        if (checkAndHandleBan()) {
+            document.getElementById('mainView').style.pointerEvents = 'none';
+        }
+        
+        // ✅ ADD MUTE CHECK
+        const muteStatus = checkMuteStatus();
+        if (muteStatus.muted) {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.disabled = true;
+                chatInput.placeholder = `Muted for ${muteStatus.hoursRemaining} hours`;
+            }
+        }
     }, 0);
 }
 function checkPassword() {
@@ -2685,7 +2700,7 @@ async function initChat() {
             updateUserDisplay();
             applyStaffBenefits();
             alert(`🎖️ Your rank has been changed to ${data.newRank} by ${data.changedBy}`);
-            location.reload();
+            
         });
 
         relay.on('banned', (data) => {
