@@ -1,33 +1,48 @@
-// admin.js - Admin panel functionality
-// Add this script to adminpanel.html: <script src="admin.js"></script>
+// admin.js - Admin panel functionality with better debugging
 
 class AdminPanel {
     constructor() {
+        console.log('🔧 AdminPanel constructor called');
         this.relay = null;
         this.userProfile = this.getUserProfile();
+        console.log('👤 User profile loaded:', this.userProfile);
         this.checkAccess();
-        this.initializeRelay();
         this.setupEventListeners();
+        
+        // Initialize relay AFTER a short delay to ensure DOM is ready
+        setTimeout(() => {
+            this.initializeRelay();
+        }, 100);
     }
 
     getUserProfile() {
         try {
             const stored = localStorage.getItem('userProfile');
             if (stored) {
-                return JSON.parse(stored);
+                const profile = JSON.parse(stored);
+                console.log('✅ Profile loaded from localStorage:', profile);
+                return profile;
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error('❌ Error loading profile:', e);
+        }
+        console.warn('⚠️ No profile found, using guest');
         return { status: 'player', username: 'guest' };
     }
 
     checkAccess() {
         const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
         
+        console.log('🔐 Checking access for:', this.userProfile.status);
+        
         if (!staffRanks.includes(this.userProfile.status)) {
+            console.log('🚫 Access denied - not staff');
             document.getElementById('accessDenied').style.display = 'block';
             document.getElementById('panelTitle').textContent = '🚫 ACCESS DENIED';
             return;
         }
+
+        console.log('✅ Access granted');
 
         // Set panel title
         const titles = {
@@ -57,18 +72,32 @@ class AdminPanel {
     }
 
     async initializeRelay() {
+        console.log('🌐 Initializing relay connection...');
+        
         try {
             const RELAY_SERVER = 'wss://relayfah.onrender.com';
+            console.log('🔌 Connecting to:', RELAY_SERVER);
+            
+            if (typeof RelayClient === 'undefined') {
+                console.error('❌ RelayClient not found! Make sure relay-client.js is loaded first.');
+                alert('Error: RelayClient not loaded. Check console.');
+                this.updateConnectionStatus(false);
+                return;
+            }
+            
             this.relay = new RelayClient(RELAY_SERVER);
             await this.relay.connect();
             
+            console.log('✅ Relay connected');
             this.updateConnectionStatus(true);
             
             // Join admin channel
+            console.log('📡 Joining admin_actions room...');
             this.relay.joinRoom('admin_actions', this.userProfile.username, this.userProfile.status);
             
             // Listen for admin action confirmations
             this.relay.on('admin_action_result', (data) => {
+                console.log('📨 Admin action result:', data);
                 if (data.success) {
                     alert(`✅ ${data.message}`);
                 } else {
@@ -78,23 +107,26 @@ class AdminPanel {
 
             // Listen for connection events
             this.relay.on('connected', () => {
+                console.log('✅ Relay connected event');
                 this.updateConnectionStatus(true);
             });
 
             this.relay.on('disconnected', () => {
+                console.log('❌ Relay disconnected event');
                 this.updateConnectionStatus(false);
             });
 
             // Listen for admin logs response
             this.relay.on('admin_logs', (data) => {
+                console.log('📋 Admin logs received:', data);
                 this.displayLogs(data.logs);
             });
 
-            console.log('Admin panel connected to relay server');
+            console.log('✅ Admin panel fully initialized');
         } catch (error) {
-            console.error('Failed to connect admin panel:', error);
+            console.error('❌ Failed to connect admin panel:', error);
             this.updateConnectionStatus(false);
-            alert('Failed to connect to server. Admin actions will not work.');
+            alert('Failed to connect to server. Admin actions will not work.\n\nError: ' + error.message);
         }
     }
 
@@ -103,51 +135,64 @@ class AdminPanel {
         if (connected) {
             statusEl.textContent = '✅ Connected';
             statusEl.className = 'connection-status connected';
+            console.log('🟢 Status: Connected');
         } else {
             statusEl.textContent = '❌ Disconnected';
             statusEl.className = 'connection-status disconnected';
+            console.log('🔴 Status: Disconnected');
         }
     }
 
     setupEventListeners() {
+        console.log('🎯 Setting up event listeners...');
+        
         // OWNER: Promote/Demote
         const promoteBtn = document.getElementById('promoteBtn');
         if (promoteBtn) {
             promoteBtn.addEventListener('click', () => this.handlePromote());
+            console.log('✅ Promote button listener added');
         }
 
         // OWNER: Permanent Ban
         const permBanBtn = document.getElementById('permBanBtn');
         if (permBanBtn) {
             permBanBtn.addEventListener('click', () => this.handlePermBan());
+            console.log('✅ Perm ban button listener added');
         }
 
         // SR. ADMIN: Ban
         const srBanBtn = document.getElementById('srBanBtn');
         if (srBanBtn) {
             srBanBtn.addEventListener('click', () => this.handleSrBan());
+            console.log('✅ Sr ban button listener added');
         }
 
         // ADMIN: Ban
         const adminBanBtn = document.getElementById('adminBanBtn');
         if (adminBanBtn) {
             adminBanBtn.addEventListener('click', () => this.handleAdminBan());
+            console.log('✅ Admin ban button listener added');
         }
 
         // MODERATOR: Mute
         const muteBtn = document.getElementById('muteBtn');
         if (muteBtn) {
             muteBtn.addEventListener('click', () => this.handleMute());
+            console.log('✅ Mute button listener added');
         }
 
         // View Logs
         const viewLogsBtn = document.getElementById('viewLogsBtn');
         if (viewLogsBtn) {
             viewLogsBtn.addEventListener('click', () => this.handleViewLogs());
+            console.log('✅ View logs button listener added');
         }
+        
+        console.log('✅ All event listeners set up');
     }
 
     handlePromote() {
+        console.log('👑 Promote button clicked');
         const username = document.getElementById('promoteUsername').value.trim();
         const rank = document.getElementById('promoteRank').value;
 
@@ -158,12 +203,15 @@ class AdminPanel {
 
         if (!this.relay || !this.relay.connected) {
             alert('Not connected to server!');
+            console.error('❌ Relay not connected');
             return;
         }
 
         if (!confirm(`Set ${username}'s rank to ${rank}?`)) {
             return;
         }
+
+        console.log('📤 Sending promote action:', { username, rank });
 
         // Send to relay server
         this.relay.send({
@@ -179,6 +227,7 @@ class AdminPanel {
     }
 
     handlePermBan() {
+        console.log('🚫 Perm ban button clicked');
         const username = document.getElementById('permBanUsername').value.trim();
         const days = parseInt(document.getElementById('permBanDays').value) || 0;
 
@@ -189,6 +238,7 @@ class AdminPanel {
 
         if (!this.relay || !this.relay.connected) {
             alert('Not connected to server!');
+            console.error('❌ Relay not connected');
             return;
         }
 
@@ -196,6 +246,8 @@ class AdminPanel {
         if (!confirm(`Ban ${username} for ${banType}?`)) {
             return;
         }
+
+        console.log('📤 Sending perm ban:', { username, days });
 
         this.relay.send({
             type: 'admin_action',
@@ -213,6 +265,7 @@ class AdminPanel {
     }
 
     handleSrBan() {
+        console.log('⚡ Sr ban button clicked');
         const username = document.getElementById('srBanUsername').value.trim();
         const days = Math.min(parseInt(document.getElementById('srBanDays').value) || 1, 30);
 
@@ -223,12 +276,15 @@ class AdminPanel {
 
         if (!this.relay || !this.relay.connected) {
             alert('Not connected to server!');
+            console.error('❌ Relay not connected');
             return;
         }
 
         if (!confirm(`Ban ${username} for ${days} days?`)) {
             return;
         }
+
+        console.log('📤 Sending sr ban:', { username, days });
 
         this.relay.send({
             type: 'admin_action',
@@ -246,6 +302,7 @@ class AdminPanel {
     }
 
     handleAdminBan() {
+        console.log('🛡️ Admin ban button clicked');
         const username = document.getElementById('adminBanUsername').value.trim();
         const days = Math.min(parseInt(document.getElementById('adminBanDays').value) || 1, 7);
 
@@ -256,12 +313,15 @@ class AdminPanel {
 
         if (!this.relay || !this.relay.connected) {
             alert('Not connected to server!');
+            console.error('❌ Relay not connected');
             return;
         }
 
         if (!confirm(`Ban ${username} for ${days} days?`)) {
             return;
         }
+
+        console.log('📤 Sending admin ban:', { username, days });
 
         this.relay.send({
             type: 'admin_action',
@@ -279,6 +339,7 @@ class AdminPanel {
     }
 
     handleMute() {
+        console.log('🔇 Mute button clicked');
         const username = document.getElementById('muteUsername').value.trim();
         const hours = Math.min(parseInt(document.getElementById('muteHours').value) || 1, 24);
 
@@ -289,12 +350,15 @@ class AdminPanel {
 
         if (!this.relay || !this.relay.connected) {
             alert('Not connected to server!');
+            console.error('❌ Relay not connected');
             return;
         }
 
         if (!confirm(`Mute ${username} for ${hours} hours?`)) {
             return;
         }
+
+        console.log('📤 Sending mute:', { username, hours });
 
         this.relay.send({
             type: 'admin_action',
@@ -310,10 +374,15 @@ class AdminPanel {
     }
 
     handleViewLogs() {
+        console.log('📋 View logs button clicked');
+        
         if (!this.relay || !this.relay.connected) {
             alert('Not connected to server');
+            console.error('❌ Relay not connected');
             return;
         }
+
+        console.log('📤 Requesting admin logs...');
 
         this.relay.send({
             type: 'get_admin_logs',
@@ -324,6 +393,7 @@ class AdminPanel {
     }
 
     displayLogs(logs) {
+        console.log('📄 Displaying logs:', logs);
         const logDisplay = document.getElementById('logDisplay');
         logDisplay.style.display = 'block';
         
@@ -347,10 +417,27 @@ class AdminPanel {
     }
 }
 
-// Initialize admin panel when page loads - THIS IS THE KEY PART!
+// Initialize admin panel when page loads
 let adminPanel = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+console.log('🚀 admin.js loaded');
+
+// Try multiple initialization methods
+if (document.readyState === 'loading') {
+    console.log('⏳ DOM still loading, waiting...');
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('✅ DOMContentLoaded fired');
+        adminPanel = new AdminPanel();
+    });
+} else {
+    console.log('✅ DOM already loaded');
     adminPanel = new AdminPanel();
-    console.log('Admin panel initialized');
-});
+}
+
+// Backup initialization after a delay
+setTimeout(() => {
+    if (!adminPanel) {
+        console.log('⚠️ Backup initialization triggered');
+        adminPanel = new AdminPanel();
+    }
+}, 500);
