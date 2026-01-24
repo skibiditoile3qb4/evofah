@@ -2716,7 +2716,7 @@ async function initChat() {
             alert(`🔇 You have been muted for ${data.hours} hours by ${data.mutedBy}`);
             
             // Disable chat input
-            const muteStatus = checkMuteStatus();
+                        const muteStatus = checkMuteStatus();
             if (muteStatus.muted) {
                 const chatInput = document.getElementById('chatInput');
                 chatInput.disabled = true;
@@ -2730,8 +2730,6 @@ async function initChat() {
             }
         });
         
-    } catch (error) {
-        console.error('Failed to connect to chat:', error);
     } catch (error) {
         console.error('Failed to connect to chat:', error);
         addSystemMessage('Failed to connect to chat server');
