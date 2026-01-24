@@ -2696,6 +2696,14 @@ async function initChat() {
         
         relay.on('banned', (data) => {
             console.log('🚫 BAN EVENT RECEIVED:', data);
+            
+            // Staff ranks cannot be banned
+            const immuneRanks = ['owner', 'sr.admin', 'admin'];
+            if (immuneRanks.includes(userProfile.status)) {
+                console.log('Staff member is immune to bans');
+                return;
+            }
+            
             console.log('Current username:', userProfile.username);
             console.log('Saving ban to key:', `_ban_${userProfile.username}`);
             
