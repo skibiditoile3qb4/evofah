@@ -683,6 +683,16 @@
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     border: 1px solid #333;
 }
+    .chat-nametag-badge.cracked {
+    background: linear-gradient(135deg, #ff6b00 0%, #ff0000 100%);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 107, 0, 0.5);
+    animation: crackedPulse 2s infinite;
+}
+@keyframes crackedPulse {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 107, 0, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8); }
+}
     </style>
     <script src="PlayerSphere.js"></script>
     <script src="relay-client.js"></script>
@@ -1059,7 +1069,7 @@ function applyStaffBenefits() {
 
        function checkNametags() {
     const totalDonated = userProfile.totalDonated || 0;
-    const gladiatorElo = parseInt(localStorage.getItem('gladiator_elo_' + userProfile.username) || '1000');
+    const gladiatorElo = parseInt(localStorage.getItem('gladiator_elo') || '1000');
     const currentGems = userProfile.gems || 0;
     const ownerDonationReceived = localStorage.getItem('_receivedOwnerDonation_' + userProfile.username) === '1';
 
@@ -1070,8 +1080,8 @@ function applyStaffBenefits() {
         alert('🎖️ Nametag Unlocked: DONATOR');
     }
     
-    // WAR HERO - 1500+ ELO
-    if (gladiatorElo >= 1500 && !userProfile.nametag.unlocked.includes('warhero')) {
+    // WAR HERO - 14+ ELO
+    if (gladiatorElo >= 1300 && !userProfile.nametag.unlocked.includes('warhero')) {
         userProfile.nametag.unlocked.push('warhero');
         saveUserProfile(userProfile);
         alert('⚔️ Nametag Unlocked: WARHERO');
@@ -1090,6 +1100,13 @@ function applyStaffBenefits() {
         saveUserProfile(userProfile);
         alert('👑 Nametag Unlocked: M0GGED');
     }
+    const totalHours = totalActiveTime / 3600; // Convert seconds to hours
+    if (totalHours >= 8 && !userProfile.nametag.unlocked.includes('cracked')) {
+        userProfile.nametag.unlocked.push('cracked');
+        saveUserProfile(userProfile);
+        alert('🔥 Nametag Unlocked: CRACKED');
+    }
+           
 }
         
 
