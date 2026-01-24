@@ -1,7 +1,11 @@
+// admin.js - Admin panel functionality
+// Add this script to adminpanel.html: <script src="admin.js"></script>
+
 class AdminPanel {
     constructor() {
         this.relay = null;
         this.userProfile = this.getUserProfile();
+        this.checkAccess();
         this.initializeRelay();
         this.setupEventListeners();
     }
@@ -16,11 +20,49 @@ class AdminPanel {
         return { status: 'player', username: 'guest' };
     }
 
+    checkAccess() {
+        const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
+        
+        if (!staffRanks.includes(this.userProfile.status)) {
+            document.getElementById('accessDenied').style.display = 'block';
+            document.getElementById('panelTitle').textContent = '🚫 ACCESS DENIED';
+            return;
+        }
+
+        // Set panel title
+        const titles = {
+            owner: '👑 OWNER PANEL',
+            'sr.admin': '⚡ SR. ADMIN PANEL',
+            admin: '🛡️ ADMIN PANEL',
+            moderator: '🔰 MODERATOR PANEL'
+        };
+        document.getElementById('panelTitle').textContent = titles[this.userProfile.status];
+        
+        // Show appropriate sections
+        if (this.userProfile.status === 'owner') {
+            document.getElementById('ownerSection').style.display = 'block';
+            document.getElementById('srAdminSection').style.display = 'block';
+            document.getElementById('adminSection').style.display = 'block';
+            document.getElementById('moderatorSection').style.display = 'block';
+        } else if (this.userProfile.status === 'sr.admin') {
+            document.getElementById('srAdminSection').style.display = 'block';
+            document.getElementById('adminSection').style.display = 'block';
+            document.getElementById('moderatorSection').style.display = 'block';
+        } else if (this.userProfile.status === 'admin') {
+            document.getElementById('adminSection').style.display = 'block';
+            document.getElementById('moderatorSection').style.display = 'block';
+        } else if (this.userProfile.status === 'moderator') {
+            document.getElementById('moderatorSection').style.display = 'block';
+        }
+    }
+
     async initializeRelay() {
         try {
             const RELAY_SERVER = 'wss://relayfah.onrender.com';
             this.relay = new RelayClient(RELAY_SERVER);
             await this.relay.connect();
+            
+            this.updateConnectionStatus(true);
             
             // Join admin channel
             this.relay.joinRoom('admin_actions', this.userProfile.username, this.userProfile.status);
@@ -34,10 +76,36 @@ class AdminPanel {
                 }
             });
 
+            // Listen for connection events
+            this.relay.on('connected', () => {
+                this.updateConnectionStatus(true);
+            });
+
+            this.relay.on('disconnected', () => {
+                this.updateConnectionStatus(false);
+            });
+
+            // Listen for admin logs response
+            this.relay.on('admin_logs', (data) => {
+                this.displayLogs(data.logs);
+            });
+
             console.log('Admin panel connected to relay server');
         } catch (error) {
             console.error('Failed to connect admin panel:', error);
-            alert('Failed to connect to server. Some features may not work.');
+            this.updateConnectionStatus(false);
+            alert('Failed to connect to server. Admin actions will not work.');
+        }
+    }
+
+    updateConnectionStatus(connected) {
+        const statusEl = document.getElementById('connectionStatus');
+        if (connected) {
+            statusEl.textContent = '✅ Connected';
+            statusEl.className = 'connection-status connected';
+        } else {
+            statusEl.textContent = '❌ Disconnected';
+            statusEl.className = 'connection-status disconnected';
         }
     }
 
@@ -88,6 +156,11 @@ class AdminPanel {
             return;
         }
 
+        if (!this.relay || !this.relay.connected) {
+            alert('Not connected to server!');
+            return;
+        }
+
         if (!confirm(`Set ${username}'s rank to ${rank}?`)) {
             return;
         }
@@ -111,6 +184,11 @@ class AdminPanel {
 
         if (!username) {
             alert('Enter a username');
+            return;
+        }
+
+        if (!this.relay || !this.relay.connected) {
+            alert('Not connected to server!');
             return;
         }
 
@@ -143,6 +221,11 @@ class AdminPanel {
             return;
         }
 
+        if (!this.relay || !this.relay.connected) {
+            alert('Not connected to server!');
+            return;
+        }
+
         if (!confirm(`Ban ${username} for ${days} days?`)) {
             return;
         }
@@ -171,6 +254,11 @@ class AdminPanel {
             return;
         }
 
+        if (!this.relay || !this.relay.connected) {
+            alert('Not connected to server!');
+            return;
+        }
+
         if (!confirm(`Ban ${username} for ${days} days?`)) {
             return;
         }
@@ -196,6 +284,11 @@ class AdminPanel {
 
         if (!username) {
             alert('Enter a username');
+            return;
+        }
+
+        if (!this.relay || !this.relay.connected) {
+            alert('Not connected to server!');
             return;
         }
 
@@ -228,11 +321,6 @@ class AdminPanel {
             adminRank: this.userProfile.status,
             limit: 50
         });
-
-        // Listen for logs response
-        this.relay.on('admin_logs', (data) => {
-            this.displayLogs(data.logs);
-        });
     }
 
     displayLogs(logs) {
@@ -259,12 +347,10 @@ class AdminPanel {
     }
 }
 
-// Initialize admin panel when page loads
+// Initialize admin panel when page loads - THIS IS THE KEY PART!
+let adminPanel = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-    const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
-    const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{"status":"player"}');
-    
-    if (staffRanks.includes(userProfile.status)) {
-        new AdminPanel();
-    }
+    adminPanel = new AdminPanel();
+    console.log('Admin panel initialized');
 });
