@@ -1081,7 +1081,7 @@ function applyStaffBenefits() {
     }
     
     // WAR HERO - 14+ ELO
-    if (gladiatorElo >= 1400 && !userProfile.nametag.unlocked.includes('warhero')) {
+    if (gladiatorElo >= 1350 && !userProfile.nametag.unlocked.includes('warhero')) {
         userProfile.nametag.unlocked.push('warhero');
         saveUserProfile(userProfile);
         alert('⚔️ Nametag Unlocked: WARHERO');
