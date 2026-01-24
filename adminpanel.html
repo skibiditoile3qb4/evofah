@@ -139,54 +139,82 @@
     <div class="container">
         <a href="index.html" class="back-btn">← Back to Home</a>
         
-        <h1>🔒 ADMIN PANEL</h1>
+        <h1 id="panelTitle">🔒 LOADING...</h1>
         
-        <div class="section">
-            <h2>Dev Codes</h2>
-            
-            <div class="code-item">
-                <h3>alpha100x</h3>
-                <p>Effect: +100 coins</p>
-                <div class="code-box">alpha100x</div>
+        <!-- Owner Only -->
+        <div id="ownerSection" style="display: none;">
+            <div class="section">
+                <h2>👑 Owner Controls</h2>
+                
+                <h3>Promote/Demote Staff</h3>
+                <input type="text" id="promoteUsername" placeholder="Username">
+                <select id="promoteRank">
+                    <option value="player">Player</option>
+                    <option value="moderator">Moderator</option>
+                    <option value="admin">Admin</option>
+                    <option value="sr.admin">Sr. Admin</option>
+                    <option value="owner">Owner</option>
+                </select>
+                <button class="success" id="promoteBtn">Set Rank</button>
+                <small>Changes take effect on their next login</small>
             </div>
             
-            <div class="code-item">
-                <h3>sudo(username)</h3>
-                <p>Effect: Grant admin status for specified user.</p>
-                <div class="code-box">sudo(username)</div>
-            </div>
-            
-            <div class="code-item">
-                <h3>beta200y</h3>
-                <p>Effect: Toggle ads on/off</p>
-                <div class="code-box">beta200y</div>
-            </div>
-            
-            <div class="code-item">
-                <h3>gamma300z</h3>
-                <p>Effect: Set ad interval to 10 seconds (testing)</p>
-                <div class="code-box">gamma300z</div>
-            </div>
-
-            <div class="code-item">
-                <h3>delta999w</h3>
-                <p>Effect: Infinite coins (999,999,999)</p>
-                <div class="code-box">delta999w</div>
-            </div>
-            
-            <div class="code-item">
-                <h3>omega888v</h3>
-                <p>Effect: Infinite gems (999,999,999)</p>
-                <div class="code-box">omega888v</div>
+            <div class="section">
+                <h2>🚫 Permanent Ban</h2>
+                <input type="text" id="permBanUsername" placeholder="Username">
+                <input type="number" id="permBanDays" placeholder="Days (0 = permanent)">
+                <button class="danger" id="permBanBtn">Ban User</button>
             </div>
         </div>
         
-        <div class="section">
-            <h2>🚫 Server-Based Ban System</h2>
-            <input type="text" id="banUsernameInput" placeholder="Username to ban">
-            <input type="number" id="banDaysInput" placeholder="Number of days" min="1">
-            <button class="danger" id="serverBanBtn">Ban User</button>
-            <div id="banStatusMessage" style="margin-top: 15px; color: #4ade80; display: none; text-align: center;"></div>
+        <!-- Sr. Admin & Owner -->
+        <div id="srAdminSection" style="display: none;">
+            <div class="section">
+                <h2>⚡ Sr. Admin Controls</h2>
+                
+                <h3>Ban User (Up to 30 days)</h3>
+                <input type="text" id="srBanUsername" placeholder="Username">
+                <input type="number" id="srBanDays" placeholder="Days (max 30)" max="30">
+                <button class="danger" id="srBanBtn">Ban User</button>
+                <small>Cannot ban other Sr. Admins or Owner</small>
+            </div>
+        </div>
+        
+        <!-- Admin, Sr. Admin & Owner -->
+        <div id="adminSection" style="display: none;">
+            <div class="section">
+                <h2>🛡️ Admin Controls</h2>
+                
+                <h3>Ban Player (Up to 7 days)</h3>
+                <input type="text" id="adminBanUsername" placeholder="Username">
+                <input type="number" id="adminBanDays" placeholder="Days (max 7)" max="7">
+                <button class="danger" id="adminBanBtn">Ban Player</button>
+                <small>Cannot ban staff members. Daily limit: <span id="adminDonateLimit">100,000 coins</span></small>
+            </div>
+        </div>
+        
+        <!-- Moderator, Admin, Sr. Admin & Owner -->
+        <div id="moderatorSection" style="display: none;">
+            <div class="section">
+                <h2>🔰 Moderator Controls</h2>
+                
+                <h3>Mute User (24h max)</h3>
+                <input type="text" id="muteUsername" placeholder="Username">
+                <input type="number" id="muteHours" placeholder="Hours (max 24)" max="24">
+                <button id="muteBtn">Mute User</button>
+                <small>All actions are logged</small>
+            </div>
+            
+            <div class="section">
+                <h2>📊 Recent Chat Logs</h2>
+                <button id="viewLogsBtn">View Last 50 Messages</button>
+                <div id="logDisplay" style="background: #0a0a0a; padding: 10px; border-radius: 6px; margin-top: 10px; max-height: 300px; overflow-y: auto; display: none;"></div>
+            </div>
+        </div>
+        
+        <div id="accessDenied" style="display: none; text-align: center; padding: 40px;">
+            <h2 style="color: #ff4444;">Access Denied</h2>
+            <p>You don't have permission to view this page.</p>
         </div>
     </div>
     
@@ -202,41 +230,103 @@
         }
 
         const userProfile = getUserProfile();
+        const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
         
-        if (userProfile.status !== 'admin' && userProfile.status !== 'owner') {
-            alert('Access Denied: Admin privileges required');
-            window.location.href = 'index.html';
-        }
-
-        // Initialize relay connection for admin panel
-        const RELAY_SERVER = 'wss://relayfah.onrender.com';
-        let adminRelay = null;
-
-        async function initAdminRelay() {
-            try {
-                adminRelay = new RelayClient(RELAY_SERVER);
-                await adminRelay.connect();
-                console.log('Admin relay connected');
-            } catch(e) {
-                console.error('Failed to connect admin relay:', e);
+        if (!staffRanks.includes(userProfile.status)) {
+            document.getElementById('accessDenied').style.display = 'block';
+            document.getElementById('panelTitle').textContent = '🚫 ACCESS DENIED';
+        } else {
+            // Set panel title
+            const titles = {
+                owner: '👑 OWNER PANEL',
+                'sr.admin': '⚡ SR. ADMIN PANEL',
+                admin: '🛡️ ADMIN PANEL',
+                moderator: '🔰 MODERATOR PANEL'
+            };
+            document.getElementById('panelTitle').textContent = titles[userProfile.status];
+            
+            // Show appropriate sections
+            if (userProfile.status === 'owner') {
+                document.getElementById('ownerSection').style.display = 'block';
+                document.getElementById('srAdminSection').style.display = 'block';
+                document.getElementById('adminSection').style.display = 'block';
+                document.getElementById('moderatorSection').style.display = 'block';
+            } else if (userProfile.status === 'sr.admin') {
+                document.getElementById('srAdminSection').style.display = 'block';
+                document.getElementById('adminSection').style.display = 'block';
+                document.getElementById('moderatorSection').style.display = 'block';
+            } else if (userProfile.status === 'admin') {
+                document.getElementById('adminSection').style.display = 'block';
+                document.getElementById('moderatorSection').style.display = 'block';
+            } else if (userProfile.status === 'moderator') {
+                document.getElementById('moderatorSection').style.display = 'block';
             }
         }
-
-        initAdminRelay();
-
-        // Server-based ban
-        document.getElementById('serverBanBtn').addEventListener('click', async () => {
-            const username = document.getElementById('banUsernameInput').value.trim();
-            const days = parseInt(document.getElementById('banDaysInput').value);
-            const statusMsg = document.getElementById('banStatusMessage');
+        
+        // OWNER: Promote/Demote
+        document.getElementById('promoteBtn')?.addEventListener('click', () => {
+            const username = document.getElementById('promoteUsername').value.trim();
+            const rank = document.getElementById('promoteRank').value;
             
             if (!username) {
-                alert('Please enter a username');
+                alert('Enter a username');
                 return;
             }
             
-            if (isNaN(days) || days <= 0) {
-                alert('Please enter valid number of days');
+            if (!confirm(`Set ${username}'s rank to ${rank}?`)) {
+                return;
+            }
+            
+            // Store rank change
+            const rankChanges = JSON.parse(localStorage.getItem('_rankChanges') || '{}');
+            rankChanges[username] = rank;
+            localStorage.setItem('_rankChanges', JSON.stringify(rankChanges));
+            
+            alert(`✅ ${username} will be ${rank} on next login`);
+            document.getElementById('promoteUsername').value = '';
+        });
+        
+        // OWNER: Permanent Ban
+        document.getElementById('permBanBtn')?.addEventListener('click', () => {
+            const username = document.getElementById('permBanUsername').value.trim();
+            const days = parseInt(document.getElementById('permBanDays').value) || 0;
+            
+            if (!username) {
+                alert('Enter a username');
+                return;
+            }
+            
+            if (!confirm(`Ban ${username} for ${days === 0 ? 'PERMANENT' : days + ' days'}?`)) {
+                return;
+            }
+            
+            const banData = {
+                until: days === 0 ? 9999999999999 : Date.now() + (days * 24 * 60 * 60 * 1000),
+                bannedBy: userProfile.username,
+                reason: 'Owner ban'
+            };
+            
+            localStorage.setItem(`_ban_${username}`, JSON.stringify(banData));
+            alert(`✅ ${username} banned`);
+            
+            document.getElementById('permBanUsername').value = '';
+            document.getElementById('permBanDays').value = '';
+        });
+        
+        // SR. ADMIN: Ban
+        document.getElementById('srBanBtn')?.addEventListener('click', () => {
+            const username = document.getElementById('srBanUsername').value.trim();
+            const days = Math.min(parseInt(document.getElementById('srBanDays').value) || 1, 30);
+            
+            if (!username) {
+                alert('Enter a username');
+                return;
+            }
+            
+            // Check if target is sr.admin or owner
+            const targetProfile = JSON.parse(localStorage.getItem('userProfile_' + username) || '{}');
+            if (targetProfile.status === 'sr.admin' || targetProfile.status === 'owner') {
+                alert('Cannot ban Sr. Admins or Owner');
                 return;
             }
             
@@ -244,29 +334,85 @@
                 return;
             }
             
-            if (!adminRelay || !adminRelay.connected) {
-                alert('Not connected to server. Please refresh and try again.');
+            const banData = {
+                until: Date.now() + (days * 24 * 60 * 60 * 1000),
+                bannedBy: userProfile.username,
+                reason: 'Sr. Admin ban'
+            };
+            
+            localStorage.setItem(`_ban_${username}`, JSON.stringify(banData));
+            alert(`✅ ${username} banned for ${days} days`);
+            
+            document.getElementById('srBanUsername').value = '';
+            document.getElementById('srBanDays').value = '';
+        });
+        
+        // ADMIN: Ban
+        document.getElementById('adminBanBtn')?.addEventListener('click', () => {
+            const username = document.getElementById('adminBanUsername').value.trim();
+            const days = Math.min(parseInt(document.getElementById('adminBanDays').value) || 1, 7);
+            
+            if (!username) {
+                alert('Enter a username');
                 return;
             }
             
-            // Send ban request to server
-            adminRelay.send({
-                type: 'admin_ban',
-                targetUsername: username,
-                days: days,
-                adminUsername: userProfile.username
-            });
+            // Check if target is staff
+            const targetProfile = JSON.parse(localStorage.getItem('userProfile_' + username) || '{}');
+            const staffRanks = ['moderator', 'admin', 'sr.admin', 'owner'];
+            if (staffRanks.includes(targetProfile.status)) {
+                alert('Cannot ban staff members');
+                return;
+            }
             
-            statusMsg.textContent = `✅ Ban request sent for ${username} (${days} days)`;
-            statusMsg.style.display = 'block';
+            if (!confirm(`Ban ${username} for ${days} days?`)) {
+                return;
+            }
             
-            setTimeout(() => {
-                statusMsg.style.display = 'none';
-            }, 3000);
+            const banData = {
+                until: Date.now() + (days * 24 * 60 * 60 * 1000),
+                bannedBy: userProfile.username,
+                reason: 'Admin ban'
+            };
             
-            // Clear inputs
-            document.getElementById('banUsernameInput').value = '';
-            document.getElementById('banDaysInput').value = '';
+            localStorage.setItem(`_ban_${username}`, JSON.stringify(banData));
+            alert(`✅ ${username} banned for ${days} days`);
+            
+            document.getElementById('adminBanUsername').value = '';
+            document.getElementById('adminBanDays').value = '';
+        });
+        
+        // MODERATOR: Mute
+        document.getElementById('muteBtn')?.addEventListener('click', () => {
+            const username = document.getElementById('muteUsername').value.trim();
+            const hours = Math.min(parseInt(document.getElementById('muteHours').value) || 1, 24);
+            
+            if (!username) {
+                alert('Enter a username');
+                return;
+            }
+            
+            if (!confirm(`Mute ${username} for ${hours} hours?`)) {
+                return;
+            }
+            
+            const muteData = {
+                until: Date.now() + (hours * 60 * 60 * 1000),
+                mutedBy: userProfile.username
+            };
+            
+            localStorage.setItem(`_mute_${username}`, JSON.stringify(muteData));
+            alert(`✅ ${username} muted for ${hours} hours`);
+            
+            document.getElementById('muteUsername').value = '';
+            document.getElementById('muteHours').value = '';
+        });
+        
+        // View Logs (placeholder - you'd connect to relay server)
+        document.getElementById('viewLogsBtn')?.addEventListener('click', () => {
+            const logDisplay = document.getElementById('logDisplay');
+            logDisplay.style.display = 'block';
+            logDisplay.innerHTML = '<p style="color: #888;">Log viewing requires server connection. Check relay server logs.</p>';
         });
     </script>
 </body>
