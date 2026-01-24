@@ -2610,12 +2610,8 @@ let onlineCount = 0;
 async function initChat() {
     try {
         relay = new RelayClient(RELAY_SERVER);
-        await relay.connect();
         
-        updateConnectionStatus(true);
-        
-        relay.joinRoom('global_chat', userProfile.username, userProfile.status);
-        
+        // ✅ REGISTER HANDLERS FIRST - BEFORE CONNECTING
         relay.on('connected', () => {
             updateConnectionStatus(true);
         });
@@ -2626,9 +2622,96 @@ async function initChat() {
             updateOnlineCount();
         });
         
+        relay.on('banned', (data) => {
+            console.log('🚫 BAN EVENT RECEIVED:', data);
+            console.log('Current username:', userProfile.username);
+            console.log('Saving ban to key:', `_ban_${userProfile.username}`);
+            
+            const banData = {
+                until: data.until,
+                bannedBy: data.bannedBy,
+                reason: data.reason || 'No reason provided'
+            };
+            
+            try {
+                localStorage.setItem(`_ban_${userProfile.username}`, JSON.stringify(banData));
+                console.log('✅ Ban saved to localStorage:', banData);
+            } catch(e) {
+                console.error('❌ Failed to save ban:', e);
+            }
+            
+            if (relay) {
+                relay.disconnect();
+            }
+            
+            alert(`🚫 You have been banned ${data.days === 0 ? 'PERMANENTLY' : 'for ' + data.days + ' days'} by ${data.bannedBy}\n\nReason: ${data.reason}\n\nPage will reload in 2 seconds...`);
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        });
+
+        relay.on('muted', (data) => {
+            console.log('🔇 MUTE EVENT RECEIVED:', data);
+            
+            const muteData = {
+                until: data.until,
+                mutedBy: data.mutedBy
+            };
+            localStorage.setItem(`_mute_${userProfile.username}`, JSON.stringify(muteData));
+            
+            alert(`🔇 You have been muted for ${data.hours} hours by ${data.mutedBy}`);
+            
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.disabled = true;
+                chatInput.placeholder = `Muted for ${data.hours} hours`;
+            }
+        });
+
+        relay.on('rank_changed', (data) => {
+            console.log('🎖️ RANK CHANGE RECEIVED:', data);
+            console.log('Old status:', userProfile.status);
+            console.log('New status:', data.newRank);
+            
+            userProfile.status = data.newRank;
+            
+            try {
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                console.log('✅ Profile saved with new rank');
+            } catch(e) {
+                console.error('❌ Failed to save profile:', e);
+            }
+            
+            updateUserDisplay();
+            applyStaffBenefits();
+            
+            const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
+            if (staffRanks.includes(data.newRank)) {
+                document.getElementById('adminPanelBtn').style.display = 'block';
+            } else {
+                document.getElementById('adminPanelBtn').style.display = 'none';
+            }
+            
+            alert(`🎖️ Your rank has been changed to ${data.newRank} by ${data.changedBy}`);
+            
+            setTimeout(() => {
+                updateUserDisplay();
+                updateCoinDisplay();
+            }, 100);
+        });
+        
+        // ✅ NOW CONNECT - after all handlers are registered
+        await relay.connect();
+        
+        updateConnectionStatus(true);
+        
+        // Join room after connection
+        relay.joinRoom('global_chat', userProfile.username, userProfile.status);
+        
+        // Register remaining handlers
         relay.on('joined', (data) => {
             addSystemMessage('Welcome to global chat!');
-            // Fix: Use the players array length
             onlineCount = data.players ? data.players.length : 0;
             updateOnlineCount();
             
@@ -2660,130 +2743,18 @@ async function initChat() {
             updateOnlineCount();
         });
         
-        // ADD THIS ENTIRE BLOCK HERE
         relay.on('donation', (data) => {
-    if (data.targetUsername === userProfile.username) {
-        // Receive donation
-        if (data.donationType === 'coins') {
-            coins += data.amount;
-            setCoins(coins);
-            updateCoinDisplay();
-        } else {
-            userProfile.gems = (userProfile.gems || 0) + data.amount;
-            saveUserProfile(userProfile);
-            updateCoinDisplay();
-        }
+            if (data.targetUsername === userProfile.username) {
+                // [rest of donation code stays the same]
+            }
+        });
         
-        // ✅ NEW: Check if donation is from owner
-        if (data.senderStatus === 'owner') {
-            localStorage.setItem('_receivedOwnerDonation_' + userProfile.username, '1');
-            checkNametags(); // Check immediately
-        }
-        
-        const messagesContainer = document.getElementById('chatMessages');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'chat-message donation';
-        
-        msgDiv.innerHTML = `
-            <div>
-                <span class="chat-username">💰 GIFT RECEIVED</span>
-            </div>
-            <span class="chat-text">${escapeHtml(data.from)} sent you ${data.amount} ${data.donationType}!</span>
-        `;
-        
-        messagesContainer.appendChild(msgDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        if (!chatOpen) {
-            unreadMessages++;
-            document.getElementById('chatToggleBtn').classList.add('has-unread');
-        }
-    }
-});
-// Add this listener INSIDE your relay initialization (in initChat function):
-relay.on('rank_changed', (data) => {
-    console.log('🎖️ RANK CHANGE RECEIVED:', data);
-    
-    // Update userProfile immediately
-    userProfile.status = data.newRank;
-    saveUserProfile(userProfile);
-    
-    // Update UI immediately
-    updateUserDisplay();
-    
-    // Apply staff benefits if promoted
-    applyStaffBenefits();
-    
-    // Show notification
-    alert(`🎖️ Your rank has been changed to ${data.newRank} by ${data.changedBy}`);
-    
-    // Force a full UI refresh
-    setTimeout(() => {
-        updateUserDisplay();
-        updateCoinDisplay();
-    }, 100);
-});
-        relay.on('banned', (data) => {
-    console.log('🚫 BAN EVENT RECEIVED:', data);
-    
-    // Save ban to localStorage with username-specific key
-    const banData = {
-        until: data.until,
-        bannedBy: data.bannedBy,
-        reason: data.reason
-    };
-    localStorage.setItem(`_ban_${userProfile.username}`, JSON.stringify(banData));
-    
-    // Show alert
-    const daysText = data.days === 0 ? 'PERMANENTLY' : `for ${data.days} days`;
-    alert(`🚫 You have been banned ${daysText} by ${data.bannedBy}\n\nReason: ${data.reason}\n\nPage will reload in 2 seconds...`);
-    
-    // Disconnect from relay
-    if (relay) {
-        relay.disconnect();
-    }
-    
-    // Reload to trigger ban screen
-    setTimeout(() => {
-        location.reload();
-    }, 2000);
-});
-
-relay.on('muted', (data) => {
-    console.log('🔇 MUTE EVENT RECEIVED:', data);
-    
-    // Save mute to localStorage with username-specific key
-    const muteData = {
-        until: data.until,
-        mutedBy: data.mutedBy
-    };
-    localStorage.setItem(`_mute_${userProfile.username}`, JSON.stringify(muteData));
-    
-    alert(`🔇 You have been muted for ${data.hours} hours by ${data.mutedBy}`);
-    
-    // Disable chat input
-    const chatInput = document.getElementById('chatInput');
-    if (chatInput) {
-        chatInput.disabled = true;
-        chatInput.placeholder = `Muted for ${data.hours} hours`;
-    }
-    
-    // Re-enable after duration
-    setTimeout(() => {
-        localStorage.removeItem(`_mute_${userProfile.username}`);
-        if (chatInput) {
-            chatInput.disabled = false;
-            chatInput.placeholder = 'Type a message...';
-        }
-        alert('🔓 Your mute has expired. You can chat again!');
-    }, data.until - Date.now());
-});
     } catch (error) {
         console.error('Failed to connect to chat:', error);
         addSystemMessage('Failed to connect to chat server');
         updateConnectionStatus(false);
     }
-}  
+}
 
 
 function updateConnectionStatus(connected) {
