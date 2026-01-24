@@ -411,7 +411,7 @@ function getRebirthRequirements(tier) {
         2: { coins: 150000, cosmetics: 10, games: 6, swords: 1, gems: 5 },
         3: { coins: 400000, cosmetics: 15, games: 9, swords: 2, gems: 10 },
         4: { coins: 1000000, cosmetics: 20, games: 12, swords: 3, gems: 15 },
-        5: { coins: 2500000, cosmetics: 24, games: 13, swords: 3, gems: 25 }
+        5: { coins: 2500000, cosmetics: 21, games: 15, swords: 3, gems: 25 }
     };
     
     if (tier <= 5) return requirements[tier];
@@ -420,8 +420,8 @@ function getRebirthRequirements(tier) {
     const excess = tier - 5;
     return {
         coins: Math.floor(2500000 * Math.pow(2.5, excess)), // Much faster exponential growth
-        cosmetics: 24, // Maxed out
-        games: 13, // Maxed out
+        cosmetics: 21, // Maxed out
+        games: 15, // Maxed out
         swords: 3, // Maxed out
         gems: Math.floor(25 * Math.pow(1.5, excess))
     };
