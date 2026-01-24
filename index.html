@@ -1672,10 +1672,10 @@ function deobfuscateSeedAdmin(obfuscated) {
          function checkGreatReset() {
             const resetFlag = localStorage.getItem('reset');
             
-            if (resetFlag != '5') {
+            if (resetFlag != '6') {
 
                 
-                localStorage.setItem('reset', '5');
+                localStorage.setItem('reset', '6');
                 showResetNotification();
                 
                 return true;
@@ -1700,25 +1700,45 @@ function deobfuscateSeedAdmin(obfuscated) {
                 animation: fadeIn 0.3s ease-in;
             `;
             
-            notification.innerHTML = `
-                <div style="font-size: 48px; margin-bottom: 20px;">😄</div>
-                <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">New update coming soon.</div>
-                <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
-                    Prestige? Gems?<br>
-                   New better games?<br>
-                    Good luck!
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'fadeOut 0.3s ease-out';
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }, 5000);
-        }
+notification.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 20px;">🔒</div>
+
+    <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">
+        SECURITY UPDATE
+    </div>
+
+    <div style="font-size: 14px; color: #ccc; line-height: 1.6; max-width: 600px; margin: 0 auto 20px;">
+        <strong>IMPORTANT NOTICE:</strong><br><br>
+
+        Do <strong>NOT</strong> email my school email. Use:
+        <strong style="color:#f6ad55;">jokesterman4@gmail.com</strong><br><br>
+
+        Due to leaked dev codes, security has been tightened. 
+        <strong>Cheating will result in permanent bans.</strong><br><br>
+
+        Play fair. Thank you.
+    </div>
+
+    <button id="closeNotification" style="
+        padding: 12px 32px;
+        background: #d69e2e;
+        border: none;
+        border-radius: 8px;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 16px;
+    ">I Understand</button>
+`;
+
+document.body.appendChild(notification);
+
+document.getElementById('closeNotification').addEventListener('click', () => {
+    notification.style.animation = 'fadeOut 0.3s ease-out';
+    setTimeout(() => {
+        notification.remove();
+    }, 300);
+});
 
         const style = document.createElement('style');
         style.textContent = `
