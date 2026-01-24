@@ -2811,10 +2811,51 @@ async function initChat() {
         });
         
         relay.on('donation', (data) => {
-            if (data.targetUsername === userProfile.username) {
-                // [rest of donation code stays the same]
-            }
-        });
+    if (data.targetUsername === userProfile.username) {
+        // Receive the donation
+        if (data.donationType === 'coins') {
+            coins += data.amount;
+            setCoins(coins);
+        } else if (data.donationType === 'gems') {
+            userProfile.gems = (userProfile.gems || 0) + data.amount;
+            saveUserProfile(userProfile);
+        }
+        updateCoinDisplay();
+        
+        // Check if donation was from owner
+        if (data.senderStatus === 'owner') {
+            localStorage.setItem('_receivedOwnerDonation_' + userProfile.username, '1');
+            checkNametags();
+        }
+        
+        // Show notification
+        addSystemMessage(`💰 You received ${data.amount} ${data.donationType} from ${data.from}!`);
+        
+        // Show visual notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 15px 25px;
+            z-index: 10001;
+            color: #000;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+            animation: slideInRight 0.3s ease-out, fadeOutRight 0.3s ease-in 2.7s;
+        `;
+        notification.innerHTML = `💰 Received ${data.amount} ${data.donationType} from ${data.from}!`;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+});;
         
     } catch (error) {
         console.error('Failed to connect to chat:', error);
