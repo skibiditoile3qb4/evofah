@@ -1559,7 +1559,15 @@ function checkMuteStatus() {
         
         if (muteData) {
             const now = Date.now();
-            
+        if (userProfile.status === 'owner') {
+                 localStorage.removeItem('_muteData');
+                const chatInput = document.getElementById('chatInput');
+                if (chatInput) {
+                    chatInput.disabled = false;
+                    chatInput.placeholder = 'Type a message...';
+                }
+                return { muted: false };
+            }
            if (now >= muteData.until) {
                 localStorage.removeItem('_muteData');
                 const chatInput = document.getElementById('chatInput');
@@ -2734,7 +2742,7 @@ async function initChat() {
  relay.on('muted', (data) => {
             console.log('🔇 MUTE EVENT RECEIVED:', data);
             
-            // Owners cannot be muted
+           
             if (userProfile.status === 'owner') {
                 console.log('Owner is immune to mutes');
                 return;
