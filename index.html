@@ -1560,8 +1560,13 @@ function checkMuteStatus() {
         if (muteData) {
             const now = Date.now();
             
-            if (now >= muteData.until) {
+           if (now >= muteData.until) {
                 localStorage.removeItem('_muteData');
+                const chatInput = document.getElementById('chatInput');
+                if (chatInput) {
+                    chatInput.disabled = false;
+                    chatInput.placeholder = 'Type a message...';
+                }
                 return { muted: false };
             }
             
@@ -2718,14 +2723,20 @@ async function initChat() {
             }, 2000);
         });
 
-        relay.on('muted', (data) => {
+ relay.on('muted', (data) => {
             console.log('🔇 MUTE EVENT RECEIVED:', data);
+            
+            // Owners cannot be muted
+            if (userProfile.status === 'owner') {
+                console.log('Owner is immune to mutes');
+                return;
+            }
             
             const muteData = {
                 until: data.until,
                 mutedBy: data.mutedBy
             };
-            localStorage.setItem(`_mute_${userProfile.username}`, JSON.stringify(muteData));
+            setMuteData(muteData);  // Use the function, not direct localStorage
             
             alert(`🔇 You have been muted for ${data.hours} hours by ${data.mutedBy}`);
             
