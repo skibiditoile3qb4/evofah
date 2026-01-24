@@ -787,14 +787,16 @@ if (localStorage.getItem('good') === null) {
         updateUserDisplay();
         checkAndResetAbsurdMoney();
         applyStaffBenefits();
-        checkRankChanges();
         
-        // ✅ ADD BAN CHECK
-        if (checkAndHandleBan()) {
-            document.getElementById('mainView').style.pointerEvents = 'none';
+        // ✅ CHECK BAN FIRST - CRITICAL
+        const banStatus = checkBanStatus();
+        if (banStatus.banned) {
+            showBanScreen(banStatus);
+            document.getElementById('mainView').style.display = 'none';
+            return; // Stop here if banned
         }
         
-        // ✅ ADD MUTE CHECK
+        // ✅ CHECK MUTE STATUS
         const muteStatus = checkMuteStatus();
         if (muteStatus.muted) {
             const chatInput = document.getElementById('chatInput');
@@ -1227,6 +1229,10 @@ function checkAndHandleBan() {
 }
 
 function showBanScreen(banStatus) {
+    // Remove any existing ban screen first
+    const existing = document.getElementById('banScreen');
+    if (existing) existing.remove();
+    
     const banScreen = document.createElement('div');
     banScreen.id = 'banScreen';
     banScreen.style.cssText = `
@@ -1248,11 +1254,10 @@ function showBanScreen(banStatus) {
         <p style="font-size: 18px; margin-bottom: 10px;">You have been banned by: <span style="color: #d69e2e;">${banStatus.bannedBy}</span></p>
         <p style="font-size: 18px; margin-bottom: 10px;">Days remaining: <span style="color: #ff4444;">${banStatus.daysRemaining}</span></p>
         <p style="font-size: 16px; margin-bottom: 30px; color: #888;">Ban expires: ${new Date(banStatus.until).toLocaleString()}</p>
-        <p style="font-size: 16px; color: #888;">Reason: ${banStatus.reason}</p>
+        <p style="font-size: 16px; color: #888;">Reason: ${banStatus.reason || 'No reason provided'}</p>
     `;
     
     document.body.appendChild(banScreen);
-    document.getElementById('mainView').style.display = 'none';
 }
         
 function getLossProtectionData() {
@@ -1438,7 +1443,6 @@ function clearBanData() {
 }
 
 function checkBanStatus() {
-    // Check for username-specific ban
     try {
         const banKey = `_ban_${userProfile.username}`;
         const banData = localStorage.getItem(banKey);
@@ -1460,7 +1464,9 @@ function checkBanStatus() {
                 daysRemaining: Math.ceil((ban.until - now) / (1000 * 60 * 60 * 24))
             };
         }
-    } catch(e) {}
+    } catch(e) {
+        console.error('Error checking ban:', e);
+    }
     
     return { banned: false };
 }
@@ -2694,66 +2700,84 @@ async function initChat() {
         }
     }
 });
-        relay.on('rank_changed', (data) => {
-            userProfile.status = data.newRank;
-            saveUserProfile(userProfile);
-            updateUserDisplay();
-            applyStaffBenefits();
-            alert(`🎖️ Your rank has been changed to ${data.newRank} by ${data.changedBy}`);
-            
-        });
-
+// Add this listener INSIDE your relay initialization (in initChat function):
+relay.on('rank_changed', (data) => {
+    console.log('🎖️ RANK CHANGE RECEIVED:', data);
+    
+    // Update userProfile immediately
+    userProfile.status = data.newRank;
+    saveUserProfile(userProfile);
+    
+    // Update UI immediately
+    updateUserDisplay();
+    
+    // Apply staff benefits if promoted
+    applyStaffBenefits();
+    
+    // Show notification
+    alert(`🎖️ Your rank has been changed to ${data.newRank} by ${data.changedBy}`);
+    
+    // Force a full UI refresh
+    setTimeout(() => {
+        updateUserDisplay();
+        updateCoinDisplay();
+    }, 100);
+});
         relay.on('banned', (data) => {
-            // Save ban to localStorage so it persists
-            const banData = {
-                until: data.until,
-                bannedBy: data.bannedBy,
-                reason: data.reason
-            };
-            localStorage.setItem(`_ban_${userProfile.username}`, JSON.stringify(banData));
-            
-            const daysText = data.days === 0 ? 'PERMANENTLY' : `for ${data.days} days`;
-            alert(`🚫 You have been banned ${daysText} by ${data.bannedBy}\n\nReason: ${data.reason}\n\nReloading...`);
-            
-            // Reload to trigger ban check
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
-        });
+    console.log('🚫 BAN EVENT RECEIVED:', data);
+    
+    // Save ban to localStorage with username-specific key
+    const banData = {
+        until: data.until,
+        bannedBy: data.bannedBy,
+        reason: data.reason
+    };
+    localStorage.setItem(`_ban_${userProfile.username}`, JSON.stringify(banData));
+    
+    // Show alert
+    const daysText = data.days === 0 ? 'PERMANENTLY' : `for ${data.days} days`;
+    alert(`🚫 You have been banned ${daysText} by ${data.bannedBy}\n\nReason: ${data.reason}\n\nPage will reload in 2 seconds...`);
+    
+    // Disconnect from relay
+    if (relay) {
+        relay.disconnect();
+    }
+    
+    // Reload to trigger ban screen
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
+});
 
 relay.on('muted', (data) => {
-    console.log('🔇 MUTED EVENT RECEIVED:', data);  // ← ADD THIS
+    console.log('🔇 MUTE EVENT RECEIVED:', data);
     
-    setMuteData({
+    // Save mute to localStorage with username-specific key
+    const muteData = {
         until: data.until,
         mutedBy: data.mutedBy
-    });
-    
-    console.log('🔇 Mute saved. Checking status...');  // ← ADD THIS
+    };
+    localStorage.setItem(`_mute_${userProfile.username}`, JSON.stringify(muteData));
     
     alert(`🔇 You have been muted for ${data.hours} hours by ${data.mutedBy}`);
     
-    const muteStatus = checkMuteStatus();
-    console.log('🔇 Mute status:', muteStatus);  // ← ADD THIS
-    
-    if (muteStatus.muted) {
-        const chatInput = document.getElementById('chatInput');
+    // Disable chat input
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
         chatInput.disabled = true;
-        chatInput.placeholder = `Muted for ${muteStatus.hoursRemaining} hours`;
-        
-        setTimeout(() => {
+        chatInput.placeholder = `Muted for ${data.hours} hours`;
+    }
+    
+    // Re-enable after duration
+    setTimeout(() => {
+        localStorage.removeItem(`_mute_${userProfile.username}`);
+        if (chatInput) {
             chatInput.disabled = false;
             chatInput.placeholder = 'Type a message...';
-        }, data.until - Date.now());
-    }
+        }
+        alert('🔓 Your mute has expired. You can chat again!');
+    }, data.until - Date.now());
 });
-        
-    } catch (error) {
-        console.error('Failed to connect to chat:', error);
-        addSystemMessage('Failed to connect to chat server');
-        updateConnectionStatus(false);
-    }
-}
 
 
 function updateConnectionStatus(connected) {
@@ -2849,8 +2873,6 @@ function sendChatMessage() {
     const message = input.value.trim();
     
     if (message && relay && relay.connected) {
-        console.log('Sending nametag:', userProfile.nametag.equipped);
-        
         relay.send({
             type: 'chat',
             message: message,
