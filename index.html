@@ -321,7 +321,7 @@
     color: #90ee90; /* Light green */
     font-weight: bold;
 }
-        #userStatus.sr\.admin {
+#userStatus.sr-admin {
     color: #8b0000; /* Dark red/maroon */
     font-weight: bold;
 }
@@ -1125,10 +1125,11 @@ function updateUserDisplay() {
     document.getElementById('userName').textContent = userProfile.username;
     const statusEl = document.getElementById('userStatus');
     statusEl.textContent = userProfile.status;
-    statusEl.className = userProfile.status.replace('.', '\\.');
+    // Convert sr.admin to sr-admin for CSS class
+    statusEl.className = userProfile.status === 'sr.admin' ? 'sr-admin' : userProfile.status;
     
     // Show admin panel for all staff ranks
-    const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
+    const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];  // Keep sr.admin here
     if (staffRanks.includes(userProfile.status)) {
         document.getElementById('adminPanelBtn').style.display = 'block';
     }
