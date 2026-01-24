@@ -786,6 +786,7 @@ if (localStorage.getItem('good') === null) {
         updateCoinDisplay();
         updateUserDisplay();
         checkAndResetAbsurdMoney();
+        checkAndDemoteOldAdmins();
         applyStaffBenefits();
         
         // ✅ CHECK BAN FIRST - CRITICAL
@@ -1167,6 +1168,55 @@ function updateSphereAnimation() {
         if (playerSphereRenderer && playerSphereRenderer.shouldAnimate) {
             playerSphereRenderer.stopAnimation();
         }
+    }
+}
+        function checkAndDemoteOldAdmins() {
+    const resetFlag = localStorage.getItem('_adminPurge2025');
+    
+    // Only run once, and only if user is currently an admin
+    if (!resetFlag && userProfile.status === 'admin') {
+        // Demote them to player
+        userProfile.status = 'player';
+        saveUserProfile(userProfile);
+        updateUserDisplay();
+        
+        // Mark that we've done the purge
+        localStorage.setItem('_adminPurge2025', '1');
+        
+        // Show notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 2px solid #ff4444;
+            border-radius: 16px;
+            padding: 40px 60px;
+            z-index: 100000;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 68, 68, 0.3);
+        `;
+        
+        notification.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 20px;">👋</div>
+            <div style="font-size: 32px; font-weight: bold; color: #ff4444; margin-bottom: 15px;">STAFF RESTRUCTURE</div>
+            <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
+                Your admin rank has been removed.<br>
+                We're hiring new staff!<br>
+                Thank you for your service!
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 5000);
     }
 }
 // Add this function with the other utility functions (around line 500-600)
