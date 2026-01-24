@@ -2706,29 +2706,32 @@ async function initChat() {
             }, 2000);
         });
 
-        relay.on('muted', (data) => {
-            // Save mute to localStorage
-            setMuteData({
-                until: data.until,
-                mutedBy: data.mutedBy
-            });
-            
-            alert(`🔇 You have been muted for ${data.hours} hours by ${data.mutedBy}`);
-            
-            // Disable chat input
-                        const muteStatus = checkMuteStatus();
-            if (muteStatus.muted) {
-                const chatInput = document.getElementById('chatInput');
-                chatInput.disabled = true;
-                chatInput.placeholder = `Muted for ${muteStatus.hoursRemaining} hours`;
-                
-                // Re-enable after mute expires
-                setTimeout(() => {
-                    chatInput.disabled = false;
-                    chatInput.placeholder = 'Type a message...';
-                }, data.until - Date.now());
-            }
-        });
+relay.on('muted', (data) => {
+    console.log('🔇 MUTED EVENT RECEIVED:', data);  // ← ADD THIS
+    
+    setMuteData({
+        until: data.until,
+        mutedBy: data.mutedBy
+    });
+    
+    console.log('🔇 Mute saved. Checking status...');  // ← ADD THIS
+    
+    alert(`🔇 You have been muted for ${data.hours} hours by ${data.mutedBy}`);
+    
+    const muteStatus = checkMuteStatus();
+    console.log('🔇 Mute status:', muteStatus);  // ← ADD THIS
+    
+    if (muteStatus.muted) {
+        const chatInput = document.getElementById('chatInput');
+        chatInput.disabled = true;
+        chatInput.placeholder = `Muted for ${muteStatus.hoursRemaining} hours`;
+        
+        setTimeout(() => {
+            chatInput.disabled = false;
+            chatInput.placeholder = 'Type a message...';
+        }, data.until - Date.now());
+    }
+});
         
     } catch (error) {
         console.error('Failed to connect to chat:', error);
