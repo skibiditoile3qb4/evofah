@@ -13,6 +13,7 @@ class RelayClient {
     this.reconnectDelay = 2000;
     
     // Event handlers
+// Event handlers
 this.handlers = {
   connected: [],
   disconnected: [],
@@ -22,12 +23,16 @@ this.handlers = {
   game_state_update: [],
   player_action: [],
   error: [],
-  donation: [],        // ADD THIS
-  kick: [],            // ADD THIS
-  disband: [],         // ADD THIS
-  players_update: []   // ADD THIS
+  donation: [],
+  kick: [],
+  disband: [],
+  players_update: [],
+  banned: [],           // ✅ ADD THIS
+  muted: [],            // ✅ ADD THIS
+  rank_changed: [],     // ✅ ADD THIS
+  admin_action_result: [], // ✅ ADD THIS for admin panel
+  admin_logs: []        // ✅ ADD THIS for admin panel
 };
-  }
   
   connect() {
     return new Promise((resolve, reject) => {
