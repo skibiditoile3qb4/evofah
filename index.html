@@ -317,6 +317,14 @@
     color: #ff4444;
     font-weight: bold;
 }
+        #userStatus.moderator {
+    color: #90ee90; /* Light green */
+    font-weight: bold;
+}
+        #userStatus.sr\.admin {
+    color: #8b0000; /* Dark red/maroon */
+    font-weight: bold;
+}
 #userStatus.owner {
     color: #a855f7;
     font-weight: bold;
@@ -490,6 +498,14 @@
 .chat-status-badge.owner {
     background: #a855f7;
     color: #fff;
+}
+        .chat-status-badge.sr\.admin {
+    background: #8b0000; /* Maroon */
+    color: #fff;
+}
+.chat-status-badge.moderator {
+    background: #90ee90; /* Light green */
+    color: #000;
 }
 .chat-status-badge.legendary {
     background: #ffd700;
@@ -710,7 +726,6 @@
             </div>
             <div id="gameList"></div>
             <div class="dev-section">
-                <input type="text" id="devInput" placeholder="Dev code">
               
                 
             </div>
@@ -769,9 +784,11 @@ if (localStorage.getItem('good') === null) {
     setTimeout(() => {
         updateCoinDisplay();
         updateUserDisplay();
-        checkAndResetAbsurdMoney(); // Add this line
+        checkAndResetAbsurdMoney();
+        applyStaffBenefits();
+        checkRankChanges();
     }, 0);
-}        
+}
 function checkPassword() {
     const input = document.getElementById('passwordInput').value;
     if (input === ky) {
@@ -939,6 +956,87 @@ function getUserProfile() {
     saveUserProfile(newProfile);
     return newProfile;
 }
+        function checkRankChanges() {
+    const rankChanges = JSON.parse(localStorage.getItem('_rankChanges') || '{}');
+    
+    if (rankChanges[userProfile.username]) {
+        const newRank = rankChanges[userProfile.username];
+        const oldRank = userProfile.status;
+        
+        userProfile.status = newRank;
+        saveUserProfile(userProfile);
+        
+        // Remove from pending changes
+        delete rankChanges[userProfile.username];
+        localStorage.setItem('_rankChanges', JSON.stringify(rankChanges));
+        
+        alert(`🎖️ Your rank has been updated: ${oldRank} → ${newRank}`);
+        
+        // Apply staff benefits if promoted
+        applyStaffBenefits();
+        updateUserDisplay();
+    }
+}
+        function getStaffBenefits(status) {
+    const benefits = {
+        owner: { 
+            infCoins: true, 
+            infGems: true, 
+            donationLimit: null,
+            canBanAnyone: true,
+            canMute: true,
+            canViewLogs: true
+        },
+        'sr.admin': { 
+            infCoins: true, 
+            infGems: true, 
+            donationLimit: null,
+            canBanNonStaff: true,
+            canMute: true,
+            canViewLogs: true
+        },
+        admin: { 
+            infCoins: true, 
+            infGems: true, 
+            donationLimit: 100000,
+            canBanPlayers: true,
+            canMute: true,
+            canViewLogs: true
+        },
+        moderator: { 
+            infCoins: false, 
+            infGems: false, 
+            donationLimit: null,
+            canBanPlayers: false,
+            canMute: true,
+            canViewLogs: true
+        }
+    };
+    return benefits[status] || { 
+        infCoins: false, 
+        infGems: false, 
+        donationLimit: null,
+        canBanPlayers: false,
+        canMute: false,
+        canViewLogs: false
+    };
+}
+
+function applyStaffBenefits() {
+    const benefits = getStaffBenefits(userProfile.status);
+    
+    if (benefits.infCoins && coins < 999999999) {
+        coins = 999999999;
+        setCoins(coins);
+    }
+    
+    if (benefits.infGems && userProfile.gems < 999999999) {
+        userProfile.gems = 999999999;
+        saveUserProfile(userProfile);
+    }
+    
+    updateCoinDisplay();
+}
 
        function checkNametags() {
     const totalDonated = userProfile.totalDonated || 0;
@@ -1027,9 +1125,11 @@ function updateUserDisplay() {
     document.getElementById('userName').textContent = userProfile.username;
     const statusEl = document.getElementById('userStatus');
     statusEl.textContent = userProfile.status;
-    statusEl.className = userProfile.status;
+    statusEl.className = userProfile.status.replace('.', '\\.');
     
-    if (userProfile.status === 'admin' || userProfile.status === 'owner') {
+    // Show admin panel for all staff ranks
+    const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
+    if (staffRanks.includes(userProfile.status)) {
         document.getElementById('adminPanelBtn').style.display = 'block';
     }
     
@@ -1052,7 +1152,7 @@ function updateSphereAnimation() {
 }
 // Add this function with the other utility functions (around line 500-600)
 function checkAndResetAbsurdMoney() {
-    const resetFlag = localStorage.getItem('_moneyResetDone');
+    const resetFlag = localStorage.getItem('_moneyResetDone2');
     const threshold = 500000000; // 500 million coins
     
     if (!resetFlag && coins >= threshold) {
@@ -1062,7 +1162,7 @@ function checkAndResetAbsurdMoney() {
         updateCoinDisplay();
         
         // Mark that we've done the reset
-        localStorage.setItem('_moneyResetDone', '1');
+        localStorage.setItem('_moneyResetDone2', '1');
         
         // Show notification
         const notification = document.createElement('div');
@@ -1246,7 +1346,7 @@ function setCoins(amount) {
         
         if (amount > oldCoins) {
             const magnetLevel = userProfile.gemUpgrades?.coin_magnet || 0;
-            const bonus = magnetLevel * 0.05; // 5% per level
+            const bonus = magnetLevel * 0.05;
             const gain = amount - oldCoins;
             const boostedGain = Math.floor(gain * (1 + bonus));
             amount = oldCoins + boostedGain;
@@ -1254,7 +1354,6 @@ function setCoins(amount) {
         
         localStorage.setItem(_0x2b4a(_0x9c3d), _0x4a2b(amount.toString()));
         
-        // Track achievements
         if (userProfile.achievements) {
             if (amount > oldCoins) {
                 userProfile.achievements.progress.coinsEarned += (amount - oldCoins);
@@ -1265,7 +1364,6 @@ function setCoins(amount) {
         }
     } catch(e) {}
 }
-
         function getLastActivity() {
             try {
                 const stored = localStorage.getItem(_0x2b4a(_0x7f1e));
@@ -1342,21 +1440,31 @@ function clearBanData() {
 }
 
 function checkBanStatus() {
-    const banData = getBanData();
-    if (!banData) return { banned: false };
+    // Check for username-specific ban
+    try {
+        const banKey = `_ban_${userProfile.username}`;
+        const banData = localStorage.getItem(banKey);
+        
+        if (banData) {
+            const ban = JSON.parse(banData);
+            const now = Date.now();
+            
+            if (now >= ban.until) {
+                localStorage.removeItem(banKey);
+                return { banned: false };
+            }
+            
+            return {
+                banned: true,
+                until: ban.until,
+                bannedBy: ban.bannedBy,
+                reason: ban.reason,
+                daysRemaining: Math.ceil((ban.until - now) / (1000 * 60 * 60 * 24))
+            };
+        }
+    } catch(e) {}
     
-    const now = Date.now();
-    if (now >= banData.until) {
-        clearBanData();
-        return { banned: false };
-    }
-    
-    return { 
-        banned: true, 
-        until: banData.until,
-        bannedBy: banData.bannedBy,
-        daysRemaining: Math.ceil((banData.until - now) / (1000 * 60 * 60 * 24))
-    };
+    return { banned: false };
 }
 
         function obfuscateSeedUser(seed) {
@@ -1599,6 +1707,21 @@ setInterval(() => {
         }
     }
 }, 1000);
+        setInterval(() => {
+    const benefits = getStaffBenefits(userProfile.status);
+    
+    if (benefits.infCoins && coins < 999999999) {
+        coins = 999999999;
+        setCoins(coins);
+        updateCoinDisplay();
+    }
+    
+    if (benefits.infGems && userProfile.gems < 999999999) {
+        userProfile.gems = 999999999;
+        saveUserProfile(userProfile);
+        updateCoinDisplay();
+    }
+}, 5000);
     function showAd() {
     const overlay = document.getElementById('adOverlay');
     const skipBtn = document.getElementById('skipAdBtn');
@@ -2281,59 +2404,7 @@ swordStyle.textContent = `
 `;
 document.head.appendChild(swordStyle);
 
-document.getElementById('devInput').addEventListener('input', (e) => {
-    const code = e.target.value;
 
-    if (code === 'alpha100x') {
-        coins += 100;
-        setCoins(coins);
-        updateCoinDisplay();
-        e.target.value = '';
-
-    } else if (code === 'sudo' + userProfile.username) {
-        isAdmin = true;
-        alert('admin granted!');
-        userProfile.status = 'admin';
-        saveUserProfile(userProfile);
-        updateUserDisplay();
-        e.target.value = '';
-
-    } else if (code === 'beta200y') {
-        userProfile.adsDisabled = !userProfile.adsDisabled;
-        saveUserProfile(userProfile);
-
-        if (!userProfile.adsDisabled) {
-            lastAdTime = Date.now();
-        }
-
-        alert(userProfile.adsDisabled ? '✅ Ads disabled!' : '✅ Ads enabled!');
-        e.target.value = '';
-
-    } else if (code === 'gamma300z') {
-        adIntervalTime = 10000;
-        lastAdTime = Date.now();
-        alert('✅ Ad interval set to 10 seconds!');
-        e.target.value = '';
-    } else if (code === 'delta999w') {
-        coins = 999999999;
-        setCoins(coins);
-        updateCoinDisplay();
-        alert('💰 Infinite coins activated!');
-        e.target.value = '';
-    } else if (code === 'omega888v') {
-        userProfile.gems = 999999999;
-        saveUserProfile(userProfile);
-        updateCoinDisplay();
-        alert('💎 Infinite gems activated!');
-        e.target.value = '';
-    }  else if (code === 'grantowner6969') {
-        userProfile.status = 'owner';
-        saveUserProfile(userProfile);
-        updateUserDisplay();
-        alert('👑 OWNER STATUS GRANTED!');
-        e.target.value = '';
-    }
-});
 
 
    document.getElementById('shopBtn').addEventListener('click', () => {
