@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - Evo?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .header h1 {
+            font-size: 48px;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p {
+            color: #888;
+            font-size: 16px;
+        }
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .back-btn:hover {
+            background: #252525;
+            border-color: #555;
+        }
+        .section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #10b981;
+        }
+        .section p {
+            color: #aaa;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .application-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .app-card {
+            background: #0a0a0a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .app-card:hover {
+            border-color: #10b981;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+        }
+        .app-card .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .app-card h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #10b981;
+        }
+        .app-card p {
+            font-size: 14px;
+            color: #888;
+        }
+        .qna-item {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        .qna-item:hover {
+            border-color: #555;
+        }
+        .qna-question {
+            font-size: 18px;
+            font-weight: bold;
+            color: #10b981;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .qna-answer {
+            color: #aaa;
+            line-height: 1.6;
+            display: none;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+        }
+        .qna-answer.show {
+            display: block;
+        }
+        .qna-toggle {
+            font-size: 24px;
+            transition: transform 0.3s;
+        }
+        .qna-toggle.open {
+            transform: rotate(180deg);
+        }
+        .warning {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            border: 2px solid #ff4444;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← BACK</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📧 SUPPORT CENTER</h1>
+            <p>Applications, Questions, and Help</p>
+        </div>
+
+        <!-- Applications Section -->
+        <div class="section">
+            <h2>📋 Applications</h2>
+            <p>Apply for Hall of Fame or Staff positions. All applications are reviewed carefully.</p>
+            
+            <div class="warning">
+                ⚠️ IMPORTANT: All answers must be truthful. False information will result in immediate disqualification and potential ban.
+            </div>
+            
+            <div class="application-grid">
+                <!-- Hall of Fame Application -->
+                <div class="app-card" onclick="openHOFApplication()">
+                    <div class="icon">🏆</div>
+                    <h3>Hall of Fame</h3>
+                    <p>Apply to be featured in the Hall of Fame</p>
+                </div>
+
+                <!-- Staff Application -->
+                <div class="app-card" onclick="openStaffApplication()">
+                    <div class="icon">👑</div>
+                    <h3>Staff Application</h3>
+                    <p>Apply to become a moderator or admin</p>
+                </div>
+
+                <!-- General Question -->
+                <div class="app-card" onclick="openQuestionForm()">
+                    <div class="icon">❓</div>
+                    <h3>Ask a Question</h3>
+                    <p>Get help with any issues or questions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Q&A Section -->
+        <div class="section">
+            <h2>❓ Frequently Asked Questions</h2>
+            <p>Click on a question to see the answer</p>
+
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    How do I unlock games?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    Most games cost 50 coins to unlock. Some special games require gems instead. Click on a locked game to see its unlock requirements. You earn coins by playing games (100 coins every 30 seconds) or through gambling games like Mines, Blackjack, and Poker.
+                </div>
+            </div>
+
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    What are gems and how do I get them?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    Gems are premium currency earned through the Prestige system. When you rebirth, you convert your coins into gems. Gems can be used to unlock special games, purchase exclusive cosmetics in the shop, and buy powerful upgrades like Auto Collector and Coin Magnet.
+                </div>
+            </div>
+
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    How does the Prestige system work?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    Click the "PRESTIGE ✨" button to access the rebirth system. You can convert your coins into gems at different tiers. Higher tiers give better conversion rates but require more coins. After rebirthing, your coin balance resets but you keep your gems and unlocked games.
+                </div>
+            </div>
+
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    What are nametags and how do I unlock them?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    Nametags are special badges that appear next to your username in chat. You unlock them by meeting certain requirements:
+                    <br>• DONATOR - Donate 100,000+ coins total
+                    <br>• WARHERO - Reach 1350+ ELO in Gladiators
+                    <br>• RICH - Own 50+ gems
+                    <br>• M0GGED - Receive a donation from the owner
+                    <br>• CRACKED - Play for 8+ hours total
+                    <br>• SECRET - Find the secret code (hint: try the Konami code)
+                </div>
+            </div>
+
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    What do the different ranks mean?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    <strong>Player</strong> - Default rank for all users<br>
+                    <strong>Rare</strong> - Special community members<br>
+                    <strong>Legendary</strong> - Highly active and respected players<br>
+                    <strong>Mystical</strong> - Elite players with loss protection (50% refund on losses up to 10k coins/day)<br>
+                    <strong>Moderator</strong> - Can mute players and view logs<br>
+                    <strong>Admin</strong> - Can ban players, infinite coins/gems<br>
+                    <strong>Sr. Admin</strong> - Senior staff with elevated permissions<br>
+                    <strong>Owner</strong> - Full control, cannot be banned or muted
+                </div>
+            </div>
+
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    How do cosmetics work?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    Purchase cosmetics in the Shop to customize your player sphere. Available items include colors, hats, faces, effects, and swords. Some items like the Dragon Sword provide gameplay bonuses (2x profit). Click on your profile in the top right to equip/unequip items.
+                </div>
+            </div>
+
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    What are the rules of the game?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    1. No cheating or exploiting bugs<br>
+                    2. No spam in global chat<br>
+                    3. Be respectful to other players<br>
+                    4. No sharing dev codes (will result in ban)<br>
+                    5. No harassment or toxic behavior<br>
+                    6. Staff decisions are final<br>
+                    Violations can result in mutes (chat restrictions) or bans (account restrictions).
+                </div>
+            </div>
+
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    My game is laggy or won't load. What do I do?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    Some games (especially gem-locked ones) may run slower due to their complexity. Try these solutions:<br>
+                    1. Close other tabs/programs<br>
+                    2. Refresh the page<br>
+                    3. Try a different browser (Chrome recommended)<br>
+                    4. Check your internet connection<br>
+                    5. Some games take 10-30 seconds to load - be patient<br>
+                    If problems persist, use the "Ask a Question" form to report the issue.
+                </div>
+            </div>
+        <div class="qna-item">
+    <div class="qna-question" onclick="toggleQnA(this)">
+        Is Gladiators p2w?
+        <span class="qna-toggle">▼</span>
+    </div>
+    <div class="qna-answer">
+        No. Gladiators is purely skill based. <br>
+        Swords are purely cosmetics and do not matter.
+    </div>
+</div>
+        <div class="qna-item">
+    <div class="qna-question" onclick="toggleQnA(this)">
+        My friend wants to play but doesn't have the password.
+        <span class="qna-toggle">▼</span>
+    </div>
+    <div class="qna-answer">
+        I'm sorry I cannot give your fried the password for security reasons. <br>
+        Instead, I will type it in their computer.
+    </div>
+</div>
+            <div class="qna-item">
+                <div class="qna-question" onclick="toggleQnA(this)">
+                    How do I contact the developer?
+                    <span class="qna-toggle">▼</span>
+                </div>
+                <div class="qna-answer">
+                    Use the "Ask a Question" application form above, or email directly at: <strong>jokesterman4@gmail.com</strong><br>
+                    <strong>DO NOT</strong> email the school email. All support requests should go to the Gmail address.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleQnA(element) {
+            const answer = element.nextElementSibling;
+            const toggle = element.querySelector('.qna-toggle');
+            
+            answer.classList.toggle('show');
+            toggle.classList.toggle('open');
+        }
+
+        function openHOFApplication() {
+            const subject = 'Hall of Fame Application';
+            const body = `HALL OF FAME APPLICATION
+-----------------------------------
+Please answer all questions truthfully. False information will result in disqualification.
+
+1. Username:
+[Your answer here]
+
+2. How many nametags do you own?
+[Your answer here]
+
+3. How many gems do you have?
+[Your answer here]
+
+4. How many coins do you have?
+[Your answer here]
+
+5. Anything notable about your account? (achievements, rare items, etc.)
+[Your answer here]
+
+6. Have you been banned for more than 10 days total?
+[Your answer here]
+
+7. Full name (or preferred name):
+[Your answer here]
+
+8. Age:
+[Your answer here]
+
+9. Why do you deserve to be in the Hall of Fame?
+[Your answer here]
+
+-----------------------------------
+I certify that all information provided above is truthful and accurate.`;
+
+            window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=jokesterman4@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        function openStaffApplication() {
+            const subject = 'Staff Application';
+            const body = `STAFF APPLICATION
+-----------------------------------
+Please answer all questions truthfully. False information will result in disqualification and potential ban.
+
+1. Username:
+[Your answer here]
+
+2. Have you ever been banned before? If yes, for how long and why?
+[Your answer here]
+
+3. Have you been muted more than 2 times?
+[Your answer here]
+
+4. Are you a righteous and fair person?
+[Your answer here]
+
+5. Age:
+[Your answer here]
+
+6. Full name (or preferred name):
+[Your answer here]
+
+7. Why do you want to be a staff member?
+[Your answer here]
+
+8. How much time can you dedicate to moderating?
+[Your answer here]
+
+9. How would you handle a player breaking the rules?
+[Your answer here]
+
+10. What rank are you applying for? (Moderator/Admin)
+[Your answer here]
+
+11. Do you have any prior moderation experience?
+[Your answer here]
+
+-----------------------------------
+I certify that all information provided above is truthful and accurate. I understand that staff positions require responsibility and fair treatment of all players.`;
+
+            window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=jokesterman4@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        function openQuestionForm() {
+            const subject = 'Support Question';
+            const body = `SUPPORT QUESTION
+-----------------------------------
+
+Your Username:
+[Your answer here]
+
+Your Question/Issue:
+[Describe your question or issue in detail here]
+
+Steps to Reproduce (if reporting a bug):
+[List the steps that led to the issue]
+
+Additional Information:
+[Any other relevant details]
+
+-----------------------------------
+Thank you for contacting support. We'll respond as soon as possible.`;
+
+            window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=jokesterman4@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+    </script>
+</body>
+</html>
