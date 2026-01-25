@@ -116,11 +116,7 @@ class AdminPanel {
                 this.updateConnectionStatus(false);
             });
 
-            // Listen for admin logs response
-            this.relay.on('admin_logs', (data) => {
-                console.log('📋 Admin logs received:', data);
-                this.displayLogs(data.logs);
-            });
+            
 
             console.log('✅ Admin panel fully initialized');
         } catch (error) {
@@ -181,12 +177,12 @@ class AdminPanel {
             console.log('✅ Mute button listener added');
         }
 
-        // View Logs
-        const viewLogsBtn = document.getElementById('viewLogsBtn');
-        if (viewLogsBtn) {
-            viewLogsBtn.addEventListener('click', () => this.handleViewLogs());
-            console.log('✅ View logs button listener added');
-        }
+//unban
+        const unbanBtn = document.getElementById('unbanBtn');
+if (unbanBtn) {
+    unbanBtn.addEventListener('click', () => this.handleUnban());
+    console.log('✅ Unban button listener added');
+}
         
         console.log('✅ All event listeners set up');
     }
@@ -372,49 +368,38 @@ class AdminPanel {
         document.getElementById('muteUsername').value = '';
         document.getElementById('muteHours').value = '';
     }
+handleUnban() {
+    console.log('🔓 Unban button clicked');
+    const username = document.getElementById('unbanUsername').value.trim();
 
-    handleViewLogs() {
-        console.log('📋 View logs button clicked');
-        
-        if (!this.relay || !this.relay.connected) {
-            alert('Not connected to server');
-            console.error('❌ Relay not connected');
-            return;
-        }
-
-        console.log('📤 Requesting admin logs...');
-
-        this.relay.send({
-            type: 'get_admin_logs',
-            adminUsername: this.userProfile.username,
-            adminRank: this.userProfile.status,
-            limit: 50
-        });
+    if (!username) {
+        alert('Enter a username');
+        return;
     }
 
-    displayLogs(logs) {
-        console.log('📄 Displaying logs:', logs);
-        const logDisplay = document.getElementById('logDisplay');
-        logDisplay.style.display = 'block';
-        
-        if (logs.length === 0) {
-            logDisplay.innerHTML = '<p style="color: #888;">No recent admin actions.</p>';
-            return;
-        }
-
-        let html = '<div style="font-size: 12px; color: #aaa;">';
-        logs.forEach(log => {
-            const time = new Date(log.timestamp).toLocaleTimeString();
-            html += `<div style="margin-bottom: 8px; padding: 8px; background: #1a1a1a; border-radius: 4px;">
-                <strong style="color: #d69e2e;">[${time}]</strong> 
-                <span style="color: #fff;">${log.action}</span>
-                ${log.details ? `<br><span style="color: #888;">${log.details}</span>` : ''}
-            </div>`;
-        });
-        html += '</div>';
-        
-        logDisplay.innerHTML = html;
+    if (!this.relay || !this.relay.connected) {
+        alert('Not connected to server!');
+        console.error('❌ Relay not connected');
+        return;
     }
+
+    if (!confirm(`Remove ban from ${username}?`)) {
+        return;
+    }
+
+    console.log('📤 Sending unban request:', { username });
+
+    this.relay.send({
+        type: 'admin_action',
+        action: 'unban',
+        targetUsername: username,
+        adminUsername: this.userProfile.username,
+        adminRank: this.userProfile.status
+    });
+
+    document.getElementById('unbanUsername').value = '';
+}
+  
 }
 
 // Initialize admin panel when page loads
