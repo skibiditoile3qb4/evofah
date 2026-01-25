@@ -2757,8 +2757,14 @@ async function initChat() {
         
         // ✅ REGISTER HANDLERS FIRST - BEFORE CONNECTING
         relay.on('connected', () => {
-            updateConnectionStatus(true);
-        });
+    updateConnectionStatus(true);
+});
+
+relay.on('players_update', (data) => {
+    onlineCount = data.players.length;
+    updateOnlineCount();
+});
+        
         
         relay.on('disconnected', () => {
             updateConnectionStatus(false);
@@ -2869,16 +2875,17 @@ async function initChat() {
         
         // Register remaining handlers
         relay.on('joined', (data) => {
-            addSystemMessage('Welcome to global chat!');
-            onlineCount = data.players ? data.players.length : 0;
-            updateOnlineCount();
-            
-            if (data.chatHistory && data.chatHistory.length > 0) {
-                data.chatHistory.forEach(msg => {
-                    displayChatMessage(msg, false);
-                });
-            }
+    addSystemMessage('Welcome to global chat!');
+    // +1 to account for yourself (you're always online when you see this)
+    onlineCount = data.players ? data.players.length : 1;
+    updateOnlineCount();
+    
+    if (data.chatHistory && data.chatHistory.length > 0) {
+        data.chatHistory.forEach(msg => {
+            displayChatMessage(msg, false);
         });
+    }
+});
         
         relay.on('chat_message', (data) => {
             displayChatMessage(data.message, true);
@@ -2890,16 +2897,14 @@ async function initChat() {
         });
         
         relay.on('player_joined', (data) => {
-            addSystemMessage(`${data.player.username} joined the chat`);
-            onlineCount++;
-            updateOnlineCount();
-        });
-        
-        relay.on('player_left', (data) => {
-            addSystemMessage(`${data.player.username} left the chat`);
-            onlineCount = Math.max(0, onlineCount - 1);
-            updateOnlineCount();
-        });
+    addSystemMessage(`${data.player.username} joined the chat`);
+    // Player count updated via heartbeat/players_update
+});
+
+relay.on('player_left', (data) => {
+    addSystemMessage(`${data.player.username} left the chat`);
+    // Player count updated via heartbeat/players_update
+});
         
         relay.on('donation', (data) => {
     if (data.targetUsername === userProfile.username) {
