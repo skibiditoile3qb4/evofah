@@ -1,5 +1,3 @@
-// relay-client.js - Add this file to your static site
-
 class RelayClient {
   constructor(serverUrl) {
     this.serverUrl = serverUrl;
@@ -11,6 +9,7 @@ class RelayClient {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.reconnectDelay = 2000;
+    this.heartbeatInterval = null;
     
     // Event handlers
     this.handlers = {
@@ -19,18 +18,15 @@ class RelayClient {
       chat_message: [],
       player_joined: [],
       player_left: [],
+      players_update: [],
       game_state_update: [],
       player_action: [],
-      error: [],
       donation: [],
-      kick: [],
-      disband: [],
-      players_update: [],
-      banned: [],           // ✅ ADDED
-      muted: [],            // ✅ ADDED
-      rank_changed: [],     // ✅ ADDED
-      admin_action_result: [], // ✅ ADDED
-      admin_logs: []        // ✅ ADDED
+      banned: [],
+      muted: [],
+      rank_changed: [],
+      admin_action_result: [],
+      error: []
     };
   }
   
@@ -40,13 +36,11 @@ class RelayClient {
         this.ws = new WebSocket(this.serverUrl);
         
         this.ws.onopen = () => {
-  console.log('Connected to relay server');
-  this.connected = true;
-  this.reconnectAttempts = 0;
-  
-onsole.log('starting heartbeat');
-  this.startHeartbeat();
-};
+          console.log('Connected to relay server');
+          this.connected = true;
+          this.reconnectAttempts = 0;
+          this.startHeartbeat();
+        };
         
         this.ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
@@ -63,6 +57,7 @@ onsole.log('starting heartbeat');
         this.ws.onclose = () => {
           console.log('Disconnected from relay server');
           this.connected = false;
+          this.stopHeartbeat();
           this.emit('disconnected');
           this.attemptReconnect();
         };
@@ -79,23 +74,25 @@ onsole.log('starting heartbeat');
       }
     });
   }
+  
   startHeartbeat() {
-  if (this.heartbeatInterval) {
-    clearInterval(this.heartbeatInterval);
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+    
+    this.heartbeatInterval = setInterval(() => {
+      if (this.connected && this.room) {
+        this.send({ type: 'heartbeat' });
+      }
+    }, 5000); // Every 5 seconds
   }
   
-  this.heartbeatInterval = setInterval(() => {
-    if (this.connected && this.room) {
-      this.send({ type: 'heartbeat' });
-    }
-  }, 1000); // Every 1 second
-}
   stopHeartbeat() {
-  if (this.heartbeatInterval) {
-    clearInterval(this.heartbeatInterval);
-    this.heartbeatInterval = null;
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
   }
-}
   
   attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -124,7 +121,7 @@ onsole.log('starting heartbeat');
     }
   }
   
-  // Room Management
+  // Join global chat room
   joinRoom(room, username, status) {
     this.room = room;
     this.username = username;
@@ -136,25 +133,7 @@ onsole.log('starting heartbeat');
     });
   }
   
-  leaveRoom() {
-    this.send({ type: 'leave' });
-    this.room = null;
-  }
-  
-  // Chat
-  sendChat(message) {
-    if (!this.room) {
-      console.warn('Not in a room');
-      return;
-    }
-    
-    this.send({
-      type: 'chat',
-      message
-    });
-  }
-  
-  // Game State Sync
+  // Game State Sync (for multiplayer games)
   sendGameState(state) {
     if (!this.room) {
       console.warn('Not in a room');
@@ -180,14 +159,6 @@ onsole.log('starting heartbeat');
     });
   }
   
-  // Logging
-  getLogs(limit = 100) {
-    this.send({
-      type: 'get_logs',
-      limit
-    });
-  }
-  
   // Event System
   on(event, handler) {
     if (this.handlers[event]) {
@@ -207,12 +178,12 @@ onsole.log('starting heartbeat');
     }
   }
   
- disconnect() {
-  this.stopHeartbeat();
-  if (this.ws) {
-    this.ws.close();
+  disconnect() {
+    this.stopHeartbeat();
+    if (this.ws) {
+      this.ws.close();
+    }
   }
-}
 }
 
 // Export for use in your site
