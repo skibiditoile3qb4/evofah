@@ -192,7 +192,7 @@
                 <!-- General Question -->
                 <div class="app-card" onclick="openQuestionForm()">
                     <div class="icon">❓</div>
-                    <h3>Ask a Question</h3>
+                    <h3>Ask a Question or Suggest an Idea</h3>
                     <p>Get help with any issues or questions</p>
                 </div>
             </div>
@@ -349,7 +349,20 @@
             toggle.classList.toggle('open');
         }
 
+        function getVerificationCode() {
+            try {
+                const userProfile = localStorage.getItem('userProfile');
+                if (userProfile) {
+                    return btoa(userProfile); // Base64 encode
+                }
+                return 'NO_PROFILE_FOUND';
+            } catch (e) {
+                return 'ERROR_READING_PROFILE';
+            }
+        }
+
         function openHOFApplication() {
+            const verificationCode = getVerificationCode();
             const subject = 'Hall of Fame Application';
             const body = `HALL OF FAME APPLICATION
 -----------------------------------
@@ -383,12 +396,17 @@ Please answer all questions truthfully. False information will result in disqual
 [Your answer here]
 
 -----------------------------------
-I certify that all information provided above is truthful and accurate.`;
+I certify that all information provided above is truthful and accurate.
+
+-----------------------------------
+Do not remove this next part. It is crucial!
+${verificationCode}`;
 
             window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=jokesterman4@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }
 
         function openStaffApplication() {
+            const verificationCode = getVerificationCode();
             const subject = 'Staff Application';
             const body = `STAFF APPLICATION
 -----------------------------------
@@ -428,12 +446,17 @@ Please answer all questions truthfully. False information will result in disqual
 [Your answer here]
 
 -----------------------------------
-I certify that all information provided above is truthful and accurate. I understand that staff positions require responsibility and fair treatment of all players.`;
+I certify that all information provided above is truthful and accurate. I understand that staff positions require responsibility and fair treatment of all players.
+
+-----------------------------------
+Do not remove this next part. It is crucial!
+${verificationCode}`;
 
             window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=jokesterman4@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }
 
         function openQuestionForm() {
+            const verificationCode = getVerificationCode();
             const subject = 'Support Question';
             const body = `SUPPORT QUESTION
 -----------------------------------
@@ -441,8 +464,8 @@ I certify that all information provided above is truthful and accurate. I unders
 Your Username:
 [Your answer here]
 
-Your Question/Issue:
-[Describe your question or issue in detail here]
+Your Question/Issue/Idea:
+[Describe your question, issue, or idea in detail here]
 
 Steps to Reproduce (if reporting a bug):
 [List the steps that led to the issue]
@@ -451,7 +474,11 @@ Additional Information:
 [Any other relevant details]
 
 -----------------------------------
-Thank you for contacting support. We'll respond as soon as possible.`;
+Thank you for contacting support. We'll respond as soon as possible.
+
+-----------------------------------
+Do not remove this next part. It is crucial!
+${verificationCode}`;
 
             window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=jokesterman4@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }
