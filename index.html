@@ -1240,51 +1240,65 @@ function updateSphereAnimation() {
 // Add this function with the other utility functions (around line 500-600)
 function checkAndResetAbsurdMoney() {
     const resetFlag = localStorage.getItem('_moneyResetDone2');
-    const threshold = 500000000; // 500 million coins
+    const coinThreshold = 500000000; 
+    const gemThreshold = 100000;
     
-    if (!resetFlag && coins >= threshold) {
-        // First time catching absurd money - reset it
-        coins = 10; // Reset to starting amount
-        setCoins(coins);
-        updateCoinDisplay();
+    let needsReset = false;
+    let resetMessage = '';
+    
+    if (!resetFlag) {
+        if (coins >= coinThreshold) {
+            coins = 10;
+            setCoins(coins);
+            needsReset = true;
+            resetMessage = 'Your coin balance has been reset to 10 coins.';
+        }
         
-        // Mark that we've done the reset
-        localStorage.setItem('_moneyResetDone2', '1');
+        if (userProfile.gems >= gemThreshold) {
+            userProfile.gems = 0;
+            saveUserProfile(userProfile);
+            needsReset = true;
+            resetMessage += (resetMessage ? '<br>' : '') + 'Your gem balance has been reset to 0 gems.';
+        }
         
-        // Show notification
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-            border: 2px solid #ff4444;
-            border-radius: 16px;
-            padding: 40px 60px;
-            z-index: 100000;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(255, 68, 68, 0.3);
-        `;
-        
-        notification.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-            <div style="font-size: 32px; font-weight: bold; color: #ff4444; margin-bottom: 15px;">SUSPICIOUS BALANCE DETECTED</div>
-            <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
-                Your balance has been reset to 10 coins.<br>
-                This is a one-time correction for leaked dev codes.<br>
-                Play fair and have fun!
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.animation = 'fadeOut 0.3s ease-out';
+        if (needsReset) {
+            updateCoinDisplay();
+            localStorage.setItem('_moneyResetDone2', '1');
+            
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+                border: 2px solid #ff4444;
+                border-radius: 16px;
+                padding: 40px 60px;
+                z-index: 100000;
+                text-align: center;
+                box-shadow: 0 0 50px rgba(255, 68, 68, 0.3);
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                <div style="font-size: 32px; font-weight: bold; color: #ff4444; margin-bottom: 15px;">SUSPICIOUS BALANCE DETECTED</div>
+                <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
+                    ${resetMessage}<br><br>
+                    This is a one-time correction for leaked dev codes.<br>
+                    Play fair and have fun!
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
             setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }, 5000);
+                notification.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
+        }
     }
 }
 function checkAndHandleBan() {
