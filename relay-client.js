@@ -40,10 +40,13 @@ class RelayClient {
         this.ws = new WebSocket(this.serverUrl);
         
         this.ws.onopen = () => {
-          console.log('Connected to relay server');
-          this.connected = true;
-          this.reconnectAttempts = 0;
-        };
+  console.log('Connected to relay server');
+  this.connected = true;
+  this.reconnectAttempts = 0;
+  
+onsole.log('starting heartbeat');
+  this.startHeartbeat();
+};
         
         this.ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
@@ -76,6 +79,23 @@ class RelayClient {
       }
     });
   }
+  startHeartbeat() {
+  if (this.heartbeatInterval) {
+    clearInterval(this.heartbeatInterval);
+  }
+  
+  this.heartbeatInterval = setInterval(() => {
+    if (this.connected && this.room) {
+      this.send({ type: 'heartbeat' });
+    }
+  }, 1000); // Every 1 second
+}
+  stopHeartbeat() {
+  if (this.heartbeatInterval) {
+    clearInterval(this.heartbeatInterval);
+    this.heartbeatInterval = null;
+  }
+}
   
   attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -187,11 +207,12 @@ class RelayClient {
     }
   }
   
-  disconnect() {
-    if (this.ws) {
-      this.ws.close();
-    }
+ disconnect() {
+  this.stopHeartbeat();
+  if (this.ws) {
+    this.ws.close();
   }
+}
 }
 
 // Export for use in your site
