@@ -2772,42 +2772,41 @@ relay.on('players_update', (data) => {
             updateOnlineCount();
         });
         
-        relay.on('banned', (data) => {
-            console.log('🚫 BAN EVENT RECEIVED:', data);
-            
-            // Staff ranks cannot be banned
-            const immuneRanks = ['owner', 'sr.admin', 'admin'];
-            if (immuneRanks.includes(userProfile.status)) {
-                console.log('Staff member is immune to bans');
-                return;
-            }
-            
-            console.log('Current username:', userProfile.username);
-            console.log('Saving ban to key:', `_ban_${userProfile.username}`);
-            
-            const banData = {
-                until: data.until,
-                bannedBy: data.bannedBy,
-                reason: data.reason || 'No reason provided'
-            };
-            
-            try {
-                localStorage.setItem(`_ban_${userProfile.username}`, JSON.stringify(banData));
-                console.log('✅ Ban saved to localStorage:', banData);
-            } catch(e) {
-                console.error('❌ Failed to save ban:', e);
-            }
-            
-            if (relay) {
-                relay.disconnect();
-            }
-            
-            alert(`🚫 You have been banned ${data.days === 0 ? 'PERMANENTLY' : 'for ' + data.days + ' days'} by ${data.bannedBy}\n\nReason: ${data.reason}\n\nPage will reload in 2 seconds...`);
-            
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
-        });
+       relay.on('banned', (data) => {
+    console.log('🚫 BAN EVENT RECEIVED:', data);
+    
+
+    if (userProfile.status === 'owner') {
+        console.log('Owner is immune to bans');
+        return;
+    }
+    
+    console.log('Current username:', userProfile.username);
+    console.log('Saving ban to key:', `_ban_${userProfile.username}`);
+    
+    const banData = {
+        until: data.until,
+        bannedBy: data.bannedBy,
+        reason: data.reason || 'No reason provided'
+    };
+    
+    try {
+        localStorage.setItem(`_ban_${userProfile.username}`, JSON.stringify(banData));
+        console.log('✅ Ban saved to localStorage:', banData);
+    } catch(e) {
+        console.error('❌ Failed to save ban:', e);
+    }
+    
+    if (relay) {
+        relay.disconnect();
+    }
+    
+    alert(`🚫 You have been banned ${data.days === 0 ? 'PERMANENTLY' : 'for ' + data.days + ' days'} by ${data.bannedBy}\n\nReason: ${data.reason}\n\nPage will reload in 2 seconds...`);
+    
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
+});;
         
         relay.on('unbanned', (data) => {
     console.log('🔓 UNBAN EVENT RECEIVED:', data);
