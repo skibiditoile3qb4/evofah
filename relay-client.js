@@ -26,6 +26,7 @@ class RelayClient {
       muted: [],
       rank_changed: [],
       admin_action_result: [],
+      unbanned: [],
       error: []
     };
   }
