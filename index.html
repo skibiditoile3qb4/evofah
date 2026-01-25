@@ -693,6 +693,19 @@
     0%, 100% { box-shadow: 0 0 5px rgba(255, 107, 0, 0.5); }
     50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8); }
 }
+        #requestPasswordBtn {
+    padding: 16px 32px;
+    border: 1px solid #059669;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+#requestPasswordBtn:hover {
+    background: #059669 !important;
+    border-color: #047857 !important;
+}
     </style>
     <script src="PlayerSphere.js"></script>
     <script src="relay-client.js"></script>
@@ -703,6 +716,7 @@
         <input type="password" id="passwordInput" placeholder="Enter password...">
         <button id="unlockBtn">UNLOCK</button>
         <div class="error-message" id="errorMessage">Incorrect password</div>
+        <button id="requestPasswordBtn" style="margin-top: 20px; background: #10b981; border-color: #059669;">REQUEST PASSWORD 📧</button>
     </div>
 
     <div id="mainView">
@@ -2448,6 +2462,43 @@ function backToMain() {
 
         document.getElementById('gladiatorsBtn').addEventListener('click', () => {
     loadGame('gladiators');
+});
+        document.getElementById('requestPasswordBtn').addEventListener('click', () => {
+    const subject = 'Password Request';
+    const body = `PASSWORD REQUEST
+-----------------------------------
+I am requesting access to Evo? and agree to follow all rules.
+
+1. Full Name (or preferred name):
+[Your answer here]
+
+2. Age:
+[Your answer here]
+
+3. Will you follow ALL rules? (No cheating, exploiting, spam, harassment, sharing dev codes)
+[Yes/No]
+
+4. Will you keep the password confidential and NOT share it with anyone?
+[Yes/No]
+
+5. Have you read and understood the rules in the Support section?
+[Yes/No]
+
+6. Which periods are you available for me to come type your password in person?
+Please list ALL available periods with:
+- Period number
+- Class name
+- Room number/location
+- Teacher name
+
+Example: Period 3 - Math - Room 204 - Mr. Smith
+
+[Your answer here - list ALL available periods]
+
+-----------------------------------
+I certify that all information provided above is truthful and accurate. I understand that violating any rules will result in immediate account termination.`;
+
+    window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=jokesterman4@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 });
 
 window.addEventListener('message', (event) => {
