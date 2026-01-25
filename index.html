@@ -2808,6 +2808,29 @@ relay.on('players_update', (data) => {
                 location.reload();
             }, 2000);
         });
+        
+        relay.on('unbanned', (data) => {
+    console.log('🔓 UNBAN EVENT RECEIVED:', data);
+    
+    // Clear ban from localStorage
+    const banKey = `_ban_${userProfile.username}`;
+    localStorage.removeItem(banKey);
+    
+    alert(`🔓 Your ban has been removed by ${data.unbannedBy}\n\nYou can now use all features again!`);
+    
+    // Remove ban screen if it exists
+    const banScreen = document.getElementById('banScreen');
+    if (banScreen) {
+        banScreen.remove();
+    }
+    
+    // Re-enable chat if it was disabled
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.disabled = false;
+        chatInput.placeholder = 'Type a message...';
+    }
+});
 
  relay.on('muted', (data) => {
             console.log('🔇 MUTE EVENT RECEIVED:', data);
