@@ -130,6 +130,45 @@
             100% { opacity: 0; transform: translateY(-80px); }
         }
         .critical-hit { color: #ffd700; font-size: 36px; }
+        .dash-afterimage {
+    position: absolute; width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; pointer-events: none; z-index: 5;
+    animation: fadeOut 0.5s ease-out forwards;
+}
+@keyframes fadeOut {
+    0% { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.7); }
+}
+
+#dashCooldown {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 120px; z-index: 100;
+}
+#dashIcon {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; border: 3px solid #a78bfa;
+    position: relative; cursor: pointer;
+    transition: transform 0.2s;
+}
+#dashIcon:hover { transform: scale(1.1); }
+#dashIcon.ready { animation: pulse 1.5s infinite; }
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px #8b5cf6; }
+    50% { box-shadow: 0 0 40px #a78bfa; }
+}
+#dashCooldownOverlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7); border-radius: 50%;
+    clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%);
+    transition: clip-path 0.1s linear;
+}
+#dashCooldownText {
+    position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; font-weight: bold; color: #888; white-space: nowrap;
+}
         .weak-hit { color: #666; font-size: 20px; }
         
         #battleInfo {
@@ -163,9 +202,12 @@
         </div>
         
         <div id="queueStatus">
-            <button id="findMatchBtn" onclick="toggleQueue()">FIND MATCH</button>
-            <div id="queueMessage"></div>
-        </div>
+    <button id="findMatchBtn" onclick="toggleQueue()">FIND MATCH</button>
+    <div id="queueMessage"></div>
+    <div style="margin-top: 15px; font-size: 14px; color: #888;">
+        Players in queue: <span id="queueCount" style="color: #ffd700; font-weight: bold;">0</span>
+    </div>
+</div>
         
         <div id="leaderboard">
             <h3 style="margin-bottom: 15px; text-align: center;">Top Players</h3>
@@ -180,13 +222,21 @@
             
             <div class="arena-box"></div>
             
-            <div id="attackMeter">
-                <div id="meterLabel">Swing Power</div>
-                <div id="meterBar">
-                    <div id="meterFill"></div>
-                </div>
-                <div id="attackInstruction">Arrow Keys or WASD to move • Click to attack when close</div>
-            </div>
+           <div id="attackMeter">
+    <div id="meterLabel">Swing Power</div>
+    <div id="meterBar">
+        <div id="meterFill"></div>
+    </div>
+    <div id="attackInstruction">Arrow Keys or WASD to move • Click to attack when close • SPACE to dash</div>
+</div>
+
+<div id="dashCooldown">
+    <div id="dashIcon">
+        ⚡
+        <div id="dashCooldownOverlay"></div>
+    </div>
+    <div id="dashCooldownText">READY</div>
+</div>
         </div>
     </div>
     
@@ -204,7 +254,10 @@
         const ATTACK_CHARGE_TIME = 2500;
         const PLAYER_SPEED = 3;
         const ATTACK_RANGE = 80;
-        const K_FACTOR = 80;
+        const K_FACTOR = 60;
+        const DASH_COOLDOWN = 3000; 
+        const DASH_DISTANCE = 200;
+        const DASH_SPEED = 20;
         
         let relay, userProfile, myPlayerId;
         let myElo = 1000;
@@ -222,7 +275,11 @@
         let positionUpdateInterval = null;
         let heartbeatInterval = null;
         let leaderboardUpdateInterval = null;
-
+        let dashCooldownRemaining = 0;
+        let dashCooldownTimer = null;
+        let isDashing = false;
+        let mouseX = 0;
+        let mouseY = 0;
               function loadUserProfile() {
             try {
                 const stored = localStorage.getItem('userProfile');
@@ -327,6 +384,10 @@
                 
                 relay.on('player_action', (data) => handlePlayerAction(data));
                 
+                relay.on('queue_count', (data) => {
+    document.getElementById('queueCount').textContent = data.count || 0;
+});
+                
                 startHeartbeat();
                 startLeaderboardUpdates();
                 
@@ -336,18 +397,23 @@
             }
         }
 
-        function startHeartbeat() {
-            heartbeatInterval = setInterval(() => {
-                if (relay && relay.connected) {
-                    relay.send({ 
-                        type: 'heartbeat',
-                        elo: myElo,
-                        inQueue: inQueue,
-                        inMatch: !!currentMatch
-                    });
-                }
-            }, 3000);
+       function startHeartbeat() {
+    heartbeatInterval = setInterval(() => {
+        if (relay && relay.connected) {
+            relay.send({ 
+                type: 'heartbeat',
+                elo: myElo,
+                inQueue: inQueue,
+                inMatch: !!currentMatch
+            });
+            
+            // Request queue count
+            if (!currentMatch) {
+                relay.send({ type: 'get_queue_count' });
+            }
         }
+    }, 3000);
+}
 
         function startLeaderboardUpdates() {
             leaderboardUpdateInterval = setInterval(() => {
@@ -437,9 +503,15 @@
             } else if (action === 'match_end' && currentMatch) {
                 if (data.playerId === currentMatch.opponentId) {
                     receiveMatchEnd(data.actionData);
-                }
             }
-        }
+                
+            }else if (action === 'dash' && currentMatch) {
+    if (data.playerId === currentMatch.opponentId) {
+        handleOpponentDash(data.actionData, data.playerId);
+            }
+            }
+            }
+        
 
         function startMatch(opponentId, opponentData) {
             inQueue = false;
@@ -537,6 +609,11 @@
             
             startGameLoop();
             startPositionUpdates();
+            dashCooldownRemaining = 0;
+    if (dashCooldownTimer) clearInterval(dashCooldownTimer);
+    document.getElementById('dashCooldownOverlay').style.clipPath = 'polygon(50% 50%, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%)';
+    document.getElementById('dashCooldownText').textContent = 'READY';
+    document.getElementById('dashIcon').classList.add('ready');
         }
 
         function createPlayerElement(username, color, x, y) {
@@ -570,26 +647,164 @@
             element.style.left = (centerX + x - 20) + 'px';
             element.style.top = (centerY + y - 20) + 'px';
         }
-
-        function startGameLoop() {
-            document.removeEventListener('keydown', handleKeyDown);
-            document.removeEventListener('keyup', handleKeyUp);
-            document.removeEventListener('click', handleAttack);
-            
-            document.addEventListener('keydown', handleKeyDown);
-            document.addEventListener('keyup', handleKeyUp);
-            document.addEventListener('click', handleAttack);
-            
-            meterCharge = 0;
-            canAttack = true;
-            isCharging = false;
-            
-            requestAnimationFrame(gameLoop);
+function performDash() {
+    if (isDashing || dashCooldownRemaining > 0 || !currentMatch) return;
+    
+    const myData = players.get(relay.clientId);
+    if (!myData) return;
+    
+    // Calculate direction toward mouse
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const playerScreenX = centerX + myData.x;
+    const playerScreenY = centerY + myData.y;
+    
+    const dx = mouseX - playerScreenX;
+    const dy = mouseY - playerScreenY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 10) return; // Don't dash if mouse too close
+    
+    const normalizedDx = dx / distance;
+    const normalizedDy = dy / distance;
+    
+    isDashing = true;
+    
+    // Create afterimages
+    const playerColor = '#3b82f6';
+    const afterimageCount = 5;
+    
+    for (let i = 0; i < afterimageCount; i++) {
+        setTimeout(() => {
+            createAfterimage(myData.x, myData.y, playerColor);
+        }, i * 20);
+    }
+    
+    // Perform dash movement
+    const dashSteps = 10;
+    let step = 0;
+    
+    const dashInterval = setInterval(() => {
+        if (step >= dashSteps || !currentMatch) {
+            clearInterval(dashInterval);
+            isDashing = false;
+            startDashCooldown();
+            return;
         }
+        
+        const stepDistance = DASH_DISTANCE / dashSteps;
+        const newX = myData.x + (normalizedDx * stepDistance);
+        const newY = myData.y + (normalizedDy * stepDistance);
+        
+        const maxX = window.innerWidth / 2 - 60;
+        const maxY = window.innerHeight / 2 - 100;
+        
+        if (Math.abs(newX) < maxX && Math.abs(newY) < maxY) {
+            myData.x = newX;
+            myData.y = newY;
+            updatePlayerPosition(myData.element, myData.x, myData.y);
+        }
+        
+        step++;
+    }, 20);
+    
+    // Broadcast dash to opponent
+    relay.sendPlayerAction('dash', {
+        startX: myData.x,
+        startY: myData.y,
+        directionX: normalizedDx,
+        directionY: normalizedDy
+    });
+}
+
+function createAfterimage(x, y, color) {
+    const afterimage = document.createElement('div');
+    afterimage.className = 'dash-afterimage';
+    afterimage.style.background = color;
+    afterimage.textContent = '⚔️';
+    
+    updatePlayerPosition(afterimage, x, y);
+    document.getElementById('battleArena').appendChild(afterimage);
+    
+    setTimeout(() => afterimage.remove(), 500);
+}
+
+function startDashCooldown() {
+    dashCooldownRemaining = DASH_COOLDOWN;
+    
+    const overlay = document.getElementById('dashCooldownOverlay');
+    const text = document.getElementById('dashCooldownText');
+    const icon = document.getElementById('dashIcon');
+    
+    icon.classList.remove('ready');
+    
+    if (dashCooldownTimer) clearInterval(dashCooldownTimer);
+    
+    dashCooldownTimer = setInterval(() => {
+        dashCooldownRemaining -= 100;
+        
+        if (dashCooldownRemaining <= 0) {
+            dashCooldownRemaining = 0;
+            clearInterval(dashCooldownTimer);
+            overlay.style.clipPath = 'polygon(50% 50%, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%)';
+            text.textContent = 'READY';
+            icon.classList.add('ready');
+        } else {
+            const progress = 1 - (dashCooldownRemaining / DASH_COOLDOWN);
+            const angle = progress * 360;
+            overlay.style.clipPath = getClipPath(angle);
+            text.textContent = (dashCooldownRemaining / 1000).toFixed(1) + 's';
+        }
+    }, 100);
+}
+
+function getClipPath(angle) {
+    const rad = (angle - 90) * Math.PI / 180;
+    const x = 50 + 50 * Math.cos(rad);
+    const y = 50 + 50 * Math.sin(rad);
+    
+    if (angle <= 90) {
+        return `polygon(50% 50%, 50% 0%, ${x}% ${y}%)`;
+    } else if (angle <= 180) {
+        return `polygon(50% 50%, 50% 0%, 100% 0%, ${x}% ${y}%)`;
+    } else if (angle <= 270) {
+        return `polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, ${x}% ${y}%)`;
+    } else {
+        return `polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, ${x}% ${y}%)`;
+    }
+}
+       function startGameLoop() {
+    document.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('keyup', handleKeyUp);
+    document.removeEventListener('click', handleAttack);
+    document.removeEventListener('mousemove', handleMouseMove); // NEW
+    
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    document.addEventListener('click', handleAttack);
+    document.addEventListener('mousemove', handleMouseMove); // NEW
+    
+    meterCharge = 0;
+    canAttack = true;
+    isCharging = false;
+    
+    requestAnimationFrame(gameLoop);
+}
+
+// NEW FUNCTION - Add after startGameLoop
+function handleMouseMove(e) {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+}
 
         function handleKeyDown(e) {
-            keys[e.key] = true;
-        }
+    keys[e.key] = true;
+    
+    if (e.key === ' ' && !isDashing && dashCooldownRemaining === 0 && currentMatch) {
+        e.preventDefault();
+        performDash();
+    }
+}
 
         function handleKeyUp(e) {
             keys[e.key] = false;
@@ -754,6 +969,18 @@
                 }
             }
         }
+        function handleOpponentDash(dashData, playerId) {
+    const playerData = players.get(playerId);
+    if (!playerData) return;
+    
+    // Create afterimages for opponent
+    const opponentColor = '#ef4444';
+    for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+            createAfterimage(playerData.x, playerData.y, opponentColor);
+        }, i * 20);
+    }
+}
 
         function showSwordSwing(playerElement) {
             const swing = document.createElement('div');
