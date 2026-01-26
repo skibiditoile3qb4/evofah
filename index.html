@@ -742,6 +742,16 @@
     border: 1px solid #4a5568;
     text-shadow: 0 0 8px rgba(104, 211, 145, 0.3);
 }
+        .chat-nametag-badge.freebird {
+    background: linear-gradient(135deg, #87ceeb 0%, #1e90ff 100%);
+    color: #fff;
+    animation: freebirdglow 2s ease-in-out infinite alternate;
+}
+
+@keyframes freebirdglow {
+    from { box-shadow: 0 0 5px rgba(30, 144, 255, 0.5); }
+    to { box-shadow: 0 0 15px rgba(135, 206, 235, 0.8); }
+}
         #requestPasswordBtn {
     padding: 16px 32px;
     border: 1px solid #059669;
@@ -1132,6 +1142,9 @@ function applyStaffBenefits() {
 }
 
        function checkNametags() {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
     const totalDonated = userProfile.totalDonated || 0;
     const gladiatorElo = parseInt(localStorage.getItem('gladiator_elo') || '1000');
     const currentGems = userProfile.gems || 0;
@@ -1200,6 +1213,12 @@ function applyStaffBenefits() {
         saveUserProfile(userProfile);
         alert('🧟 Nametag Unlocked: ROTTED');
     }
+           
+if (isWeekend && !userProfile.nametag.unlocked.includes('freebird')) {
+    userProfile.nametag.unlocked.push('freebird');
+    saveUserProfile(userProfile);
+    alert('🕊️ Nametag Unlocked: FREEBIRD');
+}
            
 }
         
