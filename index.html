@@ -1136,6 +1136,9 @@ function applyStaffBenefits() {
     const gladiatorElo = parseInt(localStorage.getItem('gladiator_elo') || '1000');
     const currentGems = userProfile.gems || 0;
     const ownerDonationReceived = localStorage.getItem('_receivedOwnerDonation_' + userProfile.username) === '1';
+    const totalRebirths = userProfile.rebirthData?.totalRebirths || 0; // ← ADD THIS LINE
+    const playedSprunki1999 = localStorage.getItem('_played_sprunki-1999') === '1'; // ← ADD THIS LINE TOO
+    const totalHours = totalActiveTime / 3600; // Convert seconds to hours
 
     // DONATOR - 100k+ donated
     if (totalDonated >= 100000 && !userProfile.nametag.unlocked.includes('donator')) {
@@ -1164,7 +1167,7 @@ function applyStaffBenefits() {
         saveUserProfile(userProfile);
         alert('👑 Nametag Unlocked: M0GGED');
     }
-    const totalHours = totalActiveTime / 3600; // Convert seconds to hours
+    
     if (totalHours >= 8 && !userProfile.nametag.unlocked.includes('cracked')) {
         userProfile.nametag.unlocked.push('cracked');
         saveUserProfile(userProfile);
