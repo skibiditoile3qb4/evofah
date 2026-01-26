@@ -27,6 +27,7 @@ class RelayClient {
       rank_changed: [],
       admin_action_result: [],
       unbanned: [],
+      queue_count: [],
       error: []
     };
   }
