@@ -1250,8 +1250,9 @@ function updateSphereAnimation() {
             }, 300);
         }, 5000);
     }
+    localStorage.setItem('_adminPurge2025', '1');
 }
-// Add this function with the other utility functions (around line 500-600)
+
 function checkAndResetAbsurdMoney() {
     const resetFlag = localStorage.getItem('_moneyResetDone2');
     const coinThreshold = 500000000; 
@@ -1277,7 +1278,7 @@ function checkAndResetAbsurdMoney() {
         
         if (needsReset) {
             updateCoinDisplay();
-            localStorage.setItem('_moneyResetDone2', '1');
+            
             
             const notification = document.createElement('div');
             notification.style.cssText = `
@@ -1313,6 +1314,7 @@ function checkAndResetAbsurdMoney() {
                 }, 300);
             }, 5000);
         }
+        localStorage.setItem('_moneyResetDone2', '1');
     }
 }
 function checkAndHandleBan() {
