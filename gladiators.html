@@ -142,32 +142,49 @@
 }
 
 #dashCooldown {
-    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-    width: 120px; height: 120px; z-index: 100;
+    position: fixed; right: 30px; top: 50%; transform: translateY(-50%);
+    width: 60px; z-index: 100;
+}
+#dashLabel {
+    text-align: center; margin-bottom: 8px; font-size: 14px; font-weight: bold;
+    color: #a78bfa;
 }
 #dashIcon {
-    width: 100%; height: 100%; border-radius: 50%;
+    width: 60px; height: 60px; border-radius: 50%;
     background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
     display: flex; align-items: center; justify-content: center;
-    font-size: 48px; border: 3px solid #a78bfa;
-    position: relative; cursor: pointer;
-    transition: transform 0.2s;
+    font-size: 32px; border: 3px solid #a78bfa;
+    margin: 0 auto 12px;
+    transition: all 0.2s;
 }
-#dashIcon:hover { transform: scale(1.1); }
-#dashIcon.ready { animation: pulse 1.5s infinite; }
+#dashIcon.ready { 
+    animation: pulse 1.5s infinite;
+    cursor: pointer;
+}
+#dashIcon.ready:hover { transform: scale(1.1); }
 @keyframes pulse {
     0%, 100% { box-shadow: 0 0 20px #8b5cf6; }
     50% { box-shadow: 0 0 40px #a78bfa; }
 }
-#dashCooldownOverlay {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.7); border-radius: 50%;
-    clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%);
-    transition: clip-path 0.1s linear;
+#dashIcon.cooling {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+#dashBarContainer {
+    width: 100%; height: 200px; background: rgba(26, 26, 26, 0.85);
+    border: 2px solid rgba(51, 51, 51, 0.8); border-radius: 12px;
+    overflow: hidden; position: relative;
+    backdrop-filter: blur(4px);
+}
+#dashBarFill {
+    width: 100%; height: 0%; background: linear-gradient(180deg, #8b5cf6 0%, #6366f1 100%);
+    position: absolute; bottom: 0; left: 0;
+    transition: height 0.1s linear;
 }
 #dashCooldownText {
-    position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
-    font-size: 12px; font-weight: bold; color: #888; white-space: nowrap;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 18px; font-weight: bold; color: #fff;
+    text-shadow: 0 0 8px rgba(0,0,0,0.8); z-index: 1;
 }
         .weak-hit { color: #666; font-size: 20px; }
         
@@ -231,11 +248,12 @@
 </div>
 
 <div id="dashCooldown">
-    <div id="dashIcon">
-        ⚡
-        <div id="dashCooldownOverlay"></div>
+    <div id="dashLabel">DASH</div>
+    <div id="dashIcon" class="ready">⚡</div>
+    <div id="dashBarContainer">
+        <div id="dashBarFill"></div>
+        <div id="dashCooldownText">READY</div>
     </div>
-    <div id="dashCooldownText">READY</div>
 </div>
         </div>
     </div>
@@ -732,11 +750,12 @@ function createAfterimage(x, y, color) {
 function startDashCooldown() {
     dashCooldownRemaining = DASH_COOLDOWN;
     
-    const overlay = document.getElementById('dashCooldownOverlay');
+    const barFill = document.getElementById('dashBarFill');
     const text = document.getElementById('dashCooldownText');
     const icon = document.getElementById('dashIcon');
     
     icon.classList.remove('ready');
+    icon.classList.add('cooling');
     
     if (dashCooldownTimer) clearInterval(dashCooldownTimer);
     
@@ -746,33 +765,18 @@ function startDashCooldown() {
         if (dashCooldownRemaining <= 0) {
             dashCooldownRemaining = 0;
             clearInterval(dashCooldownTimer);
-            overlay.style.clipPath = 'polygon(50% 50%, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%)';
+            barFill.style.height = '100%';
             text.textContent = 'READY';
+            icon.classList.remove('cooling');
             icon.classList.add('ready');
         } else {
             const progress = 1 - (dashCooldownRemaining / DASH_COOLDOWN);
-            const angle = progress * 360;
-            overlay.style.clipPath = getClipPath(angle);
+            barFill.style.height = (progress * 100) + '%';
             text.textContent = (dashCooldownRemaining / 1000).toFixed(1) + 's';
         }
     }, 100);
 }
 
-function getClipPath(angle) {
-    const rad = (angle - 90) * Math.PI / 180;
-    const x = 50 + 50 * Math.cos(rad);
-    const y = 50 + 50 * Math.sin(rad);
-    
-    if (angle <= 90) {
-        return `polygon(50% 50%, 50% 0%, ${x}% ${y}%)`;
-    } else if (angle <= 180) {
-        return `polygon(50% 50%, 50% 0%, 100% 0%, ${x}% ${y}%)`;
-    } else if (angle <= 270) {
-        return `polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, ${x}% ${y}%)`;
-    } else {
-        return `polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, ${x}% ${y}%)`;
-    }
-}
        function startGameLoop() {
     document.removeEventListener('keydown', handleKeyDown);
     document.removeEventListener('keyup', handleKeyUp);
