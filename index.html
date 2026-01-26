@@ -693,6 +693,55 @@
     0%, 100% { box-shadow: 0 0 5px rgba(255, 107, 0, 0.5); }
     50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8); }
 }
+
+.chat-nametag-badge.cosmic {
+    background: linear-gradient(135deg, #1a0033 0%, #330066 25%, #6600cc 50%, #9933ff 75%, #cc66ff 100%);
+    color: #fff;
+    animation: cosmicSwirl 3s infinite linear;
+    background-size: 200% 200%;
+}
+@keyframes cosmicSwirl {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+
+.chat-nametag-badge.bloodlust {
+    background: linear-gradient(180deg, #8b0000 0%, #dc143c 50%, #8b0000 100%);
+    color: #fff;
+    animation: bloodDrip 2s infinite;
+}
+@keyframes bloodDrip {
+    0%, 100% { 
+        box-shadow: 0 2px 5px rgba(139, 0, 0, 0.5);
+    }
+    50% { 
+        box-shadow: 0 4px 15px rgba(220, 20, 60, 0.9), 0 8px 25px rgba(139, 0, 0, 0.6);
+    }
+}
+
+
+.chat-nametag-badge.diamond {
+    background: linear-gradient(135deg, #b9f2ff 0%, #00d4ff 50%, #0080ff 100%);
+    color: #000;
+    font-weight: bold;
+    animation: diamondShimmer 2s infinite;
+}
+@keyframes diamondShimmer {
+    0% { box-shadow: 0 0 5px rgba(0, 212, 255, 0.5); filter: hue-rotate(0deg); }
+    25% { box-shadow: 0 0 15px rgba(185, 242, 255, 0.8); filter: hue-rotate(90deg); }
+    50% { box-shadow: 0 0 5px rgba(0, 128, 255, 0.5); filter: hue-rotate(180deg); }
+    75% { box-shadow: 0 0 15px rgba(0, 212, 255, 0.8); filter: hue-rotate(270deg); }
+    100% { box-shadow: 0 0 5px rgba(185, 242, 255, 0.5); filter: hue-rotate(360deg); }
+}
+
+.chat-nametag-badge.rotted {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    color: #68d391;
+    border: 1px solid #4a5568;
+    text-shadow: 0 0 8px rgba(104, 211, 145, 0.3);
+}
         #requestPasswordBtn {
     padding: 16px 32px;
     border: 1px solid #059669;
@@ -1120,6 +1169,33 @@ function applyStaffBenefits() {
         userProfile.nametag.unlocked.push('cracked');
         saveUserProfile(userProfile);
         alert('🔥 Nametag Unlocked: CRACKED');
+    }
+   
+    if (totalRebirths >= 10 && !userProfile.nametag.unlocked.includes('cosmic')) {
+        userProfile.nametag.unlocked.push('cosmic');
+        saveUserProfile(userProfile);
+        alert('🌌 Nametag Unlocked: COSMIC');
+    }
+    
+    
+    if (gladiatorElo >= 1500 && !userProfile.nametag.unlocked.includes('bloodlust')) {
+        userProfile.nametag.unlocked.push('bloodlust');
+        saveUserProfile(userProfile);
+        alert('🩸 Nametag Unlocked: BLOODLUST');
+    }
+    
+    
+    if (currentGems >= 200 && totalDonated >= 500000 && !userProfile.nametag.unlocked.includes('diamond')) {
+        userProfile.nametag.unlocked.push('diamond');
+        saveUserProfile(userProfile);
+        alert('💎 Nametag Unlocked: DIAMOND');
+    }
+    
+   
+    if (playedSprunki1999 && !userProfile.nametag.unlocked.includes('rotted')) {
+        userProfile.nametag.unlocked.push('rotted');
+        saveUserProfile(userProfile);
+        alert('🧟 Nametag Unlocked: ROTTED');
     }
            
 }
@@ -2118,7 +2194,10 @@ setInterval(() => {
 function loadGame(game) {
     document.getElementById('mainView').style.display = 'none';
     document.getElementById('gameView').style.display = 'block';
-    
+       if (game === 'sprunki-1999') {
+        localStorage.setItem('_played_sprunki-1999', '1');
+        checkNametags(); // Check immediately
+    }
     // Handle FNAW custom game
     if (game === 'fnaw') {
         document.getElementById('gameFrame').src = 'https://manscod.github.io/other/fnaw';
