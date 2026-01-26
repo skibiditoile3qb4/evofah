@@ -752,6 +752,80 @@
     from { box-shadow: 0 0 5px rgba(30, 144, 255, 0.5); }
     to { box-shadow: 0 0 15px rgba(135, 206, 235, 0.8); }
 }
+        /* CELESTIAL - Starry cosmic effect */
+.chat-nametag-badge.celestial {
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    animation: celestialGlow 3s ease-in-out infinite;
+}
+
+.chat-nametag-badge.celestial::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: celestialShine 2s infinite;
+}
+
+@keyframes celestialGlow {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(138, 43, 226, 0.5), inset 0 0 10px rgba(138, 43, 226, 0.2);
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(138, 43, 226, 0.8), inset 0 0 15px rgba(138, 43, 226, 0.4);
+    }
+}
+
+@keyframes celestialShine {
+    0% { left: -100%; }
+    100% { left: 200%; }
+}
+
+/* ETHEREAL - Ghostly spectral effect */
+.chat-nametag-badge.ethereal {
+    background: linear-gradient(135deg, rgba(230, 230, 250, 0.3) 0%, rgba(221, 160, 221, 0.3) 100%);
+    color: #e6e6fa;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(230, 230, 250, 0.5);
+    animation: etherealFloat 3s ease-in-out infinite, etherealFade 2s ease-in-out infinite alternate;
+    text-shadow: 0 0 8px rgba(230, 230, 250, 0.8);
+}
+
+@keyframes etherealFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes etherealFade {
+    0% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* PRISMATIC - Rainbow refraction effect */
+.chat-nametag-badge.prismatic {
+    background: linear-gradient(135deg, #ff0000 0%, #ff7f00 14%, #ffff00 28%, #00ff00 42%, #0000ff 57%, #4b0082 71%, #9400d3 85%, #ff0000 100%);
+    background-size: 200% 200%;
+    color: #fff;
+    font-weight: bold;
+    animation: prismaticShift 3s linear infinite, prismaticGlow 1.5s ease-in-out infinite alternate;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+    border: 2px solid #fff;
+}
+
+@keyframes prismaticShift {
+    0% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+    100% { background-position: 200% 50%; filter: hue-rotate(360deg); }
+}
+
+@keyframes prismaticGlow {
+    from { box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+    to { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+}
         #requestPasswordBtn {
     padding: 16px 32px;
     border: 1px solid #059669;
@@ -1219,6 +1293,27 @@ if (isWeekend && !userProfile.nametag.unlocked.includes('freebird')) {
     saveUserProfile(userProfile);
     alert('🕊️ Nametag Unlocked: FREEBIRD');
 }
+            if (totalRebirths >= 20 && !userProfile.nametag.unlocked.includes('celestial')) {
+        userProfile.nametag.unlocked.push('celestial');
+        saveUserProfile(userProfile);
+        alert('✨ Nametag Unlocked: CELESTIAL');
+    }
+    
+    // ETHEREAL - Play at exactly 3:00 AM
+    const currentHour = now.getHours();
+    if (currentHour === 3 && !userProfile.nametag.unlocked.includes('ethereal')) {
+        userProfile.nametag.unlocked.push('ethereal');
+        saveUserProfile(userProfile);
+        alert('👻 Nametag Unlocked: ETHEREAL - The witching hour favors you...');
+    }
+    
+    // PRISMATIC - Collect 1 billion coins total
+    const totalCoinsEarned = userProfile.achievements?.progress?.coinsEarned || 0;
+    if (totalCoinsEarned >= 1000000000 && !userProfile.nametag.unlocked.includes('prismatic')) {
+        userProfile.nametag.unlocked.push('prismatic');
+        saveUserProfile(userProfile);
+        alert('🌈 Nametag Unlocked: PRISMATIC - Master of Wealth!');
+    }
            
 }
         
