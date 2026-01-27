@@ -260,7 +260,7 @@
                         <div class="diff-desc">Simple AI, spams attacks</div>
                     </div>
                     <div class="difficulty-btn" onclick="selectDifficulty('medium')">
-                        <div class="diff-name">😐 CRACKED</div>
+                        <div class="diff-name">😐 medium dummy</div>
                         <div class="diff-desc">Waits for full charge</div>
                     </div>
                     <div class="difficulty-btn" onclick="selectDifficulty('hard')">
@@ -1033,63 +1033,66 @@
             }
         }
         
-        function mediumBotAI(botId, playerId) {
-            const bot = players.get(botId);
-            const player = players.get(playerId);
-            
-            if (!bot || !player) return;
-            
-            const distance = Math.sqrt(
-                Math.pow(bot.x - player.x, 2) + 
-                Math.pow(bot.y - player.y, 2)
-            );
-            
-            const dx = player.x - bot.x;
-            const dy = player.y - bot.y;
-            const magnitude = Math.sqrt(dx * dx + dy * dy);
-            
-            // Move toward player but maintain distance - VERY SLOW
-            if (distance > 110) {
-                bot.x += (dx / magnitude) * (PLAYER_SPEED); // Even slower
-                bot.y += (dy / magnitude) * (PLAYER_SPEED);
-                updatePlayerPosition(bot.element, bot.x, bot.y);
-            } else if (distance < 90) {
-                bot.x -= (dx / magnitude) * (PLAYER_SPEED);
-                bot.y -= (dy / magnitude) * (PLAYER_SPEED);
-                updatePlayerPosition(bot.element, bot.x, bot.y);
+function mediumBotAI(botId, playerId) {
+    const bot = players.get(botId);
+    const player = players.get(playerId);
+    
+    if (!bot || !player) return;
+    
+    const distance = Math.sqrt(
+        Math.pow(bot.x - player.x, 2) + 
+        Math.pow(bot.y - player.y, 2)
+    );
+    
+    const dx = player.x - bot.x;
+    const dy = player.y - bot.y;
+    const magnitude = Math.sqrt(dx * dx + dy * dy);
+    
+    // Simple chase - just move toward player when far, no backward movement BS
+    if (distance > ATTACK_RANGE + 10) {
+        bot.x += (dx / magnitude) * (PLAYER_SPEED * 0.7); // Slower than easy bot
+        bot.y += (dy / magnitude) * (PLAYER_SPEED * 0.7);
+        updatePlayerPosition(bot.element, bot.x, bot.y);
+    }
+    // Only back up if TOO close (inside attack range)
+    else if (distance < ATTACK_RANGE - 20) {
+        bot.x -= (dx / magnitude) * (PLAYER_SPEED * 0.5); // Slow retreat
+        bot.y -= (dy / magnitude) * (PLAYER_SPEED * 0.5);
+        updatePlayerPosition(bot.element, bot.x, bot.y);
+    }
+    // Otherwise just stay put in attack range
+    
+    // Makes TONS of mistakes - attacks anywhere from 55-100%, usually low
+    const targetCharge = Math.random() > 0.3 ? (55 + Math.random() * 35) : 100;
+    
+    if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
+        setTimeout(() => {
+            if (players.get(botId)) {
+                botAttack(botId, playerId);
             }
-            
-            // Makes TONS of mistakes - attacks anywhere from 55-100%, usually low
-            const targetCharge = Math.random() > 0.3 ? (55 + Math.random() * 35) : 100;
-            
-            if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
-                setTimeout(() => {
-                    if (players.get(botId)) {
-                        botAttack(botId, playerId);
-                    }
-                }, 450); // Even slower reaction (was 400ms)
-            }
-            
-            // Defensive dash - rarely happens
-            if (player.charge >= 92 && distance < 80 && bot.dashReady && Math.random() > 0.85) {
-                setTimeout(() => {
-                    if (!players.get(botId)?.dashReady) return;
-                    const dashX = bot.x - (dx / magnitude) * DASH_DISTANCE;
-                    const dashY = bot.y - (dy / magnitude) * DASH_DISTANCE;
-                    botDash(botId, dashX, dashY);
-                }, 450);
-            }
-            
-            // Offensive dash - almost never
-            if (player.charge < 30 && distance > 160 && bot.charge >= 60 && bot.dashReady && Math.random() > 0.92) {
-                setTimeout(() => {
-                    if (!players.get(botId)?.dashReady) return;
-                    const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-                    const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-                    botDash(botId, dashX, dashY);
-                }, 450);
-            }
-        }
+        }, 450); // Slow reaction
+    }
+    
+    // Defensive dash - rarely happens
+    if (meterCharge >= 92 && distance < 80 && bot.dashReady && Math.random() > 0.85) {
+        setTimeout(() => {
+            if (!players.get(botId)?.dashReady) return;
+            const dashX = bot.x - (dx / magnitude) * DASH_DISTANCE;
+            const dashY = bot.y - (dy / magnitude) * DASH_DISTANCE;
+            botDash(botId, dashX, dashY);
+        }, 450);
+    }
+    
+    // Offensive dash - almost never
+    if (meterCharge < 30 && distance > 160 && bot.charge >= 60 && bot.dashReady && Math.random() > 0.92) {
+        setTimeout(() => {
+            if (!players.get(botId)?.dashReady) return;
+            const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
+            const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
+            botDash(botId, dashX, dashY);
+        }, 450);
+    }
+}
         
      function hardBotAI(botId, playerId) {
     const bot = players.get(botId);
