@@ -1091,79 +1091,70 @@
             }
         }
         
-        function hardBotAI(botId, playerId) {
-            const bot = players.get(botId);
-            const player = players.get(playerId);
-            
-            if (!bot || !player) return;
-            
-            const distance = Math.sqrt(
-                Math.pow(bot.x - player.x, 2) + 
-                Math.pow(bot.y - player.y, 2)
-            );
-            
-            const dx = player.x - bot.x;
-            const dy = player.y - bot.y;
-            const magnitude = Math.sqrt(dx * dx + dy * dy);
-            
-            // Perfect positioning at 65-75 units (sweet spot) - FAST movement
-            if (distance > 75) {
-                bot.x += (dx / magnitude) * PLAYER_SPEED * 1; // Faster than you
-                bot.y += (dy / magnitude) * PLAYER_SPEED * 1;
-            } else if (distance < 65) {
-                bot.x -= (dx / magnitude) * PLAYER_SPEED * 1;
-                bot.y -= (dy / magnitude) * PLAYER_SPEED * 1;
-            } else {
-                // Strafe unpredictably in sweet spot
-                const perpX = -dy / magnitude;
-                const perpY = dx / magnitude;
-                const direction = Math.sin(Date.now() / 200) > 0 ? 1 : -1;
-                bot.x += perpX * PLAYER_SPEED * direction;
-                bot.y += perpY * PLAYER_SPEED * direction;
-            }
-            updatePlayerPosition(bot.element, bot.x, bot.y);
-            
-            // INSTANT ATTACK at 90-95% (wider window so it doesn't miss)
-            if (distance <= ATTACK_RANGE && bot.charge >= 90 && bot.canAttack) {
-    botAttack(botId, playerId);
-    // Always does 3 post-crit spams
-    bot.postCritCount = 3;
-}
-            
-            // Post-crit spam mode - INSTANT, NO DELAY (wider window)
-            if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 70 && distance <= ATTACK_RANGE && bot.canAttack) {
-                botAttack(botId, playerId);
-                bot.postCritCount--;
-            }
-            
-            // Defensive dash - INSTANT, very aggressive (80% chance)
-            if (player.charge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
-                const perpX = -dy / magnitude;
-                const perpY = dx / magnitude;
-                const direction = Math.random() > 0.5 ? 1 : -1;
-                const dashX = bot.x + perpX * DASH_DISTANCE * direction;
-                const dashY = bot.y + perpY * DASH_DISTANCE * direction;
-                botDash(botId, dashX, dashY);
-            }
-            
-            // Offensive dash - INSTANT, very aggressive (70% chance)
-            if (player.charge < 65 && distance > 120 && bot.charge >= 88 && bot.dashReady && Math.random() > 0.3) {
-                // Predict player position
-                const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-                const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-                botDash(botId, dashX, dashY);
-            }
-            
-            // Exploit player dash cooldown - INSTANT spam during vulnerability
-            if (dashCooldownRemaining > 0 && distance <= ATTACK_RANGE && bot.charge >= 50 && bot.canAttack) {
-                botAttack(botId, playerId);
-            }
-            
-            // VERY aggressive - if player is low HP, spam faster
-            if (myHealth < 40 && distance <= ATTACK_RANGE && bot.charge >= 50 && bot.canAttack) {
-                botAttack(botId, playerId);
-            }
+      function hardBotAI(botId, playerId) {
+    const bot = players.get(botId);
+    const player = players.get(playerId);
+    
+    if (!bot || !player) return;
+    
+    const distance = Math.sqrt(
+        Math.pow(bot.x - player.x, 2) + 
+        Math.pow(bot.y - player.y, 2)
+    );
+    
+    const dx = player.x - bot.x;
+    const dy = player.y - bot.y;
+    const magnitude = Math.sqrt(dx * dx + dy * dy);
+    
+    // Perfect positioning at 65-75 units (sweet spot) - FAST movement
+    if (distance > 75) {
+        bot.x += (dx / magnitude) * PLAYER_SPEED * 1.15; // Faster than you
+        bot.y += (dy / magnitude) * PLAYER_SPEED * 1.15;
+    } else if (distance < 65) {
+        bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.15;
+        bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.15;
+    } else {
+        // Strafe unpredictably in sweet spot
+        const perpX = -dy / magnitude;
+        const perpY = dx / magnitude;
+        const direction = Math.sin(Date.now() / 200) > 0 ? 1 : -1;
+        bot.x += perpX * PLAYER_SPEED * direction;
+        bot.y += perpY * PLAYER_SPEED * direction;
+    }
+    updatePlayerPosition(bot.element, bot.x, bot.y);
+    
+    // ALWAYS wait for 90%+ crit (disciplined)
+    if (distance <= ATTACK_RANGE && bot.charge >= 90 && bot.canAttack) {
+        botAttack(botId, playerId);
+        bot.postCritCount = 1; // Only 1 spam allowed
+    }
+    
+    // Single spam if player is running away (distance increasing)
+    if (bot.postCritCount > 0 && bot.charge >= 50 && distance <= ATTACK_RANGE && bot.canAttack) {
+        // Only spam if player seems to be retreating
+        if (distance > 70) {
+            botAttack(botId, playerId);
+            bot.postCritCount = 0; // No more spams
         }
+    }
+    
+    // Defensive dash - INSTANT, very aggressive (80% chance)
+    if (meterCharge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
+        const perpX = -dy / magnitude;
+        const perpY = dx / magnitude;
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        const dashX = bot.x + perpX * DASH_DISTANCE * direction;
+        const dashY = bot.y + perpY * DASH_DISTANCE * direction;
+        botDash(botId, dashX, dashY);
+    }
+    
+    // Offensive dash - INSTANT, very aggressive (70% chance)
+    if (meterCharge < 65 && distance > 120 && bot.charge >= 88 && bot.dashReady && Math.random() > 0.3) {
+        const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
+        const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
+        botDash(botId, dashX, dashY);
+    }
+}
         
         function botAttack(botId, playerId) {
             if (!currentMatch) return; // Don't attack if match ended
