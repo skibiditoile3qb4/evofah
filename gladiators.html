@@ -1230,21 +1230,22 @@ function mediumBotAI(botId, playerId) {
         return;
     }
     
-    // Single spam after crit
-    const timeSinceAttack = Date.now() - (bot.lastAttackTime || 0);
-    if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 65 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 1000) {
-        if (distance > 70) {
-            botAttack(botId, playerId);
-            bot.postCritCount = 0;
-            setTimeout(() => {
-                if (bot.dashReady && players.get(botId)) {
-                    const escapeX = bot.x - (dx / magnitude) * DASH_DISTANCE;
-                    const escapeY = bot.y - (dy / magnitude) * DASH_DISTANCE;
-                    botDash(botId, escapeX, escapeY);
-                }
-            }, 100);
+
+const timeSinceAttack = Date.now() - (bot.lastAttackTime || 0);
+if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 70 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 1000) {
+    // Spam regardless of distance, then escape
+    botAttack(botId, playerId);
+    bot.postCritCount = 0;
+    
+    // IMMEDIATELY DASH AWAY after spam
+    setTimeout(() => {
+        if (bot.dashReady && players.get(botId)) {
+            const escapeX = bot.x - (dx / magnitude) * DASH_DISTANCE;
+            const escapeY = bot.y - (dy / magnitude) * DASH_DISTANCE;
+            botDash(botId, escapeX, escapeY);
         }
-    }
+    }, 100);
+}
     
     // Defensive dash - when player is charged up
     if (meterCharge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
