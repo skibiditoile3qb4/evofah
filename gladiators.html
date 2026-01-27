@@ -1001,8 +1001,8 @@
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
-            // Attack when charge is 50%+ (doesn't wait, spams early attacks)
-            if (distance <= ATTACK_RANGE && bot.charge >= 50 && bot.canAttack) {
+            // Attack when charge is 45%+ (doesn't wait, spams early attacks)
+            if (distance <= ATTACK_RANGE && bot.charge >= 45 && bot.canAttack) {
                 botAttack(botId, playerId);
             }
             
@@ -1112,15 +1112,15 @@
             }
             updatePlayerPosition(bot.element, bot.x, bot.y);
             
-            // INSTANT ATTACK at exactly 90% (NO DELAY!)
-            if (distance <= ATTACK_RANGE && bot.charge >= 90 && bot.charge <= 91 && bot.canAttack) {
-                botAttack(botId, playerId);
-                // Always does 3 post-crit spams
-                bot.postCritCount = 3;
-            }
+            // INSTANT ATTACK at 90-95% (wider window so it doesn't miss)
+            if (distance <= ATTACK_RANGE && bot.charge >= 90 && bot.canAttack) {
+    botAttack(botId, playerId);
+    // Always does 3 post-crit spams
+    bot.postCritCount = 3;
+}
             
-            // Post-crit spam mode - INSTANT, NO DELAY
-            if (bot.postCritCount > 0 && bot.charge >= 55 && bot.charge <= 65 && distance <= ATTACK_RANGE && bot.canAttack) {
+            // Post-crit spam mode - INSTANT, NO DELAY (wider window)
+            if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 70 && distance <= ATTACK_RANGE && bot.canAttack) {
                 botAttack(botId, playerId);
                 bot.postCritCount--;
             }
@@ -1144,7 +1144,7 @@
             }
             
             // Exploit player dash cooldown - INSTANT spam during vulnerability
-            if (dashCooldownRemaining > 0 && distance <= ATTACK_RANGE && bot.charge >= 55 && bot.canAttack) {
+            if (dashCooldownRemaining > 0 && distance <= ATTACK_RANGE && bot.charge >= 50 && bot.canAttack) {
                 botAttack(botId, playerId);
             }
             
@@ -1180,13 +1180,17 @@
             updateHealth(playerId, player.health);
             showDamageNumber(damage, hitType, player.element);
             
+            // Reset charge and set cooldown
             bot.charge = 0;
             bot.canAttack = false;
+            
+            // Natural cooldown - same as charge time (2.5 seconds for full charge)
+            // Small cooldown to prevent instant re-attack
             setTimeout(() => {
                 if (players.get(botId)) {
                     players.get(botId).canAttack = true;
                 }
-            }, 100);
+            }, 200); // Small delay before can attack again (charge still needs to build)
             
             if (player.health <= 0 && currentMatch) { // Check match still exists
                 endMatch(false, false);
