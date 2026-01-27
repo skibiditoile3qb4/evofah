@@ -1131,7 +1131,7 @@ function mediumBotAI(botId, playerId) {
     }
 }
         
-   function hardBotAI(botId, playerId) {
+  function hardBotAI(botId, playerId) {
     const bot = players.get(botId);
     const player = players.get(playerId);
     
@@ -1154,17 +1154,24 @@ function mediumBotAI(botId, playerId) {
     const theirPotentialDamage = Math.floor((meterCharge / 100) * 25);
     const theyCanKillUs = theirPotentialDamage >= bot.health;
     
-    // MUCH simpler impatience - just count frames at medium distance
-    if (!bot.impatientCounter) bot.impatientCounter = 0;
-    
-    if (distance > 50 && distance < 100) {
-        bot.impatientCounter++;
-    } else {
-        bot.impatientCounter = 0;
+    // Track player's last position
+    if (!bot.playerLastPos) {
+        bot.playerLastPos = { x: player.x, y: player.y, time: Date.now() };
     }
     
-    // Get impatient after just 60 frames (~1 second at 60fps)
-    const isImpatient = bot.impatientCounter > 60;
+    const timeSinceCheck = Date.now() - bot.playerLastPos.time;
+    if (timeSinceCheck > 500) { // Check every 500ms
+        const playerMoved = Math.sqrt(
+            Math.pow(player.x - bot.playerLastPos.x, 2) + 
+            Math.pow(player.y - bot.playerLastPos.y, 2)
+        );
+        
+        // If player barely moved (less than 20 units in 500ms), they're camping
+        const isPlayerCamping = playerMoved < 20;
+        
+        bot.playerLastPos = { x: player.x, y: player.y, time: Date.now() };
+        bot.isPlayerCamping = isPlayerCamping;
+    }
     
     // SURVIVAL MODE: If they can kill us and we're in range, DASH AWAY immediately
     if (theyCanKillUs && meterCharge >= 85 && distance < 100 && bot.dashReady) {
@@ -1174,17 +1181,16 @@ function mediumBotAI(botId, playerId) {
         const dashX = bot.x + perpX * DASH_DISTANCE * direction - (dx / magnitude) * 50;
         const dashY = bot.y + perpY * DASH_DISTANCE * direction - (dy / magnitude) * 50;
         botDash(botId, dashX, dashY);
-        bot.impatientCounter = 0;
         return;
     }
     
-    // When impatient, ALWAYS RUSH FORWARD no matter what
-    if (isImpatient) {
+    // If player is camping, ALWAYS RUSH regardless of charge
+    if (bot.isPlayerCamping && distance > ATTACK_RANGE) {
         bot.x += (dx / magnitude) * PLAYER_SPEED;
         bot.y += (dy / magnitude) * PLAYER_SPEED;
         updatePlayerPosition(bot.element, bot.x, bot.y);
     } else {
-        // Normal positioning when not impatient
+        // Normal positioning
         let targetDistance = 70;
         if (meterCharge >= 85) {
             targetDistance = 100;
@@ -1212,17 +1218,15 @@ function mediumBotAI(botId, playerId) {
     if (canKillNow && distance <= ATTACK_RANGE && bot.canAttack) {
         botAttack(botId, playerId);
         bot.postCritCount = 0;
-        bot.impatientCounter = 0;
         return;
     }
     
-    // When impatient, attack at 70%+. Otherwise wait for 90%+
-    const critThreshold = isImpatient ? 70 : 90;
+    // Attack at 70% if player is camping, otherwise 90%
+    const critThreshold = bot.isPlayerCamping ? 70 : 90;
     if (distance <= ATTACK_RANGE && bot.charge >= critThreshold && bot.canAttack) {
         botAttack(botId, playerId);
         bot.postCritCount = 1;
         bot.lastAttackTime = Date.now();
-        bot.impatientCounter = 0;
         return;
     }
     
@@ -1250,16 +1254,14 @@ function mediumBotAI(botId, playerId) {
         const dashX = bot.x + perpX * DASH_DISTANCE * direction;
         const dashY = bot.y + perpY * DASH_DISTANCE * direction;
         botDash(botId, dashX, dashY);
-        bot.impatientCounter = 0;
     }
     
-    // Offensive dash - when impatient OR when you're weak
+    // Offensive dash - when player is weak OR player is camping
     if ((meterCharge < 65 && distance > 120 && bot.charge >= 88 && Math.random() > 0.3) ||
-        (isImpatient && bot.charge >= 60 && distance > 70 && bot.dashReady)) {
+        (bot.isPlayerCamping && bot.charge >= 60 && distance > 80 && bot.dashReady)) {
         const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
         const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
         botDash(botId, dashX, dashY);
-        bot.impatientCounter = 0;
     }
 }
         
