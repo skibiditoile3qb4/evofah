@@ -1145,7 +1145,8 @@ function mediumBotAI(botId, playerId) {
     const dx = player.x - bot.x;
     const dy = player.y - bot.y;
     const magnitude = Math.sqrt(dx * dx + dy * dy);
-      if (bot.isRetreating && Date.now() < bot.retreatUntil) {
+    // If retreating after spam, RUN AWAY but still attack if possible
+if (bot.isRetreating && Date.now() < bot.retreatUntil) {
     const newX = bot.x - (dx / magnitude) * PLAYER_SPEED;
     const newY = bot.y - (dy / magnitude) * PLAYER_SPEED;
     
@@ -1161,9 +1162,15 @@ function mediumBotAI(botId, playerId) {
         // Hit a wall, stop retreating
         bot.isRetreating = false;
     }
+    
+    // WHILE RETREATING, still spam if in range and charged!
+    if (distance <= ATTACK_RANGE && bot.charge >= 20 && bot.canAttack) {
+        botAttack(botId, playerId);
+    }
+    
     return; // Don't do any other AI logic while running
 }
-bot.isRetreating = false; // Stop retreating after time runs out
+bot.isRetreating = false;
     
     
     // Calculate if we can finish them with current charge
