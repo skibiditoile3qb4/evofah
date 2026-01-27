@@ -1257,24 +1257,7 @@ function mediumBotAI(botId, playerId) {
         }
     }
 }
-    
-    // Defensive dash - when player is charged up
-    if (meterCharge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
-        const perpX = -dy / magnitude;
-        const perpY = dx / magnitude;
-        const direction = Math.random() > 0.5 ? 1 : -1;
-        const dashX = bot.x + perpX * DASH_DISTANCE * direction;
-        const dashY = bot.y + perpY * DASH_DISTANCE * direction;
-        botDash(botId, dashX, dashY);
-    }
-    
-    // Offensive dash - when player is weak and we're charged
-    if (meterCharge < 65 && distance > 120 && bot.charge >= 88 && bot.dashReady && Math.random() > 0.3) {
-        const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-        const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-        botDash(botId, dashX, dashY);
-    }
-}
+  
         
         function botAttack(botId, playerId) {
             if (!currentMatch) return; // Don't attack if match ended
