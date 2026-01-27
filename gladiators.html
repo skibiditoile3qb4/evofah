@@ -970,14 +970,25 @@
         // BOT AI FUNCTIONS
         
         function updateBotCharge(botId) {
-            const bot = players.get(botId);
-            if (!bot || !bot.isBot) return;
-            
-            if (bot.canAttack && bot.charge < 100) {
-                bot.charge += (100 / (ATTACK_CHARGE_TIME / 50));
-                if (bot.charge > 100) bot.charge = 100;
-            }
-        }
+    const bot = players.get(botId);
+    if (!bot || !bot.isBot) return;
+    
+    if (bot.canAttack && bot.charge < 100) {
+        // Match player charge rate exactly - 2% every 50ms
+        // Since gameLoop runs faster, we need to account for actual time passed
+        const now = Date.now();
+        if (!bot.lastChargeUpdate) bot.lastChargeUpdate = now;
+        
+        const timePassed = now - bot.lastChargeUpdate;
+        bot.charge += (timePassed / ATTACK_CHARGE_TIME) * 100;
+        bot.lastChargeUpdate = now;
+        
+        if (bot.charge > 100) bot.charge = 100;
+    } else if (!bot.canAttack) {
+        // Reset charge timer when can't attack
+        bot.lastChargeUpdate = Date.now();
+    }
+}
         
         function easyBotAI(botId, playerId) {
             const bot = players.get(botId);
@@ -1002,7 +1013,7 @@
             }
             
             // Attack when charge is 45%+ (doesn't wait, spams early attacks)
-            if (distance <= ATTACK_RANGE && bot.charge >= 45 && bot.canAttack) {
+            if (distance <= ATTACK_RANGE && bot.charge >= 10 && bot.canAttack) {
                 botAttack(botId, playerId);
             }
             
