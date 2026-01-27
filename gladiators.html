@@ -1091,7 +1091,7 @@
             }
         }
         
-      function hardBotAI(botId, playerId) {
+     function hardBotAI(botId, playerId) {
     const bot = players.get(botId);
     const player = players.get(playerId);
     
@@ -1106,13 +1106,39 @@
     const dy = player.y - bot.y;
     const magnitude = Math.sqrt(dx * dx + dy * dy);
     
-    // Perfect positioning at 65-75 units (sweet spot) - FAST movement
-    if (distance > 75) {
-        bot.x += (dx / magnitude) * PLAYER_SPEED; // Faster than you
-        bot.y += (dy / magnitude) * PLAYER_SPEED;
-    } else if (distance < 65) {
-        bot.x -= (dx / magnitude) * PLAYER_SPEED;
-        bot.y -= (dy / magnitude) * PLAYER_SPEED;
+    // Calculate if we can finish them with current charge
+    const myPotentialDamage = Math.floor((bot.charge / 100) * 25);
+    const canKillNow = myPotentialDamage >= myHealth;
+    
+    // Calculate if they can kill us with their current charge
+    const theirPotentialDamage = Math.floor((meterCharge / 100) * 25);
+    const theyCanKillUs = theirPotentialDamage >= bot.health;
+    
+    // SURVIVAL MODE: If they can kill us and we're in range, DASH AWAY immediately
+    if (theyCanKillUs && meterCharge >= 85 && distance < 100 && bot.dashReady) {
+        const perpX = -dy / magnitude;
+        const perpY = dx / magnitude;
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        const dashX = bot.x + perpX * DASH_DISTANCE * direction - (dx / magnitude) * 50;
+        const dashY = bot.y + perpY * DASH_DISTANCE * direction - (dy / magnitude) * 50;
+        botDash(botId, dashX, dashY);
+        return; // Don't do anything else this frame
+    }
+    
+    // Perfect positioning - but adjust based on their charge
+    let targetDistance = 70; // Default sweet spot
+    if (meterCharge >= 85) {
+        targetDistance = 100; // Stay further when they're charged
+    } else if (meterCharge < 30) {
+        targetDistance = 65; // Get closer when they're weak
+    }
+    
+    if (distance > targetDistance + 5) {
+        bot.x += (dx / magnitude) * PLAYER_SPEED * 1.15;
+        bot.y += (dy / magnitude) * PLAYER_SPEED * 1.15;
+    } else if (distance < targetDistance - 5) {
+        bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.15;
+        bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.15;
     } else {
         // Strafe unpredictably in sweet spot
         const perpX = -dy / magnitude;
@@ -1123,22 +1149,39 @@
     }
     updatePlayerPosition(bot.element, bot.x, bot.y);
     
-    // ALWAYS wait for 90%+ crit (disciplined)
+    // PRIORITY: Finish them if we can!
+    if (canKillNow && distance <= ATTACK_RANGE && bot.canAttack) {
+        botAttack(botId, playerId);
+        bot.postCritCount = 0; // Reset spam counter
+        return;
+    }
+    
+    // ALWAYS wait for 90%+ crit (disciplined) - unless finishing
     if (distance <= ATTACK_RANGE && bot.charge >= 90 && bot.canAttack) {
         botAttack(botId, playerId);
         bot.postCritCount = 1; // Only 1 spam allowed
+        bot.lastAttackTime = Date.now(); // Track when we attacked
+        return;
     }
     
-    // Single spam if player is running away (distance increasing)
-    if (bot.postCritCount > 0 && bot.charge >= 50 && distance <= ATTACK_RANGE && bot.canAttack) {
-        // Only spam if player seems to be retreating
-        if (distance > 70) {
+    // Single spam ONLY if: player is running away AND we just attacked recently
+    const timeSinceAttack = Date.now() - (bot.lastAttackTime || 0);
+    if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 65 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 1000) {
+        if (distance > 70) { // Player retreating
             botAttack(botId, playerId);
-            bot.postCritCount = 0; // No more spams
+            bot.postCritCount = 0;
+            // IMMEDIATELY DASH AWAY after spam (your suggestion!)
+            setTimeout(() => {
+                if (bot.dashReady && players.get(botId)) {
+                    const escapeX = bot.x - (dx / magnitude) * DASH_DISTANCE;
+                    const escapeY = bot.y - (dy / magnitude) * DASH_DISTANCE;
+                    botDash(botId, escapeX, escapeY);
+                }
+            }, 100);
         }
     }
     
-    // Defensive dash - INSTANT, very aggressive (80% chance)
+    // Defensive dash - when player is charged up
     if (meterCharge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
         const perpX = -dy / magnitude;
         const perpY = dx / magnitude;
@@ -1148,7 +1191,7 @@
         botDash(botId, dashX, dashY);
     }
     
-    // Offensive dash - INSTANT, very aggressive (70% chance)
+    // Offensive dash - when player is weak and we're charged
     if (meterCharge < 65 && distance > 120 && bot.charge >= 88 && bot.dashReady && Math.random() > 0.3) {
         const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
         const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
