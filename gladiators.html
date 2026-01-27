@@ -1001,8 +1001,8 @@
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
-            // Attack when charge is 50-70% (weak/medium damage, never crits)
-            if (distance <= ATTACK_RANGE && bot.charge >= 50 && bot.charge <= 70 && bot.canAttack) {
+            // Attack when charge is 50%+ (doesn't wait, spams early attacks)
+            if (distance <= ATTACK_RANGE && bot.charge >= 50 && bot.canAttack) {
                 botAttack(botId, playerId);
             }
             
@@ -1037,46 +1037,46 @@
             const dy = player.y - bot.y;
             const magnitude = Math.sqrt(dx * dx + dy * dy);
             
-            // Move toward player but maintain distance
-            if (distance > 90) {
-                bot.x += (dx / magnitude) * PLAYER_SPEED;
-                bot.y += (dy / magnitude) * PLAYER_SPEED;
+            // Move toward player but maintain distance - VERY SLOW
+            if (distance > 110) {
+                bot.x += (dx / magnitude) * (PLAYER_SPEED * 0.85); // Even slower
+                bot.y += (dy / magnitude) * (PLAYER_SPEED * 0.85);
                 updatePlayerPosition(bot.element, bot.x, bot.y);
-            } else if (distance < 70) {
-                bot.x -= (dx / magnitude) * PLAYER_SPEED;
-                bot.y -= (dy / magnitude) * PLAYER_SPEED;
+            } else if (distance < 90) {
+                bot.x -= (dx / magnitude) * (PLAYER_SPEED * 0.85);
+                bot.y -= (dy / magnitude) * (PLAYER_SPEED * 0.85);
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
-            // Waits for full charge but makes mistakes (70-100%)
-            const targetCharge = Math.random() > 0.6 ? (70 + Math.random() * 20) : 100;
+            // Makes TONS of mistakes - attacks anywhere from 55-100%, usually low
+            const targetCharge = Math.random() > 0.3 ? (55 + Math.random() * 35) : 100;
             
             if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
                 setTimeout(() => {
                     if (players.get(botId)) {
                         botAttack(botId, playerId);
                     }
-                }, 350); // Slower reaction
+                }, 450); // Even slower reaction (was 400ms)
             }
             
-            // Defensive dash - less frequent
-            if (player.charge >= 85 && distance < 90 && bot.dashReady && Math.random() > 0.6) {
+            // Defensive dash - rarely happens
+            if (player.charge >= 92 && distance < 80 && bot.dashReady && Math.random() > 0.85) {
                 setTimeout(() => {
                     if (!players.get(botId)?.dashReady) return;
                     const dashX = bot.x - (dx / magnitude) * DASH_DISTANCE;
                     const dashY = bot.y - (dy / magnitude) * DASH_DISTANCE;
                     botDash(botId, dashX, dashY);
-                }, 350);
+                }, 450);
             }
             
-            // Offensive dash - rarely and with bad timing
-            if (player.charge < 50 && distance > 140 && bot.charge >= 70 && bot.dashReady && Math.random() > 0.8) {
+            // Offensive dash - almost never
+            if (player.charge < 30 && distance > 160 && bot.charge >= 60 && bot.dashReady && Math.random() > 0.92) {
                 setTimeout(() => {
                     if (!players.get(botId)?.dashReady) return;
                     const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
                     const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
                     botDash(botId, dashX, dashY);
-                }, 350);
+                }, 450);
             }
         }
         
@@ -1095,13 +1095,13 @@
             const dy = player.y - bot.y;
             const magnitude = Math.sqrt(dx * dx + dy * dy);
             
-            // Perfect positioning at 65-75 units (sweet spot)
+            // Perfect positioning at 65-75 units (sweet spot) - FAST movement
             if (distance > 75) {
-                bot.x += (dx / magnitude) * PLAYER_SPEED * 1.1; // Slightly faster
-                bot.y += (dy / magnitude) * PLAYER_SPEED * 1.1;
+                bot.x += (dx / magnitude) * PLAYER_SPEED * 1.15; // Faster than you
+                bot.y += (dy / magnitude) * PLAYER_SPEED * 1.15;
             } else if (distance < 65) {
-                bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.1;
-                bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.1;
+                bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.15;
+                bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.15;
             } else {
                 // Strafe unpredictably in sweet spot
                 const perpX = -dy / magnitude;
@@ -1112,52 +1112,45 @@
             }
             updatePlayerPosition(bot.element, bot.x, bot.y);
             
-            // ALWAYS attack at exactly 90% (perfect DPS)
+            // INSTANT ATTACK at exactly 90% (NO DELAY!)
             if (distance <= ATTACK_RANGE && bot.charge >= 90 && bot.charge <= 91 && bot.canAttack) {
-                setTimeout(() => {
-                    if (!players.get(botId)) return;
-                    botAttack(botId, playerId);
-                    
-                    // Always does 3 post-crit spams
-                    bot.postCritCount = 3;
-                }, 180); // Fast reaction
+                botAttack(botId, playerId);
+                // Always does 3 post-crit spams
+                bot.postCritCount = 3;
             }
             
-            // Post-crit spam mode - AGGRESSIVE
+            // Post-crit spam mode - INSTANT, NO DELAY
             if (bot.postCritCount > 0 && bot.charge >= 55 && bot.charge <= 65 && distance <= ATTACK_RANGE && bot.canAttack) {
                 botAttack(botId, playerId);
                 bot.postCritCount--;
             }
             
-            // Defensive dash - perpendicular to cut off escapes
+            // Defensive dash - INSTANT, very aggressive (80% chance)
             if (player.charge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
-                setTimeout(() => {
-                    if (!players.get(botId)?.dashReady) return;
-                    const perpX = -dy / magnitude;
-                    const perpY = dx / magnitude;
-                    const direction = Math.random() > 0.5 ? 1 : -1;
-                    const dashX = bot.x + perpX * DASH_DISTANCE * direction;
-                    const dashY = bot.y + perpY * DASH_DISTANCE * direction;
-                    botDash(botId, dashX, dashY);
-                }, 180);
+                const perpX = -dy / magnitude;
+                const perpY = dx / magnitude;
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                const dashX = bot.x + perpX * DASH_DISTANCE * direction;
+                const dashY = bot.y + perpY * DASH_DISTANCE * direction;
+                botDash(botId, dashX, dashY);
             }
             
-            // Offensive dash - AGGRESSIVE when player is weak
+            // Offensive dash - INSTANT, very aggressive (70% chance)
             if (player.charge < 65 && distance > 120 && bot.charge >= 88 && bot.dashReady && Math.random() > 0.3) {
-                setTimeout(() => {
-                    if (!players.get(botId)?.dashReady) return;
-                    // Predict player movement
-                    const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-                    const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-                    botDash(botId, dashX, dashY);
-                }, 180);
+                // Predict player position
+                const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
+                const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
+                botDash(botId, dashX, dashY);
             }
             
-            // Exploit player dash cooldown - spam during their vulnerability
+            // Exploit player dash cooldown - INSTANT spam during vulnerability
             if (dashCooldownRemaining > 0 && distance <= ATTACK_RANGE && bot.charge >= 55 && bot.canAttack) {
-                setTimeout(() => {
-                    if (players.get(botId)) botAttack(botId, playerId);
-                }, 180);
+                botAttack(botId, playerId);
+            }
+            
+            // VERY aggressive - if player is low HP, spam faster
+            if (myHealth < 40 && distance <= ATTACK_RANGE && bot.charge >= 50 && bot.canAttack) {
+                botAttack(botId, playerId);
             }
         }
         
