@@ -1048,49 +1048,69 @@ function mediumBotAI(botId, playerId) {
     const dy = player.y - bot.y;
     const magnitude = Math.sqrt(dx * dx + dy * dy);
     
-    // Simple chase - just move toward player when far, no backward movement BS
-    if (distance > ATTACK_RANGE + 10) {
-        bot.x += (dx / magnitude) * (PLAYER_SPEED * 0.7); // Slower than easy bot
-        bot.y += (dy / magnitude) * (PLAYER_SPEED * 0.7);
+    // Average player movement - same speed, tries to stay at good distance
+    if (distance > ATTACK_RANGE + 15) {
+        // Chase when too far
+        bot.x += (dx / magnitude) * PLAYER_SPEED;
+        bot.y += (dy / magnitude) * PLAYER_SPEED;
         updatePlayerPosition(bot.element, bot.x, bot.y);
-    }
-    // Only back up if TOO close (inside attack range)
-    else if (distance < ATTACK_RANGE - 20) {
-        bot.x -= (dx / magnitude) * (PLAYER_SPEED * 0.5); // Slow retreat
-        bot.y -= (dy / magnitude) * (PLAYER_SPEED * 0.5);
+    } else if (distance < ATTACK_RANGE - 10) {
+        // Back up when too close
+        bot.x -= (dx / magnitude) * PLAYER_SPEED;
+        bot.y -= (dy / magnitude) * PLAYER_SPEED;
         updatePlayerPosition(bot.element, bot.x, bot.y);
+    } else {
+        // Strafe a bit in the sweet spot (like a player would)
+        if (Math.random() > 0.7) {
+            const perpX = -dy / magnitude;
+            const perpY = dx / magnitude;
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            bot.x += perpX * PLAYER_SPEED * 0.5 * direction;
+            bot.y += perpY * PLAYER_SPEED * 0.5 * direction;
+            updatePlayerPosition(bot.element, bot.x, bot.y);
+        }
     }
-    // Otherwise just stay put in attack range
     
-    // Makes TONS of mistakes - attacks anywhere from 55-100%, usually low
-    const targetCharge = Math.random() > 0.3 ? (55 + Math.random() * 35) : 100;
+    // Average player - tries to hit around 85-95% (not perfect, but decent)
+    const targetCharge = 85 + Math.random() * 15; // Random between 85-100%
     
     if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
         setTimeout(() => {
             if (players.get(botId)) {
                 botAttack(botId, playerId);
             }
-        }, 450); // Slow reaction
+        }, 250); // Decent reaction time (not instant, not super slow)
     }
     
-    // Defensive dash - rarely happens
-    if (meterCharge >= 92 && distance < 80 && bot.dashReady && Math.random() > 0.85) {
+    // Defensive dash - sometimes dodges when you're charged (50% chance)
+    if (meterCharge >= 88 && distance < 85 && bot.dashReady && Math.random() > 0.3) {
         setTimeout(() => {
             if (!players.get(botId)?.dashReady) return;
-            const dashX = bot.x - (dx / magnitude) * DASH_DISTANCE;
-            const dashY = bot.y - (dy / magnitude) * DASH_DISTANCE;
+            // Dash to the side, not just backward
+            const perpX = -dy / magnitude;
+            const perpY = dx / magnitude;
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            const dashX = bot.x + perpX * DASH_DISTANCE * direction;
+            const dashY = bot.y + perpY * DASH_DISTANCE * direction;
             botDash(botId, dashX, dashY);
-        }, 450);
+        }, 200);
     }
     
-    // Offensive dash - almost never
-    if (meterCharge < 30 && distance > 160 && bot.charge >= 60 && bot.dashReady && Math.random() > 0.92) {
+    // Offensive dash - occasionally dashes in when you're weak (40% chance)
+    if (meterCharge < 40 && distance > 130 && bot.charge >= 75 && bot.dashReady && Math.random() > 0.6) {
         setTimeout(() => {
             if (!players.get(botId)?.dashReady) return;
             const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
             const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
             botDash(botId, dashX, dashY);
-        }, 450);
+        }, 200);
+    }
+    
+    // If low health, play more defensively
+    if (bot.health < 30 && distance < 90 && meterCharge > 70) {
+        bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.2;
+        bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.2;
+        updatePlayerPosition(bot.element, bot.x, bot.y);
     }
 }
         
