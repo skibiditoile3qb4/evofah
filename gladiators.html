@@ -45,7 +45,7 @@
             display: none; margin-bottom: 20px;
         }
         .difficulty-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
             margin-top: 10px;
         }
         .difficulty-btn {
@@ -265,11 +265,7 @@
                     </div>
                     <div class="difficulty-btn" onclick="selectDifficulty('hard')">
                         <div class="diff-name">😤 Hard</div>
-                        <div class="diff-desc">90% rule, smart dashes</div>
-                    </div>
-                    <div class="difficulty-btn" onclick="selectDifficulty('insane')">
-                        <div class="diff-name">💀 Insane</div>
-                        <div class="diff-desc">Perfect execution</div>
+                        <div class="diff-desc">90% rule, smart tactics</div>
                     </div>
                 </div>
             </div>
@@ -563,10 +559,9 @@
 
         function startBotMatch() {
             const botElo = {
-                easy: 800,
+                easy: 700,
                 medium: 1000,
-                hard: 1300,
-                insane: 1600
+                hard: 1400
             }[selectedDifficulty];
             
             currentMatch = {
@@ -918,7 +913,7 @@
         }
 
         function gameLoop() {
-            if (!currentMatch) return;
+            if (!currentMatch) return; // Stop immediately if no match
             
             const myData = players.get(relay.clientId);
             if (!myData) return;
@@ -949,24 +944,23 @@
                 startCharging();
             }
             
-            // Bot AI
-            const opponentData = players.get(currentMatch.opponentId);
-            if (opponentData && opponentData.isBot) {
-                updateBotCharge(currentMatch.opponentId);
-                
-                switch(opponentData.botDifficulty) {
-                    case 'easy':
-                        easyBotAI(currentMatch.opponentId, relay.clientId);
-                        break;
-                    case 'medium':
-                        mediumBotAI(currentMatch.opponentId, relay.clientId);
-                        break;
-                    case 'hard':
-                        hardBotAI(currentMatch.opponentId, relay.clientId);
-                        break;
-                    case 'insane':
-                        insaneBotAI(currentMatch.opponentId, relay.clientId);
-                        break;
+            // Bot AI - only run if match is still active
+            if (currentMatch) { // Double check match exists
+                const opponentData = players.get(currentMatch.opponentId);
+                if (opponentData && opponentData.isBot) {
+                    updateBotCharge(currentMatch.opponentId);
+                    
+                    switch(opponentData.botDifficulty) {
+                        case 'easy':
+                            easyBotAI(currentMatch.opponentId, relay.clientId);
+                            break;
+                        case 'medium':
+                            mediumBotAI(currentMatch.opponentId, relay.clientId);
+                            break;
+                        case 'hard':
+                            hardBotAI(currentMatch.opponentId, relay.clientId);
+                            break;
+                    }
                 }
             }
             
@@ -1000,24 +994,28 @@
             const dy = player.y - bot.y;
             const magnitude = Math.sqrt(dx * dx + dy * dy);
             
-            if (magnitude > ATTACK_RANGE) {
-                bot.x += (dx / magnitude) * PLAYER_SPEED;
-                bot.y += (dy / magnitude) * PLAYER_SPEED;
+            // Simple chase - slower movement
+            if (magnitude > ATTACK_RANGE + 20) {
+                bot.x += (dx / magnitude) * (PLAYER_SPEED * 0.8); // Slower
+                bot.y += (dy / magnitude) * (PLAYER_SPEED * 0.8);
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
-            if (distance <= ATTACK_RANGE && bot.charge > 20 && bot.canAttack) {
+            // Only attack when charge is between 40-60% (never gets crits)
+            if (distance <= ATTACK_RANGE && bot.charge >= 40 && bot.charge <= 60 && bot.canAttack) {
                 botAttack(botId, playerId);
             }
             
-            if (bot.justGotHit && bot.dashReady && Math.random() > 0.3) {
+            // Panic dash away if just got hit (more frequent)
+            if (bot.justGotHit && bot.dashReady && Math.random() > 0.2) {
                 const dashX = bot.x - (dx / magnitude) * DASH_DISTANCE;
                 const dashY = bot.y - (dy / magnitude) * DASH_DISTANCE;
                 botDash(botId, dashX, dashY);
                 bot.justGotHit = false;
             }
             
-            if (distance > 150 && bot.dashReady && Math.random() > 0.7 && bot.charge > 20) {
+            // Rarely dashes offensively and at random times (bad timing)
+            if (distance > 150 && bot.dashReady && Math.random() > 0.9) {
                 const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
                 const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
                 botDash(botId, dashX, dashY);
@@ -1039,42 +1037,46 @@
             const dy = player.y - bot.y;
             const magnitude = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance > 80) {
+            // Move toward player but maintain distance
+            if (distance > 90) {
                 bot.x += (dx / magnitude) * PLAYER_SPEED;
                 bot.y += (dy / magnitude) * PLAYER_SPEED;
                 updatePlayerPosition(bot.element, bot.x, bot.y);
-            } else if (distance < 60) {
+            } else if (distance < 70) {
                 bot.x -= (dx / magnitude) * PLAYER_SPEED;
                 bot.y -= (dy / magnitude) * PLAYER_SPEED;
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
-            const targetCharge = Math.random() > 0.8 ? (85 + Math.random() * 10) : 100;
+            // Waits for full charge but makes mistakes (70-100%)
+            const targetCharge = Math.random() > 0.6 ? (70 + Math.random() * 20) : 100;
             
             if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
                 setTimeout(() => {
                     if (players.get(botId)) {
                         botAttack(botId, playerId);
                     }
-                }, 300);
+                }, 350); // Slower reaction
             }
             
-            if (player.charge >= 80 && distance < 100 && bot.dashReady && Math.random() > 0.4) {
+            // Defensive dash - less frequent
+            if (player.charge >= 85 && distance < 90 && bot.dashReady && Math.random() > 0.6) {
                 setTimeout(() => {
                     if (!players.get(botId)?.dashReady) return;
                     const dashX = bot.x - (dx / magnitude) * DASH_DISTANCE;
                     const dashY = bot.y - (dy / magnitude) * DASH_DISTANCE;
                     botDash(botId, dashX, dashY);
-                }, 300);
+                }, 350);
             }
             
-            if (player.charge < 40 && distance > 120 && bot.charge >= 80 && bot.dashReady && Math.random() > 0.6) {
+            // Offensive dash - rarely and with bad timing
+            if (player.charge < 50 && distance > 140 && bot.charge >= 70 && bot.dashReady && Math.random() > 0.8) {
                 setTimeout(() => {
                     if (!players.get(botId)?.dashReady) return;
                     const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
                     const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
                     botDash(botId, dashX, dashY);
-                }, 300);
+                }, 350);
             }
         }
         
@@ -1093,133 +1095,75 @@
             const dy = player.y - bot.y;
             const magnitude = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance > 80) {
-                bot.x += (dx / magnitude) * PLAYER_SPEED;
-                bot.y += (dy / magnitude) * PLAYER_SPEED;
-            } else if (distance < 60) {
-                bot.x -= (dx / magnitude) * PLAYER_SPEED;
-                bot.y -= (dy / magnitude) * PLAYER_SPEED;
+            // Perfect positioning at 65-75 units (sweet spot)
+            if (distance > 75) {
+                bot.x += (dx / magnitude) * PLAYER_SPEED * 1.1; // Slightly faster
+                bot.y += (dy / magnitude) * PLAYER_SPEED * 1.1;
+            } else if (distance < 65) {
+                bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.1;
+                bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.1;
             } else {
+                // Strafe unpredictably in sweet spot
                 const perpX = -dy / magnitude;
                 const perpY = dx / magnitude;
-                bot.x += perpX * PLAYER_SPEED * (Math.random() > 0.5 ? 1 : -1);
-                bot.y += perpY * PLAYER_SPEED * (Math.random() > 0.5 ? 1 : -1);
+                const direction = Math.sin(Date.now() / 200) > 0 ? 1 : -1;
+                bot.x += perpX * PLAYER_SPEED * direction;
+                bot.y += perpY * PLAYER_SPEED * direction;
             }
             updatePlayerPosition(bot.element, bot.x, bot.y);
             
-            const targetCharge = Math.random() > 0.85 ? (92 + Math.random() * 3) : 90;
-            
-            if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
+            // ALWAYS attack at exactly 90% (perfect DPS)
+            if (distance <= ATTACK_RANGE && bot.charge >= 90 && bot.charge <= 91 && bot.canAttack) {
                 setTimeout(() => {
                     if (!players.get(botId)) return;
                     botAttack(botId, playerId);
                     
-                    const followUps = Math.random() > 0.6 ? 2 : 1;
-                    bot.postCritCount = followUps;
-                }, 220);
-            }
-            
-            if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 60 && distance <= ATTACK_RANGE) {
-                botAttack(botId, playerId);
-                bot.postCritCount--;
-            }
-            
-            if (player.charge >= 85 && distance < 100 && bot.dashReady && Math.random() > 0.3) {
-                setTimeout(() => {
-                    if (!players.get(botId)?.dashReady) return;
-                    const perpX = -dy / magnitude;
-                    const perpY = dx / magnitude;
-                    const dashX = bot.x + perpX * DASH_DISTANCE;
-                    const dashY = bot.y + perpY * DASH_DISTANCE;
-                    botDash(botId, dashX, dashY);
-                }, 220);
-            }
-            
-            if (player.charge < 60 && distance > 120 && bot.charge >= 90 && bot.dashReady && Math.random() > 0.6) {
-                setTimeout(() => {
-                    if (!players.get(botId)?.dashReady) return;
-                    const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-                    const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-                    botDash(botId, dashX, dashY);
-                }, 220);
-            }
-        }
-        
-        function insaneBotAI(botId, playerId) {
-            const bot = players.get(botId);
-            const player = players.get(playerId);
-            
-            if (!bot || !player) return;
-            
-            const distance = Math.sqrt(
-                Math.pow(bot.x - player.x, 2) + 
-                Math.pow(bot.y - player.y, 2)
-            );
-            
-            const dx = player.x - bot.x;
-            const dy = player.y - bot.y;
-            const magnitude = Math.sqrt(dx * dx + dy * dy);
-            
-            const time = Date.now() / 1000;
-            const targetDist = 70;
-            
-            if (distance > targetDist + 5) {
-                bot.x += (dx / magnitude) * PLAYER_SPEED;
-                bot.y += (dy / magnitude) * PLAYER_SPEED;
-            } else if (distance < targetDist - 5) {
-                bot.x -= (dx / magnitude) * PLAYER_SPEED;
-                bot.y -= (dy / magnitude) * PLAYER_SPEED;
-            }
-            
-            const perpX = -dy / magnitude;
-            const perpY = dx / magnitude;
-            const strafeOffset = Math.sin(time * 2) * PLAYER_SPEED;
-            bot.x += perpX * strafeOffset;
-            bot.y += perpY * strafeOffset;
-            
-            updatePlayerPosition(bot.element, bot.x, bot.y);
-            
-            if (distance <= ATTACK_RANGE && bot.charge >= 90 && bot.charge <= 90.5 && bot.canAttack) {
-                setTimeout(() => {
-                    if (!players.get(botId)) return;
-                    botAttack(botId, playerId);
+                    // Always does 3 post-crit spams
                     bot.postCritCount = 3;
-                }, 50 + Math.random() * 50);
+                }, 180); // Fast reaction
             }
             
-            if (bot.postCritCount > 0 && bot.charge >= 55 && bot.charge <= 56 && distance <= ATTACK_RANGE) {
+            // Post-crit spam mode - AGGRESSIVE
+            if (bot.postCritCount > 0 && bot.charge >= 55 && bot.charge <= 65 && distance <= ATTACK_RANGE && bot.canAttack) {
                 botAttack(botId, playerId);
                 bot.postCritCount--;
             }
             
-            if (player.charge < 60 && distance > 120 && bot.charge >= 90 && bot.dashReady && Math.random() > 0.4) {
-                setTimeout(() => {
-                    if (!players.get(botId)?.dashReady) return;
-                    const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-                    const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-                    botDash(botId, dashX, dashY);
-                }, 50 + Math.random() * 50);
-            }
-            
-            if (player.charge >= 85 && distance < 100 && bot.dashReady && Math.random() > 0.3) {
+            // Defensive dash - perpendicular to cut off escapes
+            if (player.charge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
                 setTimeout(() => {
                     if (!players.get(botId)?.dashReady) return;
                     const perpX = -dy / magnitude;
                     const perpY = dx / magnitude;
-                    const dashX = bot.x + perpX * DASH_DISTANCE;
-                    const dashY = bot.y + perpY * DASH_DISTANCE;
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    const dashX = bot.x + perpX * DASH_DISTANCE * direction;
+                    const dashY = bot.y + perpY * DASH_DISTANCE * direction;
                     botDash(botId, dashX, dashY);
-                }, 50 + Math.random() * 50);
+                }, 180);
             }
             
-            if (dashCooldownRemaining > 0 && distance <= ATTACK_RANGE && bot.charge >= 50 && bot.canAttack) {
+            // Offensive dash - AGGRESSIVE when player is weak
+            if (player.charge < 65 && distance > 120 && bot.charge >= 88 && bot.dashReady && Math.random() > 0.3) {
+                setTimeout(() => {
+                    if (!players.get(botId)?.dashReady) return;
+                    // Predict player movement
+                    const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
+                    const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
+                    botDash(botId, dashX, dashY);
+                }, 180);
+            }
+            
+            // Exploit player dash cooldown - spam during their vulnerability
+            if (dashCooldownRemaining > 0 && distance <= ATTACK_RANGE && bot.charge >= 55 && bot.canAttack) {
                 setTimeout(() => {
                     if (players.get(botId)) botAttack(botId, playerId);
-                }, 50 + Math.random() * 50);
+                }, 180);
             }
         }
         
         function botAttack(botId, playerId) {
+            if (!currentMatch) return; // Don't attack if match ended
+            
             const bot = players.get(botId);
             const player = players.get(playerId);
             
@@ -1251,7 +1195,7 @@
                 }
             }, 100);
             
-            if (player.health <= 0) {
+            if (player.health <= 0 && currentMatch) { // Check match still exists
                 endMatch(false, false);
             }
         }
@@ -1487,20 +1431,25 @@
         function endMatch(won, disconnected) {
             if (!currentMatch) return;
             
+            // Stop all game intervals immediately
             if (chargeInterval) {
                 clearInterval(chargeInterval);
                 chargeInterval = null;
             }
             stopPositionUpdates();
             
+            // Remove event listeners
             document.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('keyup', handleKeyUp);
             document.removeEventListener('click', handleAttack);
             
-            const eloChange = calculateEloChange(myElo, currentMatch.opponentElo, won);
-            const newElo = myElo + eloChange;
+            // Calculate ELO change (only for PvP matches)
+            const isBot = currentMatch.isBot;
+            const eloChange = isBot ? 0 : calculateEloChange(myElo, currentMatch.opponentElo, won);
+            const newElo = isBot ? myElo : myElo + eloChange;
             
-            if (!currentMatch.isBot) {
+            // Send match end to relay if not bot match
+            if (!isBot) {
                 relay.sendPlayerAction('match_end', {
                     winner: won ? myPlayerId : currentMatch.opponent,
                     myElo: newElo,
@@ -1509,14 +1458,20 @@
                 });
             }
             
-            showMatchResult(won, eloChange, newElo, disconnected);
+            // IMPORTANT: Clear the match BEFORE showing results to stop bot AI
+            const wasBot = currentMatch.isBot;
+            const botDifficulty = currentMatch.botDifficulty;
+            const opponentName = currentMatch.opponent;
+            currentMatch = null; // This stops the bot AI in gameLoop
+            
+            showMatchResult(won, eloChange, newElo, disconnected, wasBot, botDifficulty, opponentName);
         }
 
         function receiveMatchEnd(data) {
             // Match ended by opponent
         }
 
-        function showMatchResult(won, eloChange, newElo, disconnected) {
+        function showMatchResult(won, eloChange, newElo, disconnected, wasBot, botDifficulty, opponentName) {
             showScreen('resultsScreen');
             
             if (won) {
@@ -1534,7 +1489,7 @@
             document.getElementById('resultStats').textContent = 
                 `Previous: ${myElo} → New: ${newElo}` + 
                 (disconnected ? ' (Opponent Disconnected)' : '') +
-                (currentMatch.isBot ? ` (vs ${currentMatch.botDifficulty.toUpperCase()} Bot)` : '');
+                (wasBot ? ` (vs ${botDifficulty.toUpperCase()} Bot)` : '');
             
             saveElo(newElo);
             
