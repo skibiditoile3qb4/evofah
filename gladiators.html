@@ -1134,11 +1134,11 @@
     }
     
     if (distance > targetDistance + 5) {
-        bot.x += (dx / magnitude) * PLAYER_SPEED * 1.15;
-        bot.y += (dy / magnitude) * PLAYER_SPEED * 1.15;
+        bot.x += (dx / magnitude) * PLAYER_SPEED;
+        bot.y += (dy / magnitude) * PLAYER_SPEED;
     } else if (distance < targetDistance - 5) {
-        bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.15;
-        bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.15;
+        bot.x -= (dx / magnitude) * PLAYER_SPEED;
+        bot.y -= (dy / magnitude) * PLAYER_SPEED;
     } else {
         // Strafe unpredictably in sweet spot
         const perpX = -dy / magnitude;
