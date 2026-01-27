@@ -1231,14 +1231,14 @@ function mediumBotAI(botId, playerId) {
     }
     
 
-// Single spam after crit - PRIORITIZE escaping if dash is ready
+// Single spam after crit - INSTANT SPAM, don't wait for charge
 const timeSinceAttack = Date.now() - (bot.lastAttackTime || 0);
-if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 70 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 1000) {
-    // ALWAYS spam, even without dash
+if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 2000) {
+    // Spam INSTANTLY at 25% charge - race you to the hit!
     botAttack(botId, playerId);
     bot.postCritCount = 0;
     
-    // Try to dash away if available (prioritize safety)
+    // Try to dash away if available
     if (bot.dashReady) {
         setTimeout(() => {
             if (bot.dashReady && players.get(botId)) {
@@ -1246,9 +1246,8 @@ if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 70 && distance <=
                 const escapeY = bot.y - (dy / magnitude) * DASH_DISTANCE;
                 botDash(botId, escapeX, escapeY);
             }
-        }, 100);
+        }, 50);
     }
-    // If no dash, just take the L and accept the trade lol
 }
     
     // Defensive dash - when player is charged up
