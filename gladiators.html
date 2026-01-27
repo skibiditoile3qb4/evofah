@@ -1001,21 +1001,21 @@
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
-            // Only attack when charge is between 40-60% (never gets crits)
-            if (distance <= ATTACK_RANGE && bot.charge >= 40 && bot.charge <= 60 && bot.canAttack) {
+            // Attack when charge is 50-70% (weak/medium damage, never crits)
+            if (distance <= ATTACK_RANGE && bot.charge >= 50 && bot.charge <= 70 && bot.canAttack) {
                 botAttack(botId, playerId);
             }
             
-            // Panic dash away if just got hit (more frequent)
-            if (bot.justGotHit && bot.dashReady && Math.random() > 0.2) {
+            // Panic dash away if just got hit (very frequent)
+            if (bot.justGotHit && bot.dashReady && Math.random() > 0.15) {
                 const dashX = bot.x - (dx / magnitude) * DASH_DISTANCE;
                 const dashY = bot.y - (dy / magnitude) * DASH_DISTANCE;
                 botDash(botId, dashX, dashY);
                 bot.justGotHit = false;
             }
             
-            // Rarely dashes offensively and at random times (bad timing)
-            if (distance > 150 && bot.dashReady && Math.random() > 0.9) {
+            // Rarely dashes offensively at bad times
+            if (distance > 150 && bot.dashReady && Math.random() > 0.92) {
                 const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
                 const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
                 botDash(botId, dashX, dashY);
@@ -1483,17 +1483,29 @@
             }
             
             const eloChangeEl = document.getElementById('eloChange');
-            eloChangeEl.className = eloChange >= 0 ? 'elo-gain' : 'elo-loss';
-            eloChangeEl.textContent = `${eloChange >= 0 ? '+' : ''}${eloChange} ELO`;
             
-            document.getElementById('resultStats').textContent = 
-                `Previous: ${myElo} → New: ${newElo}` + 
-                (disconnected ? ' (Opponent Disconnected)' : '') +
-                (wasBot ? ` (vs ${botDifficulty.toUpperCase()} Bot)` : '');
+            if (wasBot) {
+                eloChangeEl.className = '';
+                eloChangeEl.style.color = '#888';
+                eloChangeEl.textContent = 'No ELO Change (Practice Match)';
+            } else {
+                eloChangeEl.className = eloChange >= 0 ? 'elo-gain' : 'elo-loss';
+                eloChangeEl.textContent = `${eloChange >= 0 ? '+' : ''}${eloChange} ELO`;
+            }
             
-            saveElo(newElo);
+            if (wasBot) {
+                document.getElementById('resultStats').textContent = 
+                    `Current ELO: ${myElo} (vs ${botDifficulty.toUpperCase()} Bot)`;
+            } else {
+                document.getElementById('resultStats').textContent = 
+                    `Previous: ${myElo} → New: ${newElo}` + 
+                    (disconnected ? ' (Opponent Disconnected)' : '');
+                
+                // Only save ELO for PvP matches
+                saveElo(newElo);
+            }
             
-            if (relay && relay.connected) {
+            if (relay && relay.connected && !wasBot) {
                 relay.send({ 
                     type: 'update_status',
                     status: JSON.stringify({ elo: newElo })
