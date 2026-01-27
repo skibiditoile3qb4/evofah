@@ -1231,20 +1231,24 @@ function mediumBotAI(botId, playerId) {
     }
     
 
-// Single spam after crit - INSTANT SPAM, don't wait for charge
+
+// Single spam after crit - INSTANT SPAM then GTFO
 const timeSinceAttack = Date.now() - (bot.lastAttackTime || 0);
 if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 2000) {
-    // Spam INSTANTLY at 25% charge - race you to the hit!
+    // Spam INSTANTLY at 25% charge
     botAttack(botId, playerId);
     bot.postCritCount = 0;
+    bot.isRetreating = true; // Start running away
+    bot.retreatUntil = Date.now() + 1500; // Run for 1.5 seconds
     
-    // Try to dash away if available
+    // Try to dash away if available (faster escape)
     if (bot.dashReady) {
         setTimeout(() => {
             if (bot.dashReady && players.get(botId)) {
                 const escapeX = bot.x - (dx / magnitude) * DASH_DISTANCE;
                 const escapeY = bot.y - (dy / magnitude) * DASH_DISTANCE;
                 botDash(botId, escapeX, escapeY);
+                bot.isRetreating = false; // Dash = instant escape, no need to run
             }
         }, 50);
     }
