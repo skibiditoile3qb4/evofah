@@ -1007,8 +1007,8 @@
             
             // Simple chase - slower movement
             if (magnitude > ATTACK_RANGE + 20) {
-                bot.x += (dx / magnitude) * (PLAYER_SPEED * 0.8); // Slower
-                bot.y += (dy / magnitude) * (PLAYER_SPEED * 0.8);
+                bot.x += (dx / magnitude) * (PLAYER_SPEED ); // Slower
+                bot.y += (dy / magnitude) * (PLAYER_SPEED);
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
@@ -1050,12 +1050,12 @@
             
             // Move toward player but maintain distance - VERY SLOW
             if (distance > 110) {
-                bot.x += (dx / magnitude) * (PLAYER_SPEED * 0.85); // Even slower
-                bot.y += (dy / magnitude) * (PLAYER_SPEED * 0.85);
+                bot.x += (dx / magnitude) * (PLAYER_SPEED); // Even slower
+                bot.y += (dy / magnitude) * (PLAYER_SPEED);
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             } else if (distance < 90) {
-                bot.x -= (dx / magnitude) * (PLAYER_SPEED * 0.85);
-                bot.y -= (dy / magnitude) * (PLAYER_SPEED * 0.85);
+                bot.x -= (dx / magnitude) * (PLAYER_SPEED);
+                bot.y -= (dy / magnitude) * (PLAYER_SPEED);
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
