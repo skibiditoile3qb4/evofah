@@ -1307,10 +1307,10 @@ if (isWeekend && !userProfile.nametag.unlocked.includes('freebird')) {
     }
     
     // PRISMATIC - Collect 1 billion coins total
-    if (coins >= 1000000000 && !userProfile.nametag.unlocked.includes('prismatic')) {
+    if (coins >= 1000000000 && currentHour === 12 && totalHours >= 12 &&!userProfile.nametag.unlocked.includes('prismatic')) {
         userProfile.nametag.unlocked.push('prismatic');
         saveUserProfile(userProfile);
-        alert('🌈 Nametag Unlocked: PRISMATIC - Master of Wealth!');
+        alert('🌈 Nametag Unlocked: PRISMATIC');
     }
            
 }
