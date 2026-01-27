@@ -1048,14 +1048,25 @@ function mediumBotAI(botId, playerId) {
     const dy = player.y - bot.y;
     const magnitude = Math.sqrt(dx * dx + dy * dy);
     
+    // Track how long we've been in standoff range
+    if (distance > ATTACK_RANGE - 10 && distance < ATTACK_RANGE + 20) {
+        if (!bot.standoffTimer) bot.standoffTimer = Date.now();
+    } else {
+        bot.standoffTimer = null;
+    }
+    
+    // Get impatient after 2 seconds of waiting
+    const standoffTime = bot.standoffTimer ? Date.now() - bot.standoffTimer : 0;
+    const isImpatient = standoffTime > 2000;
+    
     // Average player movement - same speed, tries to stay at good distance
-    if (distance > ATTACK_RANGE + 15) {
-        // Chase when too far
+    if (distance > ATTACK_RANGE + 15 || isImpatient) {
+        // Chase when too far OR when impatient
         bot.x += (dx / magnitude) * PLAYER_SPEED;
         bot.y += (dy / magnitude) * PLAYER_SPEED;
         updatePlayerPosition(bot.element, bot.x, bot.y);
-    } else if (distance < ATTACK_RANGE - 10) {
-        // Back up when too close
+    } else if (distance < ATTACK_RANGE - 10 && !isImpatient) {
+        // Back up when too close (unless impatient)
         bot.x -= (dx / magnitude) * PLAYER_SPEED;
         bot.y -= (dy / magnitude) * PLAYER_SPEED;
         updatePlayerPosition(bot.element, bot.x, bot.y);
@@ -1072,21 +1083,22 @@ function mediumBotAI(botId, playerId) {
     }
     
     // Average player - tries to hit around 85-95% (not perfect, but decent)
-    const targetCharge = 85 + Math.random() * 15; // Random between 85-100%
+    // When impatient, will attack earlier (70%+)
+    const targetCharge = isImpatient ? (70 + Math.random() * 30) : (85 + Math.random() * 15);
     
     if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
         setTimeout(() => {
             if (players.get(botId)) {
                 botAttack(botId, playerId);
+                bot.standoffTimer = null; // Reset timer after attacking
             }
-        }, 250); // Decent reaction time (not instant, not super slow)
+        }, 250);
     }
     
     // Defensive dash - sometimes dodges when you're charged (50% chance)
     if (meterCharge >= 88 && distance < 85 && bot.dashReady && Math.random() > 0.3) {
         setTimeout(() => {
             if (!players.get(botId)?.dashReady) return;
-            // Dash to the side, not just backward
             const perpX = -dy / magnitude;
             const perpY = dx / magnitude;
             const direction = Math.random() > 0.5 ? 1 : -1;
@@ -1097,17 +1109,22 @@ function mediumBotAI(botId, playerId) {
     }
     
     // Offensive dash - occasionally dashes in when you're weak (40% chance)
-    if (meterCharge < 40 && distance > 130 && bot.charge >= 75 && bot.dashReady && Math.random() > 0.6) {
-        setTimeout(() => {
-            if (!players.get(botId)?.dashReady) return;
-            const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-            const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-            botDash(botId, dashX, dashY);
-        }, 200);
+    // OR always dash in when impatient
+    if ((meterCharge < 40 && distance > 130 && bot.charge >= 75 && Math.random() > 0.6) || 
+        (isImpatient && bot.charge >= 60 && distance > 90)) {
+        if (bot.dashReady) {
+            setTimeout(() => {
+                if (!players.get(botId)?.dashReady) return;
+                const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
+                const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
+                botDash(botId, dashX, dashY);
+                bot.standoffTimer = null; // Reset after dashing in
+            }, 200);
+        }
     }
     
-    // If low health, play more defensively
-    if (bot.health < 30 && distance < 90 && meterCharge > 70) {
+    // If low health, play more defensively (but still attack if impatient)
+    if (bot.health < 30 && distance < 90 && meterCharge > 70 && !isImpatient) {
         bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.2;
         bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.2;
         updatePlayerPosition(bot.element, bot.x, bot.y);
