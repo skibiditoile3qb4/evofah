@@ -1108,11 +1108,11 @@
             
             // Perfect positioning at 65-75 units (sweet spot) - FAST movement
             if (distance > 75) {
-                bot.x += (dx / magnitude) * PLAYER_SPEED * 1.15; // Faster than you
-                bot.y += (dy / magnitude) * PLAYER_SPEED * 1.15;
+                bot.x += (dx / magnitude) * PLAYER_SPEED * 1; // Faster than you
+                bot.y += (dy / magnitude) * PLAYER_SPEED * 1;
             } else if (distance < 65) {
-                bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.15;
-                bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.15;
+                bot.x -= (dx / magnitude) * PLAYER_SPEED * 1;
+                bot.y -= (dy / magnitude) * PLAYER_SPEED * 1;
             } else {
                 // Strafe unpredictably in sweet spot
                 const perpX = -dy / magnitude;
