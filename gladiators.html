@@ -1131,7 +1131,7 @@ function mediumBotAI(botId, playerId) {
     }
 }
         
-    function hardBotAI(botId, playerId) {
+   function hardBotAI(botId, playerId) {
     const bot = players.get(botId);
     const player = players.get(playerId);
     
@@ -1154,15 +1154,17 @@ function mediumBotAI(botId, playerId) {
     const theirPotentialDamage = Math.floor((meterCharge / 100) * 25);
     const theyCanKillUs = theirPotentialDamage >= bot.health;
     
-    // Track standoff time
-    if (distance > 60 && distance < 90 && !theyCanKillUs) {
-        if (!bot.standoffTimer) bot.standoffTimer = Date.now();
+    // MUCH simpler impatience - just count frames at medium distance
+    if (!bot.impatientCounter) bot.impatientCounter = 0;
+    
+    if (distance > 50 && distance < 100) {
+        bot.impatientCounter++;
     } else {
-        bot.standoffTimer = null;
+        bot.impatientCounter = 0;
     }
     
-    const standoffTime = bot.standoffTimer ? Date.now() - bot.standoffTimer : 0;
-    const isImpatient = standoffTime > 3000; // Hard bot waits longer (3 sec) but still gets impatient
+    // Get impatient after just 60 frames (~1 second at 60fps)
+    const isImpatient = bot.impatientCounter > 60;
     
     // SURVIVAL MODE: If they can kill us and we're in range, DASH AWAY immediately
     if (theyCanKillUs && meterCharge >= 85 && distance < 100 && bot.dashReady) {
@@ -1172,59 +1174,64 @@ function mediumBotAI(botId, playerId) {
         const dashX = bot.x + perpX * DASH_DISTANCE * direction - (dx / magnitude) * 50;
         const dashY = bot.y + perpY * DASH_DISTANCE * direction - (dy / magnitude) * 50;
         botDash(botId, dashX, dashY);
-        bot.standoffTimer = null;
+        bot.impatientCounter = 0;
         return;
     }
     
-    // Perfect positioning - but adjust based on their charge and impatience
-    let targetDistance = 70;
-    if (meterCharge >= 85) {
-        targetDistance = 100;
-    } else if (meterCharge < 30 || isImpatient) {
-        targetDistance = 65; // Get closer when they're weak OR when impatient
-    }
-    
-    if (distance > targetDistance + 5 || isImpatient) {
+    // When impatient, ALWAYS RUSH FORWARD no matter what
+    if (isImpatient) {
         bot.x += (dx / magnitude) * PLAYER_SPEED;
         bot.y += (dy / magnitude) * PLAYER_SPEED;
-    } else if (distance < targetDistance - 5 && !isImpatient) {
-        bot.x -= (dx / magnitude) * PLAYER_SPEED;
-        bot.y -= (dy / magnitude) * PLAYER_SPEED;
+        updatePlayerPosition(bot.element, bot.x, bot.y);
     } else {
-        // Strafe unpredictably in sweet spot
-        const perpX = -dy / magnitude;
-        const perpY = dx / magnitude;
-        const direction = Math.sin(Date.now() / 200) > 0 ? 1 : -1;
-        bot.x += perpX * PLAYER_SPEED * direction;
-        bot.y += perpY * PLAYER_SPEED * direction;
+        // Normal positioning when not impatient
+        let targetDistance = 70;
+        if (meterCharge >= 85) {
+            targetDistance = 100;
+        } else if (meterCharge < 30) {
+            targetDistance = 65;
+        }
+        
+        if (distance > targetDistance + 5) {
+            bot.x += (dx / magnitude) * PLAYER_SPEED;
+            bot.y += (dy / magnitude) * PLAYER_SPEED;
+        } else if (distance < targetDistance - 5) {
+            bot.x -= (dx / magnitude) * PLAYER_SPEED;
+            bot.y -= (dy / magnitude) * PLAYER_SPEED;
+        } else {
+            const perpX = -dy / magnitude;
+            const perpY = dx / magnitude;
+            const direction = Math.sin(Date.now() / 200) > 0 ? 1 : -1;
+            bot.x += perpX * PLAYER_SPEED * direction;
+            bot.y += perpY * PLAYER_SPEED * direction;
+        }
+        updatePlayerPosition(bot.element, bot.x, bot.y);
     }
-    updatePlayerPosition(bot.element, bot.x, bot.y);
     
     // PRIORITY: Finish them if we can!
     if (canKillNow && distance <= ATTACK_RANGE && bot.canAttack) {
         botAttack(botId, playerId);
         bot.postCritCount = 0;
-        bot.standoffTimer = null;
+        bot.impatientCounter = 0;
         return;
     }
     
-    // ALWAYS wait for 90%+ crit (disciplined) - UNLESS impatient, then 80%+
-    const critThreshold = isImpatient ? 80 : 90;
+    // When impatient, attack at 70%+. Otherwise wait for 90%+
+    const critThreshold = isImpatient ? 70 : 90;
     if (distance <= ATTACK_RANGE && bot.charge >= critThreshold && bot.canAttack) {
         botAttack(botId, playerId);
         bot.postCritCount = 1;
         bot.lastAttackTime = Date.now();
-        bot.standoffTimer = null;
+        bot.impatientCounter = 0;
         return;
     }
     
-    // Single spam ONLY if: player is running away AND we just attacked recently
+    // Single spam after crit
     const timeSinceAttack = Date.now() - (bot.lastAttackTime || 0);
     if (bot.postCritCount > 0 && bot.charge >= 50 && bot.charge <= 65 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 1000) {
         if (distance > 70) {
             botAttack(botId, playerId);
             bot.postCritCount = 0;
-            // IMMEDIATELY DASH AWAY after spam
             setTimeout(() => {
                 if (bot.dashReady && players.get(botId)) {
                     const escapeX = bot.x - (dx / magnitude) * DASH_DISTANCE;
@@ -1243,21 +1250,18 @@ function mediumBotAI(botId, playerId) {
         const dashX = bot.x + perpX * DASH_DISTANCE * direction;
         const dashY = bot.y + perpY * DASH_DISTANCE * direction;
         botDash(botId, dashX, dashY);
-        bot.standoffTimer = null;
+        bot.impatientCounter = 0;
     }
     
-    // Offensive dash - when player is weak and we're charged OR when impatient
+    // Offensive dash - when impatient OR when you're weak
     if ((meterCharge < 65 && distance > 120 && bot.charge >= 88 && Math.random() > 0.3) ||
-        (isImpatient && bot.charge >= 70 && distance > 80)) {
-        if (bot.dashReady) {
-            const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-            const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-            botDash(botId, dashX, dashY);
-            bot.standoffTimer = null;
-        }
+        (isImpatient && bot.charge >= 60 && distance > 70 && bot.dashReady)) {
+        const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
+        const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
+        botDash(botId, dashX, dashY);
+        bot.impatientCounter = 0;
     }
 }
-  
         
         function botAttack(botId, playerId) {
             if (!currentMatch) return; // Don't attack if match ended
