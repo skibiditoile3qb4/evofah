@@ -967,7 +967,7 @@
     </div>
 </div>
     <script>
-        const ky = atob('aWdvdG1vZ2dlZA==');
+        let serverPassword = null;
         const ownerKey = atob('Z29vZnk=');
         if (!window._chromeOSValid) {
     document.getElementById('passwordScreen').style.display = 'none';
@@ -1096,7 +1096,19 @@ if (localStorage.getItem('good') === null) {
 }
 async function checkPassword() {
     const input = document.getElementById('passwordInput').value;
-    if (input === ky) {
+    
+
+    if (!serverPassword) {
+        if (!relay) {
+            await initChat();
+        }
+        for (let i = 0; i < 30; i++) {
+            if (serverPassword) break;
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
+    
+    if (input === serverPassword) {
         document.getElementById('passwordScreen').style.display = 'none';
         localStorage.setItem('good', '1');
         document.getElementById('mainView').style.display = 'flex';
@@ -3131,9 +3143,11 @@ async function initChat() {
         relay = new RelayClient(RELAY_SERVER);
         
 
-        relay.on('connected', () => {
+       relay.on('connected', (data) => {
+    serverPassword = data.password;
     updateConnectionStatus(true);
 });
+
 
 relay.on('players_update', (data) => {
     onlineCount = data.players.length;
