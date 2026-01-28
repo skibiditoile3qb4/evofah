@@ -9,10 +9,10 @@ class RelayClient {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.reconnectDelay = 2000;
-    this.heartbeatInterval = null;
+    this.heartbeatInterval = null;  // ← Make sure semicolon is here
     
-    // Event handlers
-this.handlers = {
+    // Event handlers  ← Make sure this is a COMMENT, not broken syntax
+    this.handlers = {  // ← Line that was causing error
       connected: [],
       disconnected: [],
       chat_message: [],
@@ -28,10 +28,11 @@ this.handlers = {
       admin_action_result: [],
       unbanned: [],
       queue_count: [],
-      password_result: [],        // ADDED
-      owner_password_result: [],  // ADDED
+      password_result: [],
+      owner_password_result: [],
       error: []
-    };
+    };  // ← Make sure semicolon is here too
+  }
   
   connect() {
     return new Promise((resolve, reject) => {
@@ -87,7 +88,7 @@ this.handlers = {
       if (this.connected && this.room) {
         this.send({ type: 'heartbeat' });
       }
-    }, 5000); // Every 5 seconds
+    }, 5000);
   }
   
   stopHeartbeat() {
@@ -112,7 +113,6 @@ this.handlers = {
   }
   
   handleMessage(data) {
-    // Emit event to handlers
     this.emit(data.type, data);
   }
   
@@ -124,7 +124,6 @@ this.handlers = {
     }
   }
   
-  // Join global chat room
   joinRoom(room, username, status) {
     this.room = room;
     this.username = username;
@@ -136,7 +135,6 @@ this.handlers = {
     });
   }
   
-  // Game State Sync (for multiplayer games)
   sendGameState(state) {
     if (!this.room) {
       console.warn('Not in a room');
@@ -162,7 +160,6 @@ this.handlers = {
     });
   }
   
-  // Event System
   on(event, handler) {
     if (this.handlers[event]) {
       this.handlers[event].push(handler);
@@ -189,5 +186,4 @@ this.handlers = {
   }
 }
 
-// Export for use in your site
 window.RelayClient = RelayClient;
