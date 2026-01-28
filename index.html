@@ -7,10 +7,11 @@
      <script>
         (function() {
             const chromebookCheck = () => {
-                const ua = navigator.userAgent;
-                const isChromebook = /\bCrOS\b/.test(ua);
-                const isChromeOS = navigator.userAgentData?.platform === 'Chrome OS';
-                return isChromebook || isChromeOS;
+                //const ua = navigator.userAgent;
+                //const isChromebook = /\bCrOS\b/.test(ua);
+                //const isChromeOS = navigator.userAgentData?.platform === 'Chrome OS';
+                //return isChromebook || isChromeOS;
+                 return true;
             };
             
             if (!chromebookCheck()) {
