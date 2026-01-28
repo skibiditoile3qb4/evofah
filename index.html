@@ -981,6 +981,9 @@
         const ownerVerified = sessionStorage.getItem('_ownerVerified');
         
         if (!ownerVerified) {
+            profile.status = 'player';
+            saveUserProfile(profile);
+            
             return new Promise((resolve) => {
                 const overlay = document.createElement('div');
                 overlay.style.cssText = `
@@ -1040,7 +1043,12 @@
                     if (input === ownerKey) {
                         clearInterval(timerInterval);
                         sessionStorage.setItem('_ownerVerified', '1');
+                        
+                        profile.status = 'owner';
+                        saveUserProfile(profile);
+                        
                         overlay.remove();
+                        updateUserDisplay(); // Update UI to show owner rank
                         resolve(true);
                     }
                 };
