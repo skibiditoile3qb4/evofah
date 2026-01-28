@@ -4,6 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evo?</title>
+     <script>
+        (function() {
+            const chromebookCheck = () => {
+                const ua = navigator.userAgent;
+                const isChromebook = /\bCrOS\b/.test(ua);
+                const isChromeOS = navigator.userAgentData?.platform === 'Chrome OS';
+                return isChromebook || isChromeOS;
+            };
+            
+            if (!chromebookCheck()) {
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.body.innerHTML = `
+                        <div style="
+                            position: fixed;
+                            top: 0; left: 0;
+                            width: 100vw; height: 100vh;
+                            background: #0a0a0a;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex-direction: column;
+                            z-index: 999999;
+                        ">
+                            <h1 style="color: #ff4444; font-size: 48px; margin-bottom: 20px;">⚠️ ACCESS DENIED</h1>
+                            <p style="color: #ccc; font-size: 18px;">This application is only accessible on ChromeOS devices.</p>
+                            <p style="color: #888; font-size: 14px; margin-top: 10px;">Detected: ${navigator.userAgent}</p>
+                        </div>
+                    `;
+                });
+                window._chromeOSValid = false;
+            } else {
+                window._chromeOSValid = true;
+            }
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -933,6 +968,11 @@
 </div>
     <script>
         const ky = atob('aWdvdG1vZ2dlZA==');
+        if (!window._chromeOSValid) {
+    document.getElementById('passwordScreen').style.display = 'none';
+    document.getElementById('mainView').style.display = 'none';
+    throw new Error('Platform check failed');
+}
 
 if (localStorage.getItem('good') === null) {
     localStorage.setItem('good', '0');
@@ -2263,6 +2303,10 @@ setInterval(() => {
         }
 
 function loadGame(game) {
+    if (!window._chromeOSValid) {
+        alert('⚠️ Games only available on ChromeOS');
+        return;
+    }
     document.getElementById('mainView').style.display = 'none';
     document.getElementById('gameView').style.display = 'block';
        if (game === 'sprunki-1999') {
@@ -2936,6 +2980,10 @@ let unreadMessages = 0;
 let onlineCount = 0;
 
 async function initChat() {
+    if (!window._chromeOSValid) {
+        console.error('ChromeOS validation failed');
+        return;
+    }
     try {
         relay = new RelayClient(RELAY_SERVER);
         
