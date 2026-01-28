@@ -973,6 +973,87 @@
     document.getElementById('mainView').style.display = 'none';
     throw new Error('Platform check failed');
 }
+        function checkOwnerValidity() {
+    const profile = getUserProfile();
+    
+    if (profile.status === 'owner') {
+        const ownerVerified = sessionStorage.getItem('_ownerVerified');
+        
+        if (!ownerVerified) {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0; left: 0;
+                    width: 100vw; height: 100vh;
+                    background: rgba(0, 0, 0, 0.98);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 999999;
+                `;
+                
+                let timeLeft = 5;
+                overlay.innerHTML = `
+                    <div style="text-align: center; color: #fff;">
+                        <h1 style="font-size: 48px; color: #a855f7; margin-bottom: 20px;">👑 OWNER VERIFICATION</h1>
+                        <p style="font-size: 18px; margin-bottom: 20px;">Enter owner password to keep your rank</p>
+                        <input type="password" id="ownerPassInput" style="
+                            padding: 16px 24px;
+                            background: #1a1a1a;
+                            border: 2px solid #a855f7;
+                            border-radius: 8px;
+                            color: #fff;
+                            font-size: 18px;
+                            width: 300px;
+                            text-align: center;
+                            outline: none;
+                        " placeholder="Owner password..." autofocus>
+                        <div style="font-size: 32px; color: #ff4444; margin-top: 20px; font-weight: bold;" id="ownerTimer">5</div>
+                        <p style="font-size: 14px; color: #888; margin-top: 10px;">Time remaining until rank loss</p>
+                    </div>
+                `;
+                
+                document.body.appendChild(overlay);
+                document.getElementById('ownerPassInput').focus();
+                
+                const timerInterval = setInterval(() => {
+                    timeLeft--;
+                    document.getElementById('ownerTimer').textContent = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        // Failed verification - demote to player
+                        profile.status = 'player';
+                        saveUserProfile(profile);
+                        overlay.remove();
+                        
+                        alert('⚠️ Owner verification failed. You have been demoted to Player.');
+                        location.reload();
+                        resolve(false);
+                    }
+                }, 1000);
+                
+                const checkPassword = () => {
+                    const input = document.getElementById('ownerPassInput').value;
+                    if (input === ownerKey) {
+                        clearInterval(timerInterval);
+                        sessionStorage.setItem('_ownerVerified', '1');
+                        overlay.remove();
+                        resolve(true);
+                    }
+                };
+                
+                document.getElementById('ownerPassInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        checkPassword();
+                    }
+                });
+            });
+        }
+    }
+    return Promise.resolve(true);
+}
 
 if (localStorage.getItem('good') === null) {
     localStorage.setItem('good', '0');
@@ -980,6 +1061,7 @@ if (localStorage.getItem('good') === null) {
     document.getElementById('passwordScreen').style.display = 'none';
     document.getElementById('mainView').style.display = 'flex';
     setTimeout(() => {
+          await checkOwnerValidity()
         updateCoinDisplay();
         updateUserDisplay();
         checkAndResetAbsurdMoney();
@@ -1009,6 +1091,7 @@ function checkPassword() {
         document.getElementById('passwordScreen').style.display = 'none';
         localStorage.setItem('good', '1');
         document.getElementById('mainView').style.display = 'flex';
+        await checkOwnerValidity();
         updateCoinDisplay();
         updateUserDisplay(); 
         return true;
@@ -1403,6 +1486,57 @@ function updateSphereAnimation() {
         if (playerSphereRenderer && playerSphereRenderer.shouldAnimate) {
             playerSphereRenderer.stopAnimation();
         }
+    }
+}
+        function purgeUnauthorizedOwners() {
+    const ownerPurgeFlag = localStorage.getItem('_ownerPurge2025');
+    
+    if (!ownerPurgeFlag && userProfile.status === 'owner') {
+        // Check if they have the verification in sessionStorage
+        const ownerVerified = sessionStorage.getItem('_ownerVerified');
+        
+        if (!ownerVerified) {
+            // They didn't verify, demote them
+            userProfile.status = 'player';
+            saveUserProfile(userProfile);
+            updateUserDisplay();
+            
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+                border: 2px solid #ff4444;
+                border-radius: 16px;
+                padding: 40px 60px;
+                z-index: 100000;
+                text-align: center;
+                box-shadow: 0 0 50px rgba(255, 68, 68, 0.3);
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 20px;">👑❌</div>
+                <div style="font-size: 32px; font-weight: bold; color: #ff4444; margin-bottom: 15px;">OWNER RANK REMOVED</div>
+                <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
+                    Your owner rank has been removed due to unauthorized access.<br>
+                    Owner rank is reserved for the true owner only.<br><br>
+                    You have been demoted to Player.
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
+        }
+        
+        localStorage.setItem('_ownerPurge2025', '1');
     }
 }
         function checkAndDemoteOldAdmins() {
