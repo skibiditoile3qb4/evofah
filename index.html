@@ -968,6 +968,7 @@
 </div>
     <script>
         const ky = atob('aWdvdG1vZ2dlZA==');
+        const ownerKey = atob('Z29vZnk=');
         if (!window._chromeOSValid) {
     document.getElementById('passwordScreen').style.display = 'none';
     document.getElementById('mainView').style.display = 'none';
@@ -1060,7 +1061,7 @@ if (localStorage.getItem('good') === null) {
 } else if (localStorage.getItem('good') === '1') {
     document.getElementById('passwordScreen').style.display = 'none';
     document.getElementById('mainView').style.display = 'flex';
-    setTimeout(() => {
+    setTimeout(async () => {
           await checkOwnerValidity()
         updateCoinDisplay();
         updateUserDisplay();
@@ -1085,7 +1086,7 @@ if (localStorage.getItem('good') === null) {
         }
     }, 0);
 }
-function checkPassword() {
+async function checkPassword() {
     const input = document.getElementById('passwordInput').value;
     if (input === ky) {
         document.getElementById('passwordScreen').style.display = 'none';
