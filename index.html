@@ -946,15 +946,13 @@ if (localStorage.getItem('good') === null) {
         checkAndDemoteOldAdmins();
         applyStaffBenefits();
         
-        // ✅ CHECK BAN FIRST - CRITICAL
         const banStatus = checkBanStatus();
         if (banStatus.banned) {
             showBanScreen(banStatus);
             document.getElementById('mainView').style.display = 'none';
-            return; // Stop here if banned
+            return; 
         }
-        
-        // ✅ CHECK MUTE STATUS
+
         const muteStatus = checkMuteStatus();
         if (muteStatus.muted) {
             const chatInput = document.getElementById('chatInput');
@@ -1016,7 +1014,7 @@ const gemLockedGames = {
         const _0x6f9a = 'X2JhbkRhdGE=';
         
 function generateGuestUsername() {
-    const num = Math.floor(100000 + Math.random() * 900000); // 6 digits
+    const num = Math.floor(100000 + Math.random() * 900000);
     return 'guest' + num;
 }
 
@@ -1027,11 +1025,9 @@ function getUserProfile() {
         if (stored) {
             const profile = JSON.parse(stored);
 
-            // ----- CORE -----
             if (!profile.username) profile.username = generateGuestUsername();
             if (!profile.status) profile.status = 'player';
 
-            // ----- UNLOCKED GAMES -----
             if (!Array.isArray(profile.unlockedGames)) {
                 profile.unlockedGames = [];
             }
@@ -1046,23 +1042,17 @@ function getUserProfile() {
                 };
             }
 
-            // ✅ NAMETAG INITIALIZATION (CRITICAL FOR CHAT)
             if (!profile.nametag) {
                 profile.nametag = {
                     equipped: 'none',
                     unlocked: ['none']
                 };
             }
-            // Ensure nametag has both properties
             if (!profile.nametag.equipped) profile.nametag.equipped = 'none';
             if (!Array.isArray(profile.nametag.unlocked)) profile.nametag.unlocked = ['none'];
-
-            // Track donations
             if (typeof profile.totalDonated === 'undefined') {
                 profile.totalDonated = 0;
             }
-
-            // ----- REBIRTH DATA -----
             if (!profile.rebirthData) {
                 profile.rebirthData = {
                     tier: 0,
@@ -1076,7 +1066,6 @@ function getUserProfile() {
                 profile.gemUpgrades = {};
             }
            
-            // ----- OWNED COSMETICS -----
             if (!profile.ownedCosmetics) {
                 profile.ownedCosmetics = {
                     colors: ['default'],
@@ -1087,7 +1076,6 @@ function getUserProfile() {
                 };
             }
 
-            // ----- ENSURE ARRAYS -----
             if (!Array.isArray(profile.ownedCosmetics.colors)) profile.ownedCosmetics.colors = ['default'];
             if (!Array.isArray(profile.ownedCosmetics.hats)) profile.ownedCosmetics.hats = ['none'];
             if (!Array.isArray(profile.ownedCosmetics.faces)) profile.ownedCosmetics.faces = ['none'];
@@ -1101,9 +1089,6 @@ function getUserProfile() {
         console.error('Error loading profile:', e);
     }
 
-    // =============================
-    // FIRST-TIME USER
-    // =============================
     const newProfile = {
         username: generateGuestUsername(),
         status: 'player',
@@ -1142,13 +1127,11 @@ function getUserProfile() {
         userProfile.status = newRank;
         saveUserProfile(userProfile);
         
-        // Remove from pending changes
         delete rankChanges[userProfile.username];
         localStorage.setItem('_rankChanges', JSON.stringify(rankChanges));
         
         alert(`🎖️ Your rank has been updated: ${oldRank} → ${newRank}`);
-        
-        // Apply staff benefits if promoted
+
         applyStaffBenefits();
         updateUserDisplay();
     }
@@ -1216,38 +1199,33 @@ function applyStaffBenefits() {
 
        function checkNametags() {
     const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const dayOfWeek = now.getDay(); 
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
     const totalDonated = userProfile.totalDonated || 0;
     const gladiatorElo = parseInt(localStorage.getItem('gladiator_elo') || '1000');
     const currentGems = userProfile.gems || 0;
     const ownerDonationReceived = localStorage.getItem('_receivedOwnerDonation_' + userProfile.username) === '1';
-    const totalRebirths = userProfile.rebirthData?.totalRebirths || 0; // ← ADD THIS LINE
-    const playedSprunki1999 = localStorage.getItem('_played_sprunki-1999') === '1'; // ← ADD THIS LINE TOO
-    const totalHours = totalActiveTime / 3600; // Convert seconds to hours
+    const totalRebirths = userProfile.rebirthData?.totalRebirths || 0;
+    const playedSprunki1999 = localStorage.getItem('_played_sprunki-1999') === '1';
+    const totalHours = totalActiveTime / 3600;
 
-    // DONATOR - 100k+ donated
     if (totalDonated >= 100000 && !userProfile.nametag.unlocked.includes('donator')) {
         userProfile.nametag.unlocked.push('donator');
         saveUserProfile(userProfile);
         alert('🎖️ Nametag Unlocked: DONATOR');
     }
     
-    // WAR HERO - 14+ ELO
     if (gladiatorElo >= 1350 && !userProfile.nametag.unlocked.includes('warhero')) {
         userProfile.nametag.unlocked.push('warhero');
         saveUserProfile(userProfile);
         alert('⚔️ Nametag Unlocked: WARHERO');
     }
     
-    // ✅ NEW: RICH - 50+ gems
     if (currentGems >= 50 && !userProfile.nametag.unlocked.includes('rich')) {
         userProfile.nametag.unlocked.push('rich');
         saveUserProfile(userProfile);
         alert('💎 Nametag Unlocked: RICH');
     }
-    
-    // ✅ NEW: M0GGED - received donation from owner
     if (ownerDonationReceived && !userProfile.nametag.unlocked.includes('m0gged')) {
         userProfile.nametag.unlocked.push('m0gged');
         saveUserProfile(userProfile);
@@ -1298,7 +1276,6 @@ if (isWeekend && !userProfile.nametag.unlocked.includes('freebird')) {
         alert('✨ Nametag Unlocked: CELESTIAL');
     }
     
-    // ETHEREAL - Play at exactly 3:00 AM
     const currentHour = now.getHours();
     if (currentHour === 3 && !userProfile.nametag.unlocked.includes('ethereal')) {
         userProfile.nametag.unlocked.push('ethereal');
@@ -1306,7 +1283,6 @@ if (isWeekend && !userProfile.nametag.unlocked.includes('freebird')) {
         alert('👻 Nametag Unlocked: ETHEREAL - The witching hour favors you...');
     }
     
-    // PRISMATIC - Collect 1 billion coins total
     if (coins >= 1000000000 && currentHour === 12 && totalHours >= 12 &&!userProfile.nametag.unlocked.includes('prismatic')) {
         userProfile.nametag.unlocked.push('prismatic');
         saveUserProfile(userProfile);
@@ -1317,7 +1293,6 @@ if (isWeekend && !userProfile.nametag.unlocked.includes('freebird')) {
         
 
 
-// Check nametags periodically
 setInterval(checkNametags, 5000);
 
         let konamiCode = [];
@@ -1367,11 +1342,8 @@ function updateUserDisplay() {
     document.getElementById('userName').textContent = userProfile.username;
     const statusEl = document.getElementById('userStatus');
     statusEl.textContent = userProfile.status;
-    // Convert sr.admin to sr-admin for CSS class
     statusEl.className = userProfile.status === 'sr.admin' ? 'sr-admin' : userProfile.status;
-    
-    // Show admin panel for all staff ranks
-    const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];  // Keep sr.admin here
+    const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];  
     if (staffRanks.includes(userProfile.status)) {
         document.getElementById('adminPanelBtn').style.display = 'block';
     }
@@ -1396,17 +1368,12 @@ function updateSphereAnimation() {
         function checkAndDemoteOldAdmins() {
     const resetFlag = localStorage.getItem('_adminPurge2025');
     
-    // Only run once, and only if user is currently an admin
     if (!resetFlag && userProfile.status === 'admin') {
-        // Demote them to player
         userProfile.status = 'player';
         saveUserProfile(userProfile);
         updateUserDisplay();
         
-        // Mark that we've done the purge
         localStorage.setItem('_adminPurge2025', '1');
-        
-        // Show notification
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
@@ -1518,7 +1485,6 @@ function checkAndHandleBan() {
 }
 
 function showBanScreen(banStatus) {
-    // Remove any existing ban screen first
     const existing = document.getElementById('banScreen');
     if (existing) existing.remove();
     
@@ -1588,7 +1554,6 @@ function applyLossProtection(lossAmount) {
         protectionData.used = true;
         setLossProtectionData(protectionData);
         
-        // Show notification
         showLossProtectionNotification(refund);
         
         return refund;
@@ -2022,12 +1987,10 @@ if (checkAndHandleBan()) {
         let gamePlayTime = 0;
         let lastAdTime = Date.now();
 
-// Around line 500-600, update the activity check interval
 activityCheckInterval = setInterval(() => {
     if (gameIsPlaying) {
         gamePlayTime += 1;
-        
-        // This part is good - keeps running
+
         if (gamePlayTime > 0) {
             const hasGoldenAura = userProfile.equippedCosmetics?.effect === 'golden-aura';
             const interval = hasGoldenAura ? 10 : 30;
@@ -2053,23 +2016,19 @@ activityCheckInterval = setInterval(() => {
     const now = Date.now();
     const isCurrentlyActive = (isActive && (now - lastActivity) < 2000);
     
-    if (isCurrentlyActive && !gameIsPlaying) {  // Only track non-game activity here
+    if (isCurrentlyActive && !gameIsPlaying) {  
         totalActiveTime += 1;
         setTotalActiveTime(totalActiveTime);
     }
     isActive = false;
 }, 1000);
-// AUTO COLLECTOR - Idle coin generation
 setInterval(() => {
     const autoCollectLevel = userProfile.gemUpgrades?.auto_collect || 0;
     
     if (autoCollectLevel > 0) {
-        // Fixed rate: every 30 seconds
         const rate = 30;
-        // Coins per tick: 20 at level 1, up to 60 at level 5
         const coinsPerTick = 10 + (autoCollectLevel * 10);
         
-        // Check if enough time has passed
         const lastCollect = parseInt(localStorage.getItem('_lastAutoCollect') || '0');
         const now = Date.now();
         const elapsed = now - lastCollect;
@@ -2241,7 +2200,6 @@ setInterval(() => {
         
         if (isLocked) {
             btn.classList.add('locked');
-            // Override the default :after style for gem-locked games
             if (gemCost) {
                 btn.style.setProperty('--lock-text', `"💎 ${gemCost} gems"`);
             }
@@ -2251,7 +2209,6 @@ setInterval(() => {
         btn.onclick = () => {
             if (isLocked) {
                 if (gemCost) {
-                    // Gem-locked game
                     if (confirm(`Unlock ${formatGameName(game)} for ${gemCost} gems? The game may run slow or take long to load.`)) {
                         if (userProfile.gems >= gemCost) {
                             userProfile.gems -= gemCost;
@@ -2266,7 +2223,6 @@ setInterval(() => {
                         }
                     }
                 } else {
-                    // Coin-locked game
                     if (confirm(`Unlock ${formatGameName(game)} for 50 coins?`)) {
                         if (coins >= 50) {
                             coins -= 50;
@@ -2311,9 +2267,8 @@ function loadGame(game) {
     document.getElementById('gameView').style.display = 'block';
        if (game === 'sprunki-1999') {
         localStorage.setItem('_played_sprunki-1999', '1');
-        checkNametags(); // Check immediately
+        checkNametags(); 
     }
-    // Handle FNAW custom game
     if (game === 'fnaw') {
         document.getElementById('gameFrame').src = 'https://manscod.github.io/other/fnaw';
         gameIsPlaying = true;
@@ -2425,8 +2380,6 @@ function loadGame(game) {
      document.getElementById('gameFrame').src = 'https://gswitch3.github.io/g6/stick-fighter/';
         gameIsPlaying = true;
     return; }
-
-    // Get game source
     const gameInfo = gamesList[game];
     
     if (!gameInfo) {
@@ -2435,16 +2388,13 @@ function loadGame(game) {
         return;
     }
     
-    // Load based on source
     if (gameInfo.s === 'jason') {
-        // Load from Jason Games Dev
         document.getElementById('gameFrame').src = `https://jasongamesdev.github.io/${game}`;
         gameIsPlaying = true;
         if (userProfile.visualizerEnabled) {
             document.body.style.setProperty('--visualizer-active', '1');
         }
     } else if (gameInfo.s === 'lna') {
-        // Check cache first
         const cachedDir = gameUrlCache[game];
         if (cachedDir === 'simple') {
             document.getElementById('gameFrame').src = `https://lnahtml.github.io/a/${game}`;
@@ -2462,7 +2412,6 @@ function loadGame(game) {
             return;
         }
         
-        // Try loading from lnahtml with auto-detection
         tryLoadingGame(game, 0);
         gameIsPlaying = true;
         if (userProfile.visualizerEnabled) {
@@ -2471,7 +2420,6 @@ function loadGame(game) {
     }
 }
 
-// GAME URL CACHE - Add this before tryLoadingGame
 let gameUrlCache = {};
 
 try {
@@ -2487,7 +2435,6 @@ function saveUrlCache() {
     } catch(e) {}
 }
 
-// COMPLETE tryLoadingGame FUNCTION - Add this function
 async function tryLoadingGame(game, startAttempt = 0) {
     const baseUrl = 'https://lnahtml.github.io/';
     const frame = document.getElementById('gameFrame');
@@ -2555,7 +2502,6 @@ async function tryLoadingGame(game, startAttempt = 0) {
     backToMain();
 }
 
-// COMPLETE testGameUrl FUNCTION - Add this function
 async function testGameUrl(url) {
     try {
         const response = await fetch(url);
@@ -2714,17 +2660,13 @@ window.addEventListener('message', (event) => {
         const newCoins = event.data.coins;
         const oldCoins = coins;
         
-        // Calculate profit/loss
         const difference = newCoins - oldCoins;
         
-        // Apply sword multiplier ONLY to profits (positive differences)
-// Apply sword multiplier ONLY to profits (positive differences)
 if (difference > 0) {
     let swordMultiplier = getSwordMultiplier();
     let totalMultiplier = swordMultiplier;
-    let bonusType = 'sword'; // Track what caused the bonus
+    let bonusType = 'sword';
     
-    // Choose EITHER Lightning Blade OR Potion (whichever is active, not both)
     if (lightningBladeState.active) {
         totalMultiplier = swordMultiplier * 2; // Sword * 2
         bonusType = 'lightning-blade';
@@ -2736,12 +2678,10 @@ if (difference > 0) {
     const bonusProfit = difference * (totalMultiplier - 1);
     coins = newCoins + bonusProfit;
     
-    // Show notification if there's a bonus
     if (bonusProfit > 0) {
         showBonus(bonusProfit, totalMultiplier, bonusType);
     }
-} else if (difference < 0) {  // <-- FIXED: Closed the if (difference > 0) block
-    // Apply loss protection for Mystical rank
+} else if (difference < 0) {  
     const lossAmount = Math.abs(difference);
     const refund = applyLossProtection(lossAmount);
     coins = newCoins + refund;
@@ -2754,7 +2694,6 @@ if (difference > 0) {
     }
 });
 
-// Get sword multiplier
 function getSwordMultiplier() {
     try {
         const sword = userProfile?.equippedCosmetics?.sword || 'none';
@@ -2767,7 +2706,7 @@ function getSwordMultiplier() {
     }
 }
 
-// Show visual feedback for bonuses
+
 function showBonus(bonus, multiplier, type) {
     const notification = document.createElement('div');
     
@@ -2784,7 +2723,6 @@ function showBonus(bonus, multiplier, type) {
         emoji = '⚡';
         label = 'Lightning Blade';
     } else {
-        // Sword bonus
         bgGradient = 'linear-gradient(135deg, #ff4500 0%, #ff8c00 100%)';
         borderColor = '#ffd700';
         emoji = multiplier === 2.0 ? '🐉' : '⚔️';
@@ -2816,7 +2754,6 @@ function showBonus(bonus, multiplier, type) {
     }, 3000);
 }
 
-// Add CSS animations for sword bonus
 const swordStyle = document.createElement('style');
 swordStyle.textContent = `
     @keyframes slideInRight {
@@ -2859,7 +2796,7 @@ document.head.appendChild(swordStyle);
     window.location.href = 'adminpanel.html';
 });
 
-// Single potion system (no stacking)
+
 function getActivePotion() {
     try {
         const saved = localStorage.getItem('_activePotion');
@@ -2867,7 +2804,6 @@ function getActivePotion() {
             const potion = JSON.parse(saved);
             const now = Date.now();
             
-            // Check if expired
             if (now >= potion.endTime) {
                 clearActivePotion();
                 return null;
@@ -2881,8 +2817,6 @@ function getActivePotion() {
 function setPotionActive(potion) {
     try {
         localStorage.setItem('_activePotion', JSON.stringify(potion));
-        
-        // Auto-clear after expiration
         const duration = potion.endTime - Date.now();
         setTimeout(() => {
             clearActivePotion();
@@ -2906,13 +2840,12 @@ function isPotionActive() {
     cooldownEnd: 0
 };
 
-// Load persisted state
+
 function loadLightningState() {
     try {
         const saved = localStorage.getItem('_lightningBlade');
         if (saved) {
             lightningBladeState = JSON.parse(saved);
-            // Check if effects have expired
             const now = Date.now();
             if (lightningBladeState.active && now >= lightningBladeState.endTime) {
                 lightningBladeState.active = false;
@@ -2941,8 +2874,7 @@ function updateLightningIcon() {
         icon.style.display = 'none';
         return;
     }
-    
-    // Show icon only when not on cooldown
+
     if (now < lightningBladeState.cooldownEnd) {
         icon.style.display = 'none';
     } else {
@@ -2970,18 +2902,17 @@ function activateLightningBlade() {
         return;
     }
     
-    // Activate ability
+]
     lightningBladeState.active = true;
-    lightningBladeState.endTime = now + (5 * 60 * 1000); // 5 minutes
+    lightningBladeState.endTime = now + (5 * 60 * 1000); 
     saveLightningState();
     updateLightningIcon();
     
     alert('⚡ Lightning Blade activated! All profits DOUBLED for 5 minutes!');
-    
-    // Auto-deactivate after 5 minutes
+
     setTimeout(() => {
         lightningBladeState.active = false;
-        lightningBladeState.cooldownEnd = Date.now() + (45 * 60 * 1000); // 45 min cooldown
+        lightningBladeState.cooldownEnd = Date.now() + (45 * 60 * 1000); 
         saveLightningState();
         updateLightningIcon();
         alert('⚡ Lightning Blade effect ended. Entering 45-minute cooldown.');
@@ -2990,7 +2921,6 @@ function activateLightningBlade() {
 
 document.getElementById('lightningIcon').addEventListener('click', activateLightningBlade);
 
-// Update icon visibility
 setInterval(() => {
     updateLightningIcon();
 }, 1000);
@@ -3009,7 +2939,7 @@ async function initChat() {
     try {
         relay = new RelayClient(RELAY_SERVER);
         
-        // ✅ REGISTER HANDLERS FIRST - BEFORE CONNECTING
+
         relay.on('connected', () => {
     updateConnectionStatus(true);
 });
