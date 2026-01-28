@@ -12,7 +12,7 @@ class RelayClient {
     this.heartbeatInterval = null;
     
     // Event handlers
-    this.handlers = {
+this.handlers = {
       connected: [],
       disconnected: [],
       chat_message: [],
@@ -28,9 +28,10 @@ class RelayClient {
       admin_action_result: [],
       unbanned: [],
       queue_count: [],
+      password_result: [],        // ADDED
+      owner_password_result: [],  // ADDED
       error: []
     };
-  }
   
   connect() {
     return new Promise((resolve, reject) => {
