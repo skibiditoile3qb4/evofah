@@ -2326,6 +2326,17 @@ setInterval(() => {
         updateCoinDisplay();
     }
 }, 5000);
+        setInterval(() => {
+    const currentCoins = getCoins();
+    const validated = validateCoins(currentCoins);
+    
+    if (validated !== currentCoins) {
+        console.warn('Invalid coins detected and reset:', currentCoins, '→', validated);
+        coins = validated;
+        setCoins(coins);
+        updateCoinDisplay();
+    }
+}, 5000);
     function showAd() {
     const overlay = document.getElementById('adOverlay');
     const skipBtn = document.getElementById('skipAdBtn');
