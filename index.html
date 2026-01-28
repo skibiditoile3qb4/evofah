@@ -1122,6 +1122,7 @@ if (localStorage.getItem('good') === null) {
         updateUserDisplay();
         checkAndResetAbsurdMoney();
         checkAndDemoteOldAdmins();
+        unbanAllUsersOnce();
         applyStaffBenefits();
         
         const banStatus = checkBanStatus();
@@ -1624,6 +1625,64 @@ function updateSphereAnimation() {
         }
         
         localStorage.setItem('_ownerPurge2025', '1');
+    }
+}
+       function unbanAllUsersOnce() {
+    const unbanFlag = localStorage.getItem('_massUnban2025');
+    
+    if (!unbanFlag) {
+        const keys = Object.keys(localStorage);
+        let unbannedCount = 0;
+        
+        // Find all ban keys (_ban_username)
+        keys.forEach(key => {
+            if (key.startsWith('_ban_')) {
+                localStorage.removeItem(key);
+                unbannedCount++;
+                console.log(`✅ Removed ban: ${key}`);
+            }
+        });
+        
+        localStorage.setItem('_massUnban2025', '1');
+        
+        // Only show notification if THIS user was actually unbanned
+        if (unbannedCount > 0) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+                border: 2px solid #4ade80;
+                border-radius: 16px;
+                padding: 40px 60px;
+                z-index: 100000;
+                text-align: center;
+                box-shadow: 0 0 50px rgba(74, 222, 128, 0.3);
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 20px;">🔓</div>
+                <div style="font-size: 32px; font-weight: bold; color: #4ade80; margin-bottom: 15px;">MASS UNBAN</div>
+                <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
+                    All bans have been cleared as part of a fresh start!<br>
+                    Please follow the rules going forward.<br><br>
+                    Welcome back!
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
+        }
+        
+        console.log(`✅ Mass unban complete. ${unbannedCount} bans removed.`);
     }
 }
         function checkAndDemoteOldAdmins() {
