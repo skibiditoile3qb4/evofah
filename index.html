@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evo?</title>
      <script>
-        (function() {
-            const chromebookCheck = () => {
 
-                 return true; 
-            };
+(function() {
+    const chromebookCheck = () => {
+        // PRODUCTION CODE (currently commented out for testing):
+        // const ua = navigator.userAgent.toLowerCase();
+        // const platform = navigator.platform.toLowerCase();
+        // 
+        // // Check for ChromeOS indicators
+        // const isChromeOS = ua.includes('cros') || 
+        //                    platform.includes('cros') ||
+        //                    ua.includes('chromebook');
+        // 
+        // // Additional check for Chrome on ChromeOS
+        // const isChrome = ua.includes('chrome') && !ua.includes('edge');
+        // 
+        // return isChromeOS && isChrome;
+        
+        // DEBUG MODE - Remove this line in production:
+        return true;  // ⚠️ DEBUG: Allows all devices
+    };
             
             if (!chromebookCheck()) {
                 document.addEventListener('DOMContentLoaded', () => {
@@ -2385,7 +2400,8 @@ setInterval(() => {
         updateCoinDisplay();
     }
 }, 5000);
-        setInterval(() => {
+     javascript// REPLACE this interval (around line 1456):
+setInterval(() => {
     const currentCoins = getCoins();
     const validated = validateCoins(currentCoins);
     
@@ -2393,6 +2409,29 @@ setInterval(() => {
         console.warn('Invalid coins detected and reset:', currentCoins, '→', validated);
         coins = validated;
         setCoins(coins);
+        updateCoinDisplay();
+    }
+}, 5000);
+
+
+setInterval(() => {
+
+    const storedCoins = getCoins();
+    const validated = validateCoins(coins); // Check live coins variable
+    
+    if (validated !== coins || isNaN(coins)) {
+        console.warn('Invalid coins detected and reset:', coins, '→', validated);
+        coins = validated;
+        setCoins(coins);
+        updateCoinDisplay();
+    }
+    
+    // Also validate storage
+    const validatedStored = validateCoins(storedCoins);
+    if (validatedStored !== storedCoins) {
+        console.warn('Invalid stored coins detected:', storedCoins, '→', validatedStored);
+        setCoins(validatedStored);
+        coins = validatedStored;
         updateCoinDisplay();
     }
 }, 5000);
