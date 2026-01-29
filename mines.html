@@ -220,7 +220,10 @@
     let safeClicks = 0;
     let gameActive = false;
     let balance = 0;
-    let tilesLeft = 25;
+    let bombCount = 0;
+
+    // House edge (0.97 = 3% house edge, adjust as needed)
+    const HOUSE_EDGE = 0.97;
 
     // Request coins from parent
     window.parent.postMessage({ type: 'getCoins' }, '*');
@@ -235,8 +238,8 @@
 
     function updateInfo() {
       multEl.textContent = currentMult.toFixed(2) + '×';
-      winEl.textContent = Math.floor(bet * currentMult); // Floor the winnings display
-      balanceEl.textContent = Math.floor(balance); // Floor the balance display
+      winEl.textContent = Math.floor(bet * currentMult);
+      balanceEl.textContent = Math.floor(balance);
     }
 
     function updateParentCoins() {
@@ -255,10 +258,29 @@
       }, 2000);
     }
 
+    // Calculate multiplier after revealing N safe tiles
+    function calculateMultiplier(revealedSafe, totalBombs) {
+      let mult = 1;
+      const totalTiles = 25;
+      const totalSafe = totalTiles - totalBombs;
+      
+      // For each safe tile revealed, calculate the probability and multiply
+      for (let i = 0; i < revealedSafe; i++) {
+        const tilesRemaining = totalTiles - i;
+        const safeRemaining = totalSafe - i;
+        const probability = safeRemaining / tilesRemaining;
+        
+        // Multiply by inverse of probability, then apply house edge
+        mult *= (1 / probability) * HOUSE_EDGE;
+      }
+      
+      return mult;
+    }
+
     function startGame() {
       if (gameActive) return showMessage("🚫 Finish your current game first!");
       bet = parseFloat(betInp.value);
-      const bombCount = parseInt(bombInp.value);
+      bombCount = parseInt(bombInp.value);
 
       if (!bet || bet <= 0 || bombCount < 1 || bombCount > 24) {
         return showMessage("❗ Invalid bet or bomb count");
@@ -274,7 +296,6 @@
       revealed.clear();
       safeClicks = 0;
       currentMult = 1;
-      tilesLeft = 25;
       gridEl.innerHTML = '';
       cashBtn.disabled = true;
       startBtn.disabled = true;
@@ -296,7 +317,6 @@
 
       tile.disabled = true;
       revealed.add(index);
-      tilesLeft--;
 
       if (bombs.has(index)) {
         tile.classList.add('revealed-bomb');
@@ -305,16 +325,17 @@
         tile.classList.add('revealed-safe');
         safeClicks++;
 
-        const safeTiles = 25 - bombs.size - safeClicks;
-        if (safeTiles > 0) {
-          const chance = safeTiles / tilesLeft;
-          const multiplierBoost = 1 / chance;
-          currentMult *= multiplierBoost;
-        }
+        // Recalculate multiplier based on total safe clicks
+        currentMult = calculateMultiplier(safeClicks, bombCount);
         updateInfo();
 
         if (safeClicks === 1) {
           cashBtn.disabled = false;
+        }
+
+        // Auto-win if all safe tiles revealed
+        if (safeClicks === 25 - bombCount) {
+          setTimeout(() => cashOut(), 500);
         }
       }
     }
