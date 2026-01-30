@@ -497,6 +497,29 @@
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     border-radius: 10px 10px 0 0;
 }
+
+.chat-tab {
+    padding: 6px 12px;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 4px;
+    color: #888;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chat-tab:hover {
+    background: #1a1a1a;
+    border-color: #555;
+}
+
+.chat-tab.active {
+    background: #d69e2e;
+    border-color: #d69e2e;
+    color: #000;
+    font-weight: bold;
+}
 #chatOnlineCount {
     font-size: 12px;
     color: #4ade80;
@@ -977,14 +1000,20 @@
 <button id="chatToggleBtn">💬</button>
 
 <div id="chatContainer">
-    <div id="chatHeader">
-        <div>
-            💬 Global Chat
-            <span id="chatOnlineCount">• 0 online</span>
-            <span id="connectionStatus" class="connection-status disconnected">Offline</span>
+   <div id="chatHeader">
+    <div>
+        💬 <span id="chatTitle">Global Chat</span>
+        <span id="chatOnlineCount">• 0 online</span>
+        <span id="connectionStatus" class="connection-status disconnected">Offline</span>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <div id="chatTabs" style="display: none; gap: 5px;">
+            <button id="globalChatTab" class="chat-tab active">Global</button>
+            <button id="staffChatTab" class="chat-tab">Staff</button>
         </div>
         <button id="closeChat">✕</button>
     </div>
+</div>
     <div id="chatMessages"></div>
 <div id="chatInputContainer">
     <div class="donate-section donate-section-chat">
@@ -3329,6 +3358,10 @@ async function initChat() {
         console.error('ChromeOS validation failed');
         return;
     }
+    const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
+    if (staffRanks.includes(userProfile.status)) {
+        document.getElementById('chatTabs').style.display = 'flex';
+    }
     try {
         relay = new RelayClient(RELAY_SERVER);
         
@@ -3470,8 +3503,47 @@ relay.on('players_update', (data) => {
         
         updateConnectionStatus(true);
         
-        // Join room after connection
-        relay.joinRoom('global_chat', userProfile.username, userProfile.status);
+        relay.joinRoom(currentChatRoom, userProfile.username, userProfile.status);
+
+// Chat tab switching
+document.getElementById('globalChatTab')?.addEventListener('click', () => {
+    switchChatRoom('global_chat');
+});
+
+document.getElementById('staffChatTab')?.addEventListener('click', () => {
+    switchChatRoom('staff_chat');
+});
+
+function switchChatRoom(room) {
+    if (room === 'staff_chat') {
+        const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
+        if (!staffRanks.includes(userProfile.status)) {
+            alert('Staff only!');
+            return;
+        }
+    }
+    
+
+    if (relay && relay.connected) {
+        relay.send({ type: 'leave' });
+    }
+    
+
+    document.getElementById('chatMessages').innerHTML = '';
+    
+ 
+    currentChatRoom = room;
+    
+    
+    document.getElementById('globalChatTab')?.classList.toggle('active', room === 'global_chat');
+    document.getElementById('staffChatTab')?.classList.toggle('active', room === 'staff_chat');
+    document.getElementById('chatTitle').textContent = room === 'staff_chat' ? 'Staff Chat' : 'Global Chat';
+    
+
+    if (relay && relay.connected) {
+        relay.joinRoom(room, userProfile.username, userProfile.status);
+    }
+}
         
         // Register remaining handlers
         relay.on('joined', (data) => {
@@ -3643,7 +3715,6 @@ function toggleChat() {
 }
 
 function sendChatMessage() {
-    // Check if muted first
     const muteStatus = checkMuteStatus();
     if (muteStatus.muted) {
         alert(`🔇 You are muted for ${muteStatus.hoursRemaining} more hours by ${muteStatus.mutedBy}`);
@@ -3657,12 +3728,12 @@ function sendChatMessage() {
         relay.send({
             type: 'chat',
             message: message,
-            nametag: userProfile.nametag.equipped
+            nametag: userProfile.nametag.equipped,
+            room: currentChatRoom 
         });
         input.value = '';
     }
 }
-
 // Event listeners
 document.getElementById('chatToggleBtn').addEventListener('click', toggleChat);
 document.getElementById('closeChat').addEventListener('click', toggleChat);
