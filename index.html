@@ -1070,11 +1070,11 @@ function checkOwnerValidity() {
                     
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
-                        profile.status = 'player';
+                        profile.status = 'sr.admin';
                         saveUserProfile(profile);
                         overlay.remove();
                         
-                        alert('⚠️ Owner verification failed. You have been demoted to Player.');
+                        alert('⚠️ Owner verification failed. You have been demoted to Sr. Admin.');
                         location.reload();
                         resolve(false);
                     }
