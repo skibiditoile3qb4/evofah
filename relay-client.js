@@ -11,27 +11,27 @@ class RelayClient {
     this.reconnectDelay = 2000;
     this.heartbeatInterval = null;  // ← Make sure semicolon is here
     
-    // Event handlers  ← Make sure this is a COMMENT, not broken syntax
-    this.handlers = {  // ← Line that was causing error
-      connected: [],
-      disconnected: [],
-      chat_message: [],
-      player_joined: [],
-      player_left: [],
-      players_update: [],
-      game_state_update: [],
-      player_action: [],
-      donation: [],
-      banned: [],
-      muted: [],
-      rank_changed: [],
-      admin_action_result: [],
-      unbanned: [],
-      queue_count: [],
-      password_result: [],
-      owner_password_result: [],
-      error: []
-    };  // ← Make sure semicolon is here too
+   this.handlers = {
+  connected: [],
+  disconnected: [],
+  chat_message: [],
+  player_joined: [],
+  player_left: [],
+  players_update: [],
+  game_state_update: [],
+  player_action: [],
+  donation: [],
+  banned: [],
+  muted: [],
+  unmuted: [],  // ← ADDED
+  rank_changed: [],
+  admin_action_result: [],
+  unbanned: [],
+  queue_count: [],
+  password_result: [],
+  owner_password_result: [],
+  error: []
+};
   }
   
   connect() {
