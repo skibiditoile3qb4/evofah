@@ -3465,6 +3465,20 @@ relay.on('players_update', (data) => {
                 chatInput.placeholder = `Muted for ${data.hours} hours`;
             }
         });
+        relay.on('unmuted', (data) => {
+    console.log('🔊 UNMUTE EVENT RECEIVED:', data);
+    
+
+    localStorage.removeItem('_muteData');
+    
+    alert(`🔊 Your mute has been removed by ${data.unmutedBy}`);
+
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.disabled = false;
+        chatInput.placeholder = 'Type a message...';
+    }
+});
 
         relay.on('rank_changed', (data) => {
             console.log('🎖️ RANK CHANGE RECEIVED:', data);
