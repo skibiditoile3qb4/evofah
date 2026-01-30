@@ -201,14 +201,18 @@
         <!-- Moderator, Admin, Sr. Admin & Owner -->
         <div id="moderatorSection" style="display: none;">
             <div class="section">
-                <h2>🔰 Moderator Controls</h2>
-                
-                <h3>Mute User (24h max)</h3>
-                <input type="text" id="muteUsername" placeholder="Username">
-                <input type="number" id="muteHours" placeholder="Hours (max 24)" max="24">
-                <button id="muteBtn">Mute User</button>
-                <small>All actions are logged</small>
-            </div>
+    <h2>🔰 Moderator Controls</h2>
+    
+    <h3>Mute User (24h max)</h3>
+    <input type="text" id="muteUsername" placeholder="Username">
+    <input type="number" id="muteHours" placeholder="Hours (max 24)" max="24">
+    <button id="muteBtn">Mute User</button>
+    
+    <h3 style="margin-top: 20px;">Unmute User</h3>
+    <input type="text" id="unmuteUsername" placeholder="Username to unmute">
+    <button class="success" id="unmuteBtn">Unmute User</button>
+    <small>All actions are logged</small>
+</div>
             
             
         </div>
