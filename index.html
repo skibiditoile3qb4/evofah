@@ -3352,6 +3352,7 @@ let relay = null;
 let chatOpen = false;
 let unreadMessages = 0;
 let onlineCount = 0;
+let currentChatRoom = 'global_chat';
 
 async function initChat() {
     if (!window._chromeOSValid) {
