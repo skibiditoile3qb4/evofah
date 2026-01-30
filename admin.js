@@ -176,6 +176,11 @@ class AdminPanel {
             muteBtn.addEventListener('click', () => this.handleMute());
             console.log('✅ Mute button listener added');
         }
+        const unmuteBtn = document.getElementById('unmuteBtn');
+if (unmuteBtn) {
+    unmuteBtn.addEventListener('click', () => this.handleUnmute());
+    console.log('✅ Unmute button listener added');
+}
 
 //unban
         const unbanBtn = document.getElementById('unbanBtn');
@@ -368,6 +373,37 @@ if (unbanBtn) {
         document.getElementById('muteUsername').value = '';
         document.getElementById('muteHours').value = '';
     }
+    handleUnmute() {
+    console.log('🔊 Unmute button clicked');
+    const username = document.getElementById('unmuteUsername').value.trim();
+
+    if (!username) {
+        alert('Enter a username');
+        return;
+    }
+
+    if (!this.relay || !this.relay.connected) {
+        alert('Not connected to server!');
+        console.error('❌ Relay not connected');
+        return;
+    }
+
+    if (!confirm(`Remove mute from ${username}?`)) {
+        return;
+    }
+
+    console.log('📤 Sending unmute:', { username });
+
+    this.relay.send({
+        type: 'admin_action',
+        action: 'unmute',
+        targetUsername: username,
+        adminUsername: this.userProfile.username,
+        adminRank: this.userProfile.status
+    });
+
+    document.getElementById('unmuteUsername').value = '';
+}
 handleUnban() {
     console.log('🔓 Unban button clicked');
     const username = document.getElementById('unbanUsername').value.trim();
