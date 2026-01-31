@@ -1181,14 +1181,14 @@ if (localStorage.getItem('good') === null) {
 } else if (localStorage.getItem('good') === '1') {
     document.getElementById('passwordScreen').style.display = 'none';
     
-
     (async () => {
+        await initChat();
+
         const loggedIn = await tryAutoLogin();
         if (!loggedIn) {
-            // No session
             showLoginScreen();
         } else {
-            startAutoSync(); // begin sync
+            startAutoSync();
         }
     })();
     
@@ -1261,12 +1261,10 @@ async function tryAutoLogin() {
     showLoginScreen();
     return false;
   }
-  
-  // Try to restore from cloud
+
   if (!relay || !relay.connected) {
-    await initChat();
     await new Promise(resolve => setTimeout(resolve, 1000));
-  }
+  }}
   
   return new Promise((resolve) => {
     relay.send({
