@@ -3443,7 +3443,28 @@ async function initChat() {
     try {
         relay = new RelayClient(RELAY_SERVER);
         
-
+relay.on('joined', (data) => {
+            console.log('🎉 JOINED EVENT RECEIVED!', data);
+            addSystemMessage('Welcome to global chat!');
+            onlineCount = data.players ? data.players.length : 1;
+            updateOnlineCount();
+            
+            console.log('Chat history:', data.chatHistory);
+            console.log('Chat history length:', data.chatHistory?.length);
+            
+            if (data.chatHistory && data.chatHistory.length > 0) {
+                console.log(`📜 Loading ${data.chatHistory.length} messages`);
+                data.chatHistory.forEach((msg, index) => {
+                    console.log(`Message ${index}:`, msg);
+                    displayChatMessage(msg, false);
+                });
+                
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else {
+                console.log('⚠️ No chat history!');
+            }
+        });
        relay.on('connected', (data) => {
     updateConnectionStatus(true);
 });
@@ -3641,30 +3662,7 @@ function switchChatRoom(room) {
     }
 }
         
-       relay.on('joined', (data) => {
-           console.log('🎉 JOINED EVENT FIRED!', data);
-    addSystemMessage('Welcome to global chat!');
-    onlineCount = data.players ? data.players.length : 1;
-    updateOnlineCount();
-    
-    // ✅ FIXED: Add debug logging and proper rendering
-    console.log('📜 Chat history received:', data.chatHistory);
-    
-    if (data.chatHistory && data.chatHistory.length > 0) {
-        console.log(`Loading ${data.chatHistory.length} messages from history`);
-        data.chatHistory.forEach(msg => {
-            console.log('Displaying message:', msg);
-            displayChatMessage(msg, false);  // false = don't auto-scroll for history
-        });
-        
-        // Scroll to bottom after loading history
-        const messagesContainer = document.getElementById('chatMessages');
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    } else {
-        console.log('⚠️ No chat history received');
-    }
-});
-        
+      
         relay.on('chat_message', (data) => {
             displayChatMessage(data.message, true);
             
