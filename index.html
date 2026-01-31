@@ -1264,7 +1264,7 @@ async function tryAutoLogin() {
 
   if (!relay || !relay.connected) {
     await new Promise(resolve => setTimeout(resolve, 1000));
-  }}
+  }
   
   return new Promise((resolve) => {
     relay.send({
