@@ -17,6 +17,7 @@ class RelayClient {
   chat_message: [],
   player_joined: [],
   player_left: [],
+  joined: [],
   players_update: [],
   game_state_update: [],
   player_action: [],
