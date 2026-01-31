@@ -3012,7 +3012,6 @@ async function testGameUrl(url) {
         return false;
     }
 }
-
 function backToMain() {
     document.getElementById('mainView').style.display = 'flex';
     const gameView = document.getElementById('gameView');
@@ -3022,6 +3021,7 @@ function backToMain() {
     frame.src = '';
     document.body.style.setProperty('--visualizer-active', '0');
     gameIsPlaying = false;
+    document.getElementById('saveLoadBtn').style.display = 'flex';
 }
         displayGames(games);
 
