@@ -1175,7 +1175,7 @@ function checkOwnerValidity() {
     }
     return Promise.resolve(true);
 }
-
+let userProfile = getUserProfile();
 if (localStorage.getItem('good') === null) {
     localStorage.setItem('good', '0');
 } else if (localStorage.getItem('good') === '1') {
@@ -1838,7 +1838,7 @@ document.addEventListener('keydown', (e) => {
             } catch(e) {}
         }
 
-        let userProfile = getUserProfile();
+       
 
 let playerSphereRenderer = null;
 
