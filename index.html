@@ -154,17 +154,13 @@
         .error-message.show {
             opacity: 1;
         }
-       #mainView {
-    min-height: 100vh;
-    padding: 40px 20px;
-    display: none;
-}
-
-#mainView .container {
-    max-width: 800px;
-    width: 100%;
-    margin: 0 auto; /* This centers it properly */
-}
+        #mainView {
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
         #coinDisplay {
             position: fixed;
             top: 20px;
@@ -945,7 +941,6 @@
     background: #059669 !important;
     border-color: #047857 !important;
 }
-
     </style>
     <script src="PlayerSphere.js"></script>
     <script src="relay-client.js"></script>
@@ -958,36 +953,15 @@
         <div class="error-message" id="errorMessage">Incorrect password</div>
         <button id="requestPasswordBtn" style="margin-top: 20px; background: #10b981; border-color: #059669;">REQUEST PASSWORD 📧</button>
     </div>
- <div id="loginScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0a0a0a; z-index: 10000; flex-direction: column; align-items: center; justify-content: center;">
-        <h1 style="font-size: 48px; font-weight: 300; letter-spacing: 3px; margin-bottom: 30px;">🔐 LOGIN</h1>
-        
-        <div id="loginTab" style="display: block;">
-            <input type="email" id="loginEmail" placeholder="Email" style="padding: 16px 24px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; outline: none; width: 300px; text-align: center; margin-bottom: 10px;">
-            <input type="password" id="loginPassword" placeholder="Password" style="padding: 16px 24px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; outline: none; width: 300px; text-align: center; margin-bottom: 20px;">
-            <button id="loginBtn" style="padding: 16px 32px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; cursor: pointer; font-size: 16px; width: 300px; margin-bottom: 10px;">LOGIN</button>
-            <button id="showSignupBtn" style="padding: 12px 32px; background: transparent; border: 1px solid #555; border-radius: 8px; color: #888; cursor: pointer; font-size: 14px; width: 300px;">Create Account</button>
-        </div>
-        
-        <div id="signupTab" style="display: none;">
-            <input type="email" id="signupEmail" placeholder="Email" style="padding: 16px 24px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; outline: none; width: 300px; text-align: center; margin-bottom: 10px;">
-            <input type="password" id="signupPassword" placeholder="Password" style="padding: 16px 24px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; outline: none; width: 300px; text-align: center; margin-bottom: 20px;">
-            <button id="signupBtn" style="padding: 16px 32px; background: #d69e2e; border: 1px solid #b7791f; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; width: 300px; margin-bottom: 10px;">CREATE ACCOUNT</button>
-            <button id="showLoginBtn" style="padding: 12px 32px; background: transparent; border: 1px solid #555; border-radius: 8px; color: #888; cursor: pointer; font-size: 14px; width: 300px;">Back to Login</button>
-        </div>
-        
-        <p style="margin-top: 20px; color: #666; font-size: 12px; cursor: pointer;" id="skipLoginBtn">Skip (play as guest)</p>
-    </div>
 
     <div id="mainView">
-<div id="userDisplay" style="position: fixed; top: 20px; right: 20px; z-index: 100;">
-    <div style="background: #1a1a1a; padding: 15px; border-radius: 12px; border: 1px solid #333; text-align: center; transition: all 0.2s; width: 200px; min-height: 250px; overflow: visible; cursor: pointer;" onclick="window.location.href='player.html'">
+<div id="userDisplay" style="position: fixed; top: 20px; right: 20px; z-index: 100; cursor: pointer;" onclick="window.location.href='player.html'">
+    <div style="background: #1a1a1a; padding: 15px; border-radius: 12px; border: 1px solid #333; text-align: center; transition: all 0.2s; width: 200px; height: 250px; overflow: visible;">
         <canvas id="playerSphere" width="150" height="150" style="display: block; margin: 0 auto 10px;"></canvas>
         <div id="userName" style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">guest000000</div>
         <div id="userStatus" style="font-size: 14px; margin-bottom: 8px;">player</div>
         <div style="font-size: 13px; color: #d69e2e;">💰 <span id="coinAmountTop">10</span> | 💎 <span id="gemAmountTop">0</span></div>
     </div>
-    <button onclick="event.stopPropagation(); handleLogout();" style="width: 200px; margin-top: 10px; padding: 10px; background: #c53030; border: 1px solid #9b2c2c; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; font-size: 14px;">LOGOUT</button>
-</div>
     
 </div>
         <div id="lightningIcon" title="Lightning Blade: Double Profit">⚡</div>
@@ -1066,17 +1040,7 @@
         <button id="skipAdBtn">Continue</button>
     </div>
 </div>
-    
-    
     <script>
-
-        
-const RELAY_SERVER = 'wss://relayfah.onrender.com';
-let relay = null;
-let chatOpen = false;
-let unreadMessages = 0;
-let onlineCount = 0;
-let currentChatRoom = 'global_chat';
         if (!window._chromeOSValid) {
     document.getElementById('passwordScreen').style.display = 'none';
     document.getElementById('mainView').style.display = 'none';
@@ -1190,23 +1154,11 @@ function checkOwnerValidity() {
     }
     return Promise.resolve(true);
 }
-let userProfile = getUserProfile();
+
 if (localStorage.getItem('good') === null) {
     localStorage.setItem('good', '0');
 } else if (localStorage.getItem('good') === '1') {
     document.getElementById('passwordScreen').style.display = 'none';
-    
-    (async () => {
-        await initChat();
-
-        const loggedIn = await tryAutoLogin();
-        if (!loggedIn) {
-            showLoginScreen();
-        } else {
-            startAutoSync();
-        }
-    })();
-    
     document.getElementById('mainView').style.display = 'flex';
     setTimeout(async () => {
           await checkOwnerValidity()
@@ -1234,235 +1186,6 @@ if (localStorage.getItem('good') === null) {
         }
     }, 0);
 }
-        function setCookie(name, value, days = 7) {
-  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Strict`;
-}
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-}
-
-function deleteCookie(name) {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-}
-
-// ============================================
-// CLOUD BACKUP FUNCTIONS (localStorage PRIMARY!)
-// ============================================
-
-function getAllLocalStorage() {
-  const data = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    data[key] = localStorage.getItem(key);
-  }
-  return data;
-}
-
-function setAllLocalStorage(data) {
-  localStorage.clear();
-  for (const [key, value] of Object.entries(data)) {
-    localStorage.setItem(key, value);
-  }
-}
-
-async function tryAutoLogin() {
-  const sessionToken = getCookie('sessionToken');
-  if (!sessionToken) {
-    showLoginScreen();
-    return false;
-  }
-
-  if (!relay || !relay.connected) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-  
-  return new Promise((resolve) => {
-    relay.send({
-      type: 'verify_session',
-      sessionToken
-    });
-    
-    const handler = (data) => {
-      relay.off('session_result', handler);
-      
-      if (data.valid && data.localStorageData) {
-        // Restore cloud backup → localStorage
-        setAllLocalStorage(data.localStorageData);
-        console.log('✅ Restored from cloud:', data.email);
-        resolve(true);
-      } else {
-        deleteCookie('sessionToken');
-        showLoginScreen();
-        resolve(false);
-      }
-    };
-    
-    relay.on('session_result', handler);
-    
-    setTimeout(() => {
-      relay.off('session_result', handler);
-      showLoginScreen();
-      resolve(false);
-    }, 30000);
-  });
-}
-
-async function handleLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  
-  if (!email || !password) {
-    alert('Please enter email and password');
-    return;
-  }
-  
-  if (!relay || !relay.connected) {
-    await initChat();
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-  
-  relay.send({
-    type: 'login',
-    email,
-    password
-  });
-  
-  relay.on('login_result', (data) => {
-    if (data.success) {
-      // Save session cookie
-      setCookie('sessionToken', data.sessionToken, 7);
-      
-      // Restore cloud backup → localStorage
-      if (data.localStorageData) {
-        setAllLocalStorage(data.localStorageData);
-      }
-      
-      alert('✅ Logged in successfully!');
-      hideLoginScreen();
-      location.reload();
-    } else {
-      alert('❌ ' + data.message);
-    }
-  });
-}
-
-async function handleSignup() {
-  const email = document.getElementById('signupEmail').value.trim();
-  const password = document.getElementById('signupPassword').value;
-  
-  if (!email || !password) {
-    alert('Please enter email and password');
-    return;
-  }
-  
-  if (password.length < 6) {
-    alert('Password must be at least 6 characters');
-    return;
-  }
-  
-  if (!relay || !relay.connected) {
-    await initChat();
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-  
-  // Get current localStorage to backup
-  const localStorageData = getAllLocalStorage();
-  
-  relay.send({
-    type: 'create_account',
-    email,
-    password,
-    localStorageData
-  });
-  
-  relay.on('account_result', (data) => {
-    if (data.success) {
-      setCookie('sessionToken', data.sessionToken, 7);
-      alert('✅ ' + data.message);
-      hideLoginScreen();
-      startAutoSync();
-    } else {
-      alert('❌ ' + data.message);
-    }
-  });
-}
-
-function syncToCloud() {
-  const sessionToken = getCookie('sessionToken');
-  if (!sessionToken || !relay || !relay.connected) return;
-  
-  const localStorageData = getAllLocalStorage();
-  
-  relay.send({
-    type: 'sync_to_cloud',
-    sessionToken,
-    localStorageData
-  });
-}
-
-function startAutoSync() {
-  // Sync every 30 seconds
-  setInterval(() => {
-    syncToCloud();
-  }, 30000);
-}
-
-function showLoginScreen() {
-  const sessionToken = getCookie('sessionToken');
-  if (sessionToken && sessionToken.length > 0) {
-    return; 
-  }
-  document.getElementById('loginScreen').style.display = 'flex';
-}
-
-function hideLoginScreen() {
-  document.getElementById('loginScreen').style.display = 'none';
-}
-
-function handleLogout() {
-  if (!confirm('⚠️ Logout will clear all local data. Make sure you have an account! Continue?')) {
-    return;
-  }
-  
-  deleteCookie('sessionToken');
-  localStorage.clear();
-  location.reload();
-}
-
-// Login UI toggle
-document.getElementById('showSignupBtn')?.addEventListener('click', () => {
-  document.getElementById('loginTab').style.display = 'none';
-  document.getElementById('signupTab').style.display = 'block';
-  document.querySelector('#loginScreen h1').textContent = '📝 SIGN UP';
-});
-
-document.getElementById('showLoginBtn')?.addEventListener('click', () => {
-  document.getElementById('signupTab').style.display = 'none';
-  document.getElementById('loginTab').style.display = 'block';
-  document.querySelector('#loginScreen h1').textContent = '🔐 LOGIN';
-});
-
-document.getElementById('loginBtn')?.addEventListener('click', handleLogin);
-document.getElementById('signupBtn')?.addEventListener('click', handleSignup);
-document.getElementById('skipLoginBtn')?.addEventListener('click', hideLoginScreen);
-
-document.getElementById('loginEmail')?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') handleLogin();
-});
-document.getElementById('loginPassword')?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') handleLogin();
-});
-document.getElementById('signupEmail')?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') handleSignup();
-});
-document.getElementById('signupPassword')?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') handleSignup();
-});
 async function checkPassword() {
     const input = document.getElementById('passwordInput').value;
     
@@ -1857,7 +1580,7 @@ document.addEventListener('keydown', (e) => {
             } catch(e) {}
         }
 
-       
+        let userProfile = getUserProfile();
 
 let playerSphereRenderer = null;
 
@@ -3666,6 +3389,12 @@ loadLightningState();
 updateLightningIcon();
 
 
+const RELAY_SERVER = 'wss://relayfah.onrender.com';
+let relay = null;
+let chatOpen = false;
+let unreadMessages = 0;
+let onlineCount = 0;
+let currentChatRoom = 'global_chat';
 
 async function initChat() {
     if (!window._chromeOSValid) {
