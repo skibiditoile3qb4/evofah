@@ -1293,7 +1293,7 @@ async function tryAutoLogin() {
       relay.off('session_result', handler);
       showLoginScreen();
       resolve(false);
-    }, 5000);
+    }, 30000);
   });
 }
 
@@ -1398,6 +1398,10 @@ function startAutoSync() {
 }
 
 function showLoginScreen() {
+  const sessionToken = getCookie('sessionToken');
+  if (sessionToken && sessionToken.length > 0) {
+    return; 
+  }
   document.getElementById('loginScreen').style.display = 'flex';
 }
 
