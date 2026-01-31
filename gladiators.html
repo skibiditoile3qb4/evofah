@@ -257,54 +257,59 @@
     <script src="relay-client.js"></script>
 </head>
 <body>
-    <!-- Lobby Screen -->
-    <div id="lobbyScreen" class="screen active">
-        <h1>⚔️ GLADIATOR ARENA</h1>
-        
-        <div id="eloDisplay">
-            <div class="elo-label">Your ELO Rating</div>
-            <div id="eloValue">1000</div>
-        </div>
-        
-        <div id="queueStatus">
-            <div class="match-type-selector">
-                <button class="match-type-btn active" onclick="selectMatchType('pvp')">🎮 PvP</button>
-                <button class="match-type-btn" onclick="selectMatchType('bot')">🤖 vs Bot</button>
+  <div id="lobbyScreen" class="screen active">
+    <div style="display: flex; gap: 30px; width: 100%; max-width: 1200px; align-items: flex-start;">
+        <!-- Left side - Main content -->
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+            <h1>⚔️ GLADIATOR ARENA</h1>
+            
+            <div id="eloDisplay">
+                <div class="elo-label">Your ELO Rating</div>
+                <div id="eloValue">1000</div>
             </div>
             
-            <div id="botDifficultySelector">
-                <div style="margin-bottom: 10px; color: #888; font-size: 14px;">Select Difficulty:</div>
-                <div class="difficulty-grid">
-                    <div class="difficulty-btn selected" onclick="selectDifficulty('easy')">
-                        <div class="diff-name">😊 Stupid noob</div>
-                        <div class="diff-desc">Actually easy.</div>
-                    </div>
-                    <div class="difficulty-btn" onclick="selectDifficulty('medium')">
-                        <div class="diff-name">😐 cracked ahh</div>
-                        <div class="diff-desc">Actually good.</div>
-                    </div>
-                    <div class="difficulty-btn" onclick="selectDifficulty('hard')">
-                        <div class="diff-name">😤 impossible pmo</div>
-                        <div class="diff-desc">If you beat this. . idk what to say.</div>
+            <div id="queueStatus">
+                <div class="match-type-selector">
+                    <button class="match-type-btn active" onclick="selectMatchType('pvp')">🎮 PvP</button>
+                    <button class="match-type-btn" onclick="selectMatchType('bot')">🤖 vs Bot</button>
+                </div>
+                
+                <div id="botDifficultySelector">
+                    <div style="margin-bottom: 10px; color: #888; font-size: 14px;">Select Difficulty:</div>
+                    <div class="difficulty-grid">
+                        <div class="difficulty-btn selected" onclick="selectDifficulty('easy')">
+                            <div class="diff-name">😊 Stupid noob</div>
+                            <div class="diff-desc">Actually easy.</div>
+                        </div>
+                        <div class="difficulty-btn" onclick="selectDifficulty('medium')">
+                            <div class="diff-name">😐 cracked ahh</div>
+                            <div class="diff-desc">Actually good.</div>
+                        </div>
+                        <div class="difficulty-btn" onclick="selectDifficulty('hard')">
+                            <div class="diff-name">😤 impossible pmo</div>
+                            <div class="diff-desc">If you beat this. . idk what to say.</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <button id="findMatchBtn" onclick="toggleQueue()">FIND MATCH</button>
-            <div id="queueMessage"></div>
-            <div id="pvpQueueInfo" style="margin-top: 15px; font-size: 14px; color: #888;">
-                Players in queue: <span id="queueCount" style="color: #ffd700; font-weight: bold;">0</span>
+                
+                <button id="findMatchBtn" onclick="toggleQueue()">FIND MATCH</button>
+                <div id="queueMessage"></div>
+                <div id="pvpQueueInfo" style="margin-top: 15px; font-size: 14px; color: #888;">
+                    Players in queue: <span id="queueCount" style="color: #ffd700; font-weight: bold;">0</span>
+                </div>
             </div>
         </div>
         
-<div id="leaderboardTabs" style="background: #1a1a1a; border: 2px solid #333; border-radius: 12px; padding: 20px; max-width: 500px; margin-top: 20px;">
-    <div style="display: flex; gap: 10px; margin-bottom: 15px; justify-content: center;">
-        <button class="leaderboard-tab active" onclick="switchLeaderboardTab('online')">👥 Online</button>
-        <button class="leaderboard-tab" onclick="switchLeaderboardTab('alltime')">🏆 All-Time</button>
+        <!-- Right side - Leaderboard -->
+        <div id="leaderboardTabs" style="background: #1a1a1a; border: 2px solid #333; border-radius: 12px; padding: 20px; width: 400px; margin-top: 80px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; justify-content: center;">
+                <button class="leaderboard-tab active" onclick="switchLeaderboardTab('online')">👥 Online</button>
+                <button class="leaderboard-tab" onclick="switchLeaderboardTab('alltime')">🏆 All-Time</button>
+            </div>
+            <div id="leaderboardContent" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
     </div>
-    <div id="leaderboardContent" style="max-height: 300px; overflow-y: auto;"></div>
 </div>
-    </div>
     
     <!-- Battle Screen -->
     <div id="battleScreen" class="screen">
