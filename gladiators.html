@@ -421,24 +421,33 @@
             document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
             event.target.closest('.difficulty-btn').classList.add('selected');
         }
-        
-        function loadUserProfile() {
-            try {
-                const stored = localStorage.getItem('userProfile');
-                if (stored) {
-                    userProfile = JSON.parse(stored);
-                    if (!userProfile.username) {
-                        userProfile.username = 'Player' + Math.floor(Math.random() * 10000);
-                    }
-                } else {
-                    userProfile = { username: 'Player' + Math.floor(Math.random() * 10000) };
-                    localStorage.setItem('userProfile', JSON.stringify(userProfile));
-                }
-            } catch(e) {
-                userProfile = { username: 'Player' + Math.floor(Math.random() * 10000) };
+      function loadUserProfile() {
+    try {
+        const stored = localStorage.getItem('userProfile');
+        if (stored) {
+            userProfile = JSON.parse(stored);
+            if (!userProfile.username) {
+                userProfile.username = 'Player' + Math.floor(Math.random() * 10000);
             }
-            
-            myPlayerId = userProfile.username;
+            if (!userProfile.permanentId) {
+                userProfile.permanentId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            }
+        } else {
+            userProfile = { 
+                username: 'Player' + Math.floor(Math.random() * 10000),
+                permanentId: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) // ✅ Create permanent ID
+            };
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        }
+    } catch(e) {
+        userProfile = { 
+            username: 'Player' + Math.floor(Math.random() * 10000),
+            permanentId: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+        };
+    }
+    
+    myPlayerId = userProfile.username;
             
             migrateEloData();
             
