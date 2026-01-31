@@ -3590,12 +3590,16 @@ relay.on('players_update', (data) => {
             }, 100);
         });
         
-        // ✅ NOW CONNECT - after all handlers are registered
+        console.log('🔌 Connecting to relay server...');
         await relay.connect();
         
+        console.log('✅ Connected! Now joining room...');
         updateConnectionStatus(true);
         
+        console.log('📍 Joining room:', currentChatRoom, 'as', userProfile.username);
         relay.joinRoom(currentChatRoom, userProfile.username, userProfile.status);
+        console.log('✅ Join request sent!');
+        
 
 // Chat tab switching
 document.getElementById('globalChatTab')?.addEventListener('click', () => {
