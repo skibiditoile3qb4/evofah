@@ -233,6 +233,26 @@
             cursor: pointer; transition: all 0.2s;
         }
         .btn:hover { background: #b7791f; transform: scale(1.05); }
+    .leaderboard-tab {
+    padding: 10px 20px;
+    background: #0a0a0a;
+    border: 2px solid #333;
+    border-radius: 8px;
+    color: #888;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.leaderboard-tab:hover {
+    background: #1a1a1a;
+    border-color: #555;
+}
+.leaderboard-tab.active {
+    background: #d69e2e;
+    border-color: #b7791f;
+    color: #000;
+}
     </style>
     <script src="relay-client.js"></script>
 </head>
@@ -277,10 +297,13 @@
             </div>
         </div>
         
-        <div id="leaderboard">
-            <h3 style="margin-bottom: 15px; text-align: center;">Top Players</h3>
-            <div id="leaderboardList"></div>
-        </div>
+<div id="leaderboardTabs" style="background: #1a1a1a; border: 2px solid #333; border-radius: 12px; padding: 20px; max-width: 500px; margin-top: 20px;">
+    <div style="display: flex; gap: 10px; margin-bottom: 15px; justify-content: center;">
+        <button class="leaderboard-tab active" onclick="switchLeaderboardTab('online')">👥 Online</button>
+        <button class="leaderboard-tab" onclick="switchLeaderboardTab('alltime')">🏆 All-Time</button>
+    </div>
+    <div id="leaderboardContent" style="max-height: 300px; overflow-y: auto;"></div>
+</div>
     </div>
     
     <!-- Battle Screen -->
@@ -437,10 +460,19 @@
         }
 
         function saveElo(newElo) {
-            myElo = newElo;
-            localStorage.setItem('gladiator_elo', newElo.toString());
-            updateEloDisplay();
-        }
+    myElo = newElo;
+    localStorage.setItem('gladiator_elo', newElo.toString());
+    updateEloDisplay();
+    
+    // Send to MongoDB
+    if (relay && relay.connected) {
+        relay.send({
+            type: 'update_elo',
+            username: myPlayerId,
+            elo: newElo
+        });
+    }
+}
 
         async function connectToRelay() {
             try {
@@ -448,6 +480,11 @@
                 await relay.connect();
                 
                 relay.joinRoom(ROOM_ID, myPlayerId, JSON.stringify({ elo: myElo }));
+                relay.send({
+                    type: 'update_elo',
+                    username: myPlayerId,
+                    elo: myElo
+                });
                 
                 relay.on('joined', (data) => {
                     updateLeaderboard();
@@ -474,6 +511,27 @@
                 
                 relay.on('queue_count', (data) => {
                     document.getElementById('queueCount').textContent = data.count || 0;
+                });
+                relay.on('leaderboard_data', (data) => {
+                    if (currentLeaderboardTab === 'alltime') {
+                        const list = document.getElementById('leaderboardContent');
+                        list.innerHTML = '';
+                        
+                        const leaderboard = data.leaderboard || [];
+                        
+                        leaderboard.forEach((p, idx) => {
+                            const entry = document.createElement('div');
+                            entry.className = 'leaderboard-entry';
+                            entry.innerHTML = `
+                                <div>
+                                    <span class="leaderboard-rank">#${idx + 1}</span>
+                                    <span>${p.username}${p.username === myPlayerId ? ' (You)' : ''}</span>
+                                </div>
+                                <div style="color: #ffd700; font-weight: bold;">${p.elo}</div>
+                            `;
+                            list.appendChild(entry);
+                        });
+                    }
                 });
                 
                 startHeartbeat();
@@ -514,36 +572,59 @@
             relay.send({ type: 'get_players' });
         }
 
-        function displayLeaderboard(allPlayers) {
-            const list = document.getElementById('leaderboardList');
-            list.innerHTML = '';
-            
-            const playersWithElo = allPlayers.map(p => {
-                let elo = 1000;
-                try {
-                    const parsed = JSON.parse(p.status);
-                    elo = parsed.elo || 1000;
-                } catch(e) {}
-                return { username: p.username, elo };
-            });
-            
-            playersWithElo.sort((a, b) => b.elo - a.elo);
-            
-            const top10 = playersWithElo.slice(0, 10);
-            
-            top10.forEach((p, idx) => {
-                const entry = document.createElement('div');
-                entry.className = 'leaderboard-entry';
-                entry.innerHTML = `
-                    <div>
-                        <span class="leaderboard-rank">#${idx + 1}</span>
-                        <span>${p.username}${p.username === myPlayerId ? ' (You)' : ''}</span>
-                    </div>
-                    <div style="color: #ffd700; font-weight: bold;">${p.elo}</div>
-                `;
-                list.appendChild(entry);
-            });
-        }
+        let currentLeaderboardTab = 'online';
+
+function switchLeaderboardTab(tab) {
+    currentLeaderboardTab = tab;
+    
+    document.querySelectorAll('.leaderboard-tab').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (tab === 'alltime') {
+        loadAllTimeLeaderboard();
+    } else {
+        updateLeaderboard();
+    }
+}
+
+function loadAllTimeLeaderboard() {
+    if (relay && relay.connected) {
+        relay.send({ type: 'get_leaderboard' });
+    }
+}
+
+function displayLeaderboard(allPlayers) {
+    if (currentLeaderboardTab !== 'online') return;
+    
+    const list = document.getElementById('leaderboardContent');
+    list.innerHTML = '';
+    
+    const playersWithElo = allPlayers.map(p => {
+        let elo = 1000;
+        try {
+            const parsed = JSON.parse(p.status);
+            elo = parsed.elo || 1000;
+        } catch(e) {}
+        return { username: p.username, elo };
+    });
+    
+    playersWithElo.sort((a, b) => b.elo - a.elo);
+    
+    const top10 = playersWithElo.slice(0, 10);
+    
+    top10.forEach((p, idx) => {
+        const entry = document.createElement('div');
+        entry.className = 'leaderboard-entry';
+        entry.innerHTML = `
+            <div>
+                <span class="leaderboard-rank">#${idx + 1}</span>
+                <span>${p.username}${p.username === myPlayerId ? ' (You)' : ''}</span>
+            </div>
+            <div style="color: #ffd700; font-weight: bold;">${p.elo}</div>
+        `;
+        list.appendChild(entry);
+    });
+}
 
         function toggleQueue() {
             if (matchType === 'bot') {
