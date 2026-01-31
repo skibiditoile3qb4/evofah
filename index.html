@@ -3866,8 +3866,142 @@ function sendGlobalDonation() {
     document.getElementById('globalDonateUsername').value = '';
     document.getElementById('globalDonateAmount').value = '';
 }
+function generateSaveId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+  for (let i = 0; i < 32; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
 
+function getSaveId() {
+  let saveId = localStorage.getItem('_saveId');
+  if (!saveId) {
+    saveId = generateSaveId();
+    localStorage.setItem('_saveId', saveId);
+    
+    alert(`🔑 NEW SAVE ID GENERATED!\n\nYour ID: ${saveId}\n\n⚠️ COPY THIS ID AND SAVE IT SOMEWHERE SAFE!\nYou'll need it to restore your progress on other devices.`);
+  }
+  return saveId;
+}
+
+function toggleSavePanel() {
+  const panel = document.getElementById('saveLoadPanel');
+  const isVisible = panel.style.display === 'block';
+  
+  if (!isVisible) {
+    const saveId = getSaveId();
+    document.getElementById('displaySaveId').textContent = saveId;
+  }
+  
+  panel.style.display = isVisible ? 'none' : 'block';
+}
+
+function closeSavePanel() {
+  document.getElementById('saveLoadPanel').style.display = 'none';
+}
+
+function copySaveId() {
+  const saveId = getSaveId();
+  navigator.clipboard.writeText(saveId).then(() => {
+    alert('✅ Save ID copied to clipboard!');
+  }).catch(() => {
+    prompt('Copy this ID:', saveId);
+  });
+}
+
+function saveGame() {
+  if (!relay || !relay.connected) {
+    alert('❌ Not connected to server');
+    return;
+  }
+  
+  const saveId = getSaveId();
+  const saveData = {};
+  
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    saveData[key] = localStorage.getItem(key);
+  }
+  
+  relay.send({
+    type: 'save_game',
+    saveId: saveId,
+    saveData: saveData
+  });
+  
+  relay.on('save_result', (data) => {
+    if (data.success) {
+      alert('✅ Game saved successfully!');
+    } else {
+      alert('❌ Save failed: ' + data.message);
+    }
+  });
+}
+
+function showLoadPrompt() {
+  const inputId = prompt('Enter your Save ID:');
+  if (!inputId || inputId.length !== 32) {
+    alert('❌ Invalid Save ID (must be 32 characters)');
+    return;
+  }
+  
+  loadGame(inputId);
+}
+
+function loadGame(saveId) {
+  if (!relay || !relay.connected) {
+    alert('❌ Not connected to server');
+    return;
+  }
+  
+  relay.send({
+    type: 'load_game',
+    saveId: saveId
+  });
+  
+  relay.on('load_result', (data) => {
+    if (data.success) {
+      localStorage.clear();
+      
+      for (const [key, value] of Object.entries(data.data)) {
+        localStorage.setItem(key, value);
+      }
+      
+      alert('✅ Game loaded! Page will reload...');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      alert('❌ Load failed: ' + data.message);
+    }
+  });
+}
+
+
+if (localStorage.getItem('good') === '1') {
+  getSaveId();
+}
     </script>
     <script src="visualizer.js"></script>
+
+<div id="saveLoadPanel" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 2px solid #333; border-radius: 12px; padding: 20px; display: none; z-index: 10000; min-width: 400px;">
+  <h3 style="margin-bottom: 15px; text-align: center;">💾 Save/Load Game</h3>
+  
+  <div style="margin-bottom: 15px; padding: 10px; background: #0a0a0a; border-radius: 6px;">
+    <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Your Save ID:</div>
+    <div id="displaySaveId" style="font-family: monospace; font-size: 14px; word-break: break-all; color: #ffd700;"></div>
+    <button onclick="copySaveId()" style="margin-top: 8px; padding: 6px 12px; background: #333; border: 1px solid #555; border-radius: 4px; color: #fff; cursor: pointer; font-size: 12px;">📋 Copy ID</button>
+  </div>
+  
+  <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button onclick="saveGame()" style="flex: 1; padding: 12px; background: #4ade80; border: none; border-radius: 6px; color: #000; font-weight: bold; cursor: pointer;">💾 SAVE</button>
+    <button onclick="showLoadPrompt()" style="flex: 1; padding: 12px; background: #3b82f6; border: none; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer;">📥 LOAD</button>
+  </div>
+  
+  <button onclick="closeSavePanel()" style="width: 100%; padding: 8px; background: #333; border: 1px solid #555; border-radius: 6px; color: #fff; cursor: pointer;">Close</button>
+</div>
+
+<button id="saveLoadBtn" onclick="toggleSavePanel()" style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; font-size: 28px; cursor: pointer; z-index: 9999; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">💾</button>
+
 </body>
 </html>
