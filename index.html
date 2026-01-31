@@ -3637,17 +3637,26 @@ function switchChatRoom(room) {
     }
 }
         
-        // Register remaining handlers
-        relay.on('joined', (data) => {
+       relay.on('joined', (data) => {
     addSystemMessage('Welcome to global chat!');
-    // +1 to account for yourself (you're always online when you see this)
     onlineCount = data.players ? data.players.length : 1;
     updateOnlineCount();
     
+    // ✅ FIXED: Add debug logging and proper rendering
+    console.log('📜 Chat history received:', data.chatHistory);
+    
     if (data.chatHistory && data.chatHistory.length > 0) {
+        console.log(`Loading ${data.chatHistory.length} messages from history`);
         data.chatHistory.forEach(msg => {
-            displayChatMessage(msg, false);
+            console.log('Displaying message:', msg);
+            displayChatMessage(msg, false);  // false = don't auto-scroll for history
         });
+        
+        // Scroll to bottom after loading history
+        const messagesContainer = document.getElementById('chatMessages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    } else {
+        console.log('⚠️ No chat history received');
     }
 });
         
