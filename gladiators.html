@@ -485,21 +485,21 @@
             document.getElementById('eloValue').textContent = myElo;
         }
 
-        function saveElo(newElo) {
+      function saveElo(newElo) {
     myElo = newElo;
     localStorage.setItem('gladiator_elo', newElo.toString());
     updateEloDisplay();
     
-    // Send to MongoDB
+
     if (relay && relay.connected) {
         relay.send({
             type: 'update_elo',
-            username: myPlayerId,
+            userId: userProfile.permanentId,  // ← Stable ID
+            username: userProfile.username,    // ← Display name (can change)
             elo: newElo
         });
     }
 }
-
         async function connectToRelay() {
             try {
                 relay = new RelayClient(RELAY_SERVER);
