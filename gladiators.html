@@ -253,6 +253,27 @@
     border-color: #b7791f;
     color: #000;
 }
+        #lobbyScreen.active {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+@media (max-width: 900px) {
+    #lobbyScreen.active {
+        flex-direction: column;
+        align-items: center;
+    }
+    #lobbyScreen.active > div {
+        flex-direction: column !important;
+    }
+    #leaderboardTabs {
+        width: 100% !important;
+        max-width: 500px !important;
+        margin-top: 20px !important;
+    }
+}
     </style>
     <script src="relay-client.js"></script>
 </head>
