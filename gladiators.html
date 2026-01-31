@@ -1729,6 +1729,9 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
             const botDifficulty = currentMatch.botDifficulty;
             const opponentName = currentMatch.opponent;
             currentMatch = null; // This stops the bot AI in gameLoop
+                        if (wasBot && botDifficulty === 'hard' && won) {
+                localStorage.setItem('_beatHardBot', '1');
+            }
             
             showMatchResult(won, eloChange, newElo, disconnected, wasBot, botDifficulty, opponentName);
         }
