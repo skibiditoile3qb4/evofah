@@ -1182,13 +1182,15 @@ if (localStorage.getItem('good') === null) {
     document.getElementById('passwordScreen').style.display = 'none';
     
 
-    const loggedIn = await tryAutoLogin();
-    if (!loggedIn) {
-        // No session
-        showLoginScreen();
-    } else {
-        startAutoSync(); // begin sync
-    }
+    (async () => {
+        const loggedIn = await tryAutoLogin();
+        if (!loggedIn) {
+            // No session
+            showLoginScreen();
+        } else {
+            startAutoSync(); // begin sync
+        }
+    })();
     
     document.getElementById('mainView').style.display = 'flex';
     setTimeout(async () => {
