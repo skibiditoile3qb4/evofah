@@ -516,10 +516,11 @@
                 
                 relay.joinRoom(ROOM_ID, myPlayerId, JSON.stringify({ elo: myElo }));
                 relay.send({
-                    type: 'update_elo',
-                    username: myPlayerId,
-                    elo: myElo
-                });
+    type: 'update_elo',
+    userId: userProfile.permanentId,  // ← add this
+    username: myPlayerId,
+    elo: myElo
+});
                 
                 relay.on('joined', (data) => {
                     updateLeaderboard();
