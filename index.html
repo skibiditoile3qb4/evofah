@@ -3638,6 +3638,7 @@ function switchChatRoom(room) {
 }
         
        relay.on('joined', (data) => {
+           console.log('🎉 JOINED EVENT FIRED!', data);
     addSystemMessage('Welcome to global chat!');
     onlineCount = data.players ? data.players.length : 1;
     updateOnlineCount();
