@@ -596,12 +596,18 @@
             }, 3000);
         }
 
-        function startLeaderboardUpdates() {
+                       function startLeaderboardUpdates() {
             leaderboardUpdateInterval = setInterval(() => {
                 if (relay && relay.connected && !currentMatch) {
-                    updateLeaderboard();
+                    updateLeaderboard(); // online tab, always runs
                 }
             }, 1000);
+
+            setInterval(() => {
+                if (relay && relay.connected && !currentMatch && currentLeaderboardTab === 'alltime') {
+                    relay.send({ type: 'get_leaderboard' });
+                }
+            }, 2000);
         }
 
         function updateLeaderboard() {
@@ -1807,4 +1813,4 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
         init();
     </script>
 </body>
-</html>
+</html
