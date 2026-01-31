@@ -11,7 +11,7 @@ class RelayClient {
     this.reconnectDelay = 2000;
     this.heartbeatInterval = null;  // ← Make sure semicolon is here
     
- this.handlers = {
+   this.handlers = {
   connected: [],
   disconnected: [],
   chat_message: [],
@@ -23,18 +23,14 @@ class RelayClient {
   donation: [],
   banned: [],
   muted: [],
-  unmuted: [],
+  unmuted: [],  // ← ADDED
   rank_changed: [],
   admin_action_result: [],
   unbanned: [],
   queue_count: [],
   password_result: [],
   owner_password_result: [],
-  error: [],
-  account_result: [],
-  login_result: [],
-  session_result: [],
-  sync_result: []
+  error: []
 };
   }
   
