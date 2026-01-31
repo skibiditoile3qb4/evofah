@@ -3981,10 +3981,10 @@ function showLoadPrompt() {
     return;
   }
   
-  loadGame(inputId);
+   loadSavedGame(inputId);
 }
 
-function loadGame(saveId) {
+function loadSavedGame(saveId) {  // ← RENAMED
   if (!relay || !relay.connected) {
     alert('❌ Not connected to server');
     return;
