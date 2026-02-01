@@ -3739,7 +3739,7 @@ relay.on('players_update', (data) => {
         updateConnectionStatus(true);
         
         console.log('📍 Joining room:', currentChatRoom, 'as', userProfile.username);
-        relay.joinRoom(currentChatRoom, userProfile.username, userProfile.status)
+        relay.joinRoom(currentChatRoom, userProfile.username, userProfile.status, userProfile.permanentId)
 
         console.log('✅ Join request sent!');
         
@@ -3780,7 +3780,7 @@ function switchChatRoom(room) {
     
 
     if (relay && relay.connected) {
-        relay.joinRoom(room, userProfile.username, userProfile.status);
+        relay.joinRoom(room, userProfile.username, userProfile.status, userProfile.permanentId)
     }
 }
         
@@ -3994,6 +3994,11 @@ function sendGlobalDonation() {
         alert('Please enter a valid username and amount');
         return;
     }
+
+    if (username === userProfile.username) {
+        alert('You cannot donate to yourself!');
+        return;
+    }
     
     const balance = type === 'coins' ? coins : (userProfile.gems || 0);
     
@@ -4027,7 +4032,8 @@ function sendGlobalDonation() {
             amount: amount,
             donationType: type,
             from: userProfile.username,
-            senderStatus: userProfile.status  
+            senderStatus: userProfile.status,
+            senderPermanentId: userProfile.permanentId
         });
         
         addSystemMessage(`You sent ${amount} ${type} to ${username}`);
