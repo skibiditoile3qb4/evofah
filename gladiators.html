@@ -376,6 +376,7 @@
         const DASH_COOLDOWN = 3000; 
         const DASH_DISTANCE = 200;
         const DASH_SPEED = 20;
+        const QUIT_PENALTY = 30;
         
         let relay, userProfile, myPlayerId;
         let myElo = 1000;
@@ -421,33 +422,53 @@
             document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
             event.target.closest('.difficulty-btn').classList.add('selected');
         }
-      function loadUserProfile() {
-    try {
-        const stored = localStorage.getItem('userProfile');
-        if (stored) {
-            userProfile = JSON.parse(stored);
-            if (!userProfile.username) {
-                userProfile.username = 'Player' + Math.floor(Math.random() * 10000);
+        
+        function loadUserProfile() {
+            // Check if player rage quit their last match
+            const wasInMatch = localStorage.getItem('isPlayingGladiator') === '1';
+            const matchStartTime = parseInt(localStorage.getItem('matchStartTime') || '0');
+            const timeSinceMatchStart = Date.now() - matchStartTime;
+            
+            if (wasInMatch && timeSinceMatchStart > 5000) {
+                // They were in a match and left for more than 5 seconds - rage quit!
+                const currentElo = parseInt(localStorage.getItem('gladiator_elo') || '1000');
+                const penalty = QUIT_PENALTY;
+                const newElo = Math.max(100, currentElo - penalty); // Don't go below 100
+                
+                localStorage.setItem('gladiator_elo', newElo.toString());
+                localStorage.setItem('isPlayingGladiator', '0');
+                localStorage.removeItem('matchStartTime');
+                
+                // Show alert to user
+                alert(`⚠️ You lost ${penalty} ELO for leaving your last match early!\nPrevious: ${currentElo} → New: ${newElo}`);
             }
-            if (!userProfile.permanentId) {
-                userProfile.permanentId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            
+            try {
+                const stored = localStorage.getItem('userProfile');
+                if (stored) {
+                    userProfile = JSON.parse(stored);
+                    if (!userProfile.username) {
+                        userProfile.username = 'Player' + Math.floor(Math.random() * 10000);
+                    }
+                    if (!userProfile.permanentId) {
+                        userProfile.permanentId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                    }
+                } else {
+                    userProfile = { 
+                        username: 'Player' + Math.floor(Math.random() * 10000),
+                        permanentId: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+                    };
+                    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                }
+            } catch(e) {
+                userProfile = { 
+                    username: 'Player' + Math.floor(Math.random() * 10000),
+                    permanentId: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+                };
             }
-        } else {
-            userProfile = { 
-                username: 'Player' + Math.floor(Math.random() * 10000),
-                permanentId: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) // ✅ Create permanent ID
-            };
-            localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        }
-    } catch(e) {
-        userProfile = { 
-            username: 'Player' + Math.floor(Math.random() * 10000),
-            permanentId: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-        };
-    }
-    
-    myPlayerId = userProfile.username;
+            
+            myPlayerId = userProfile.username;
             
             migrateEloData();
             
@@ -494,21 +515,21 @@
             document.getElementById('eloValue').textContent = myElo;
         }
 
-      function saveElo(newElo) {
-    myElo = newElo;
-    localStorage.setItem('gladiator_elo', newElo.toString());
-    updateEloDisplay();
-    
-
-    if (relay && relay.connected) {
-        relay.send({
-            type: 'update_elo',
-            userId: userProfile.permanentId,  // ← Stable ID
-            username: userProfile.username,    // ← Display name (can change)
-            elo: newElo
-        });
-    }
-}
+        function saveElo(newElo) {
+            myElo = newElo;
+            localStorage.setItem('gladiator_elo', newElo.toString());
+            updateEloDisplay();
+            
+            if (relay && relay.connected) {
+                relay.send({
+                    type: 'update_elo',
+                    userId: userProfile.permanentId,
+                    username: userProfile.username,
+                    elo: newElo
+                });
+            }
+        }
+        
         async function connectToRelay() {
             try {
                 relay = new RelayClient(RELAY_SERVER);
@@ -516,11 +537,11 @@
                 
                 relay.joinRoom(ROOM_ID, myPlayerId, JSON.stringify({ elo: myElo }));
                 relay.send({
-    type: 'update_elo',
-    userId: userProfile.permanentId,  // ← add this
-    username: myPlayerId,
-    elo: myElo
-});
+                    type: 'update_elo',
+                    userId: userProfile.permanentId,
+                    username: myPlayerId,
+                    elo: myElo
+                });
                 
                 relay.on('joined', (data) => {
                     updateLeaderboard();
@@ -581,6 +602,12 @@
 
         function startHeartbeat() {
             heartbeatInterval = setInterval(() => {
+                // Refresh our "still playing" timestamp
+                if (currentMatch) {
+                    localStorage.setItem('isPlayingGladiator', '1');
+                    localStorage.setItem('matchStartTime', Date.now().toString());
+                }
+                
                 if (relay && relay.connected) {
                     relay.send({ 
                         type: 'heartbeat',
@@ -596,10 +623,10 @@
             }, 3000);
         }
 
-                       function startLeaderboardUpdates() {
+        function startLeaderboardUpdates() {
             leaderboardUpdateInterval = setInterval(() => {
                 if (relay && relay.connected && !currentMatch) {
-                    updateLeaderboard(); // online tab, always runs
+                    updateLeaderboard();
                 }
             }, 1000);
 
@@ -616,57 +643,57 @@
 
         let currentLeaderboardTab = 'online';
 
-function switchLeaderboardTab(tab) {
-    currentLeaderboardTab = tab;
-    
-    document.querySelectorAll('.leaderboard-tab').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    if (tab === 'alltime') {
-        loadAllTimeLeaderboard();
-    } else {
-        updateLeaderboard();
-    }
-}
+        function switchLeaderboardTab(tab) {
+            currentLeaderboardTab = tab;
+            
+            document.querySelectorAll('.leaderboard-tab').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'alltime') {
+                loadAllTimeLeaderboard();
+            } else {
+                updateLeaderboard();
+            }
+        }
 
-function loadAllTimeLeaderboard() {
-    if (relay && relay.connected) {
-        relay.send({ type: 'get_leaderboard' });
-    }
-}
+        function loadAllTimeLeaderboard() {
+            if (relay && relay.connected) {
+                relay.send({ type: 'get_leaderboard' });
+            }
+        }
 
-function displayLeaderboard(allPlayers) {
-    if (currentLeaderboardTab !== 'online') return;
-    
-    const list = document.getElementById('leaderboardContent');
-    list.innerHTML = '';
-    
-    const playersWithElo = allPlayers.map(p => {
-        let elo = 1000;
-        try {
-            const parsed = JSON.parse(p.status);
-            elo = parsed.elo || 1000;
-        } catch(e) {}
-        return { username: p.username, elo };
-    });
-    
-    playersWithElo.sort((a, b) => b.elo - a.elo);
-    
-    const top10 = playersWithElo.slice(0, 10);
-    
-    top10.forEach((p, idx) => {
-        const entry = document.createElement('div');
-        entry.className = 'leaderboard-entry';
-        entry.innerHTML = `
-            <div>
-                <span class="leaderboard-rank">#${idx + 1}</span>
-                <span>${p.username}${p.username === myPlayerId ? ' (You)' : ''}</span>
-            </div>
-            <div style="color: #ffd700; font-weight: bold;">${p.elo}</div>
-        `;
-        list.appendChild(entry);
-    });
-}
+        function displayLeaderboard(allPlayers) {
+            if (currentLeaderboardTab !== 'online') return;
+            
+            const list = document.getElementById('leaderboardContent');
+            list.innerHTML = '';
+            
+            const playersWithElo = allPlayers.map(p => {
+                let elo = 1000;
+                try {
+                    const parsed = JSON.parse(p.status);
+                    elo = parsed.elo || 1000;
+                } catch(e) {}
+                return { username: p.username, elo };
+            });
+            
+            playersWithElo.sort((a, b) => b.elo - a.elo);
+            
+            const top10 = playersWithElo.slice(0, 10);
+            
+            top10.forEach((p, idx) => {
+                const entry = document.createElement('div');
+                entry.className = 'leaderboard-entry';
+                entry.innerHTML = `
+                    <div>
+                        <span class="leaderboard-rank">#${idx + 1}</span>
+                        <span>${p.username}${p.username === myPlayerId ? ' (You)' : ''}</span>
+                    </div>
+                    <div style="color: #ffd700; font-weight: bold;">${p.elo}</div>
+                `;
+                list.appendChild(entry);
+            });
+        }
 
         function toggleQueue() {
             if (matchType === 'bot') {
@@ -792,6 +819,10 @@ function displayLeaderboard(allPlayers) {
             myHealth = 100;
             opponentHealth = 100;
             players.clear();
+            
+            // Mark that we're in an active match
+            localStorage.setItem('isPlayingGladiator', '1');
+            localStorage.setItem('matchStartTime', Date.now().toString());
             
             meterCharge = 0;
             canAttack = true;
@@ -1036,7 +1067,7 @@ function displayLeaderboard(allPlayers) {
         }
 
         function gameLoop() {
-            if (!currentMatch) return; // Stop immediately if no match
+            if (!currentMatch) return;
             
             const myData = players.get(relay.clientId);
             if (!myData) return;
@@ -1067,8 +1098,7 @@ function displayLeaderboard(allPlayers) {
                 startCharging();
             }
             
-            // Bot AI - only run if match is still active
-            if (currentMatch) { // Double check match exists
+            if (currentMatch) {
                 const opponentData = players.get(currentMatch.opponentId);
                 if (opponentData && opponentData.isBot) {
                     updateBotCharge(currentMatch.opponentId);
@@ -1093,25 +1123,22 @@ function displayLeaderboard(allPlayers) {
         // BOT AI FUNCTIONS
         
         function updateBotCharge(botId) {
-    const bot = players.get(botId);
-    if (!bot || !bot.isBot) return;
-    
-    if (bot.canAttack && bot.charge < 100) {
-        // Match player charge rate exactly - 2% every 50ms
-        // Since gameLoop runs faster, we need to account for actual time passed
-        const now = Date.now();
-        if (!bot.lastChargeUpdate) bot.lastChargeUpdate = now;
-        
-        const timePassed = now - bot.lastChargeUpdate;
-        bot.charge += (timePassed / ATTACK_CHARGE_TIME) * 100;
-        bot.lastChargeUpdate = now;
-        
-        if (bot.charge > 100) bot.charge = 100;
-    } else if (!bot.canAttack) {
-        // Reset charge timer when can't attack
-        bot.lastChargeUpdate = Date.now();
-    }
-}
+            const bot = players.get(botId);
+            if (!bot || !bot.isBot) return;
+            
+            if (bot.canAttack && bot.charge < 100) {
+                const now = Date.now();
+                if (!bot.lastChargeUpdate) bot.lastChargeUpdate = now;
+                
+                const timePassed = now - bot.lastChargeUpdate;
+                bot.charge += (timePassed / ATTACK_CHARGE_TIME) * 100;
+                bot.lastChargeUpdate = now;
+                
+                if (bot.charge > 100) bot.charge = 100;
+            } else if (!bot.canAttack) {
+                bot.lastChargeUpdate = Date.now();
+            }
+        }
         
         function easyBotAI(botId, playerId) {
             const bot = players.get(botId);
@@ -1128,19 +1155,16 @@ function displayLeaderboard(allPlayers) {
             const dy = player.y - bot.y;
             const magnitude = Math.sqrt(dx * dx + dy * dy);
             
-            // Simple chase - slower movement
             if (magnitude > ATTACK_RANGE + 20) {
-                bot.x += (dx / magnitude) * (PLAYER_SPEED ); // Slower
+                bot.x += (dx / magnitude) * (PLAYER_SPEED);
                 bot.y += (dy / magnitude) * (PLAYER_SPEED);
                 updatePlayerPosition(bot.element, bot.x, bot.y);
             }
             
-            // Attack when charge is 45%+ (doesn't wait, spams early attacks)
             if (distance <= ATTACK_RANGE && bot.charge >= 10 && bot.canAttack) {
                 botAttack(botId, playerId);
             }
             
-            // Panic dash away if just got hit (very frequent)
             if (bot.justGotHit && bot.dashReady && Math.random() > 0.15) {
                 const dashX = bot.x - (dx / magnitude) * DASH_DISTANCE;
                 const dashY = bot.y - (dy / magnitude) * DASH_DISTANCE;
@@ -1148,7 +1172,6 @@ function displayLeaderboard(allPlayers) {
                 bot.justGotHit = false;
             }
             
-            // Rarely dashes offensively at bad times
             if (distance > 150 && bot.dashReady && Math.random() > 0.92) {
                 const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
                 const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
@@ -1156,275 +1179,242 @@ function displayLeaderboard(allPlayers) {
             }
         }
         
-function mediumBotAI(botId, playerId) {
-    const bot = players.get(botId);
-    const player = players.get(playerId);
-    
-    if (!bot || !player) return;
-    
-    const distance = Math.sqrt(
-        Math.pow(bot.x - player.x, 2) + 
-        Math.pow(bot.y - player.y, 2)
-    );
-    
-    const dx = player.x - bot.x;
-    const dy = player.y - bot.y;
-    const magnitude = Math.sqrt(dx * dx + dy * dy);
-    
-    // Track how long we've been in standoff range
-    if (distance > ATTACK_RANGE - 10 && distance < ATTACK_RANGE + 20) {
-        if (!bot.standoffTimer) bot.standoffTimer = Date.now();
-    } else {
-        bot.standoffTimer = null;
-    }
-    
-    // Get impatient after 2 seconds of waiting
-    const standoffTime = bot.standoffTimer ? Date.now() - bot.standoffTimer : 0;
-    const isImpatient = standoffTime > 2000;
-    
-    // Average player movement - same speed, tries to stay at good distance
-    if (distance > ATTACK_RANGE + 15 || isImpatient) {
-        // Chase when too far OR when impatient
-        bot.x += (dx / magnitude) * PLAYER_SPEED;
-        bot.y += (dy / magnitude) * PLAYER_SPEED;
-        updatePlayerPosition(bot.element, bot.x, bot.y);
-    } else if (distance < ATTACK_RANGE - 10 && !isImpatient) {
-        // Back up when too close (unless impatient)
-        bot.x -= (dx / magnitude) * PLAYER_SPEED;
-        bot.y -= (dy / magnitude) * PLAYER_SPEED;
-        updatePlayerPosition(bot.element, bot.x, bot.y);
-    } else {
-        // Strafe a bit in the sweet spot (like a player would)
-        if (Math.random() > 0.7) {
-            const perpX = -dy / magnitude;
-            const perpY = dx / magnitude;
-            const direction = Math.random() > 0.5 ? 1 : -1;
-            bot.x += perpX * PLAYER_SPEED * 0.5 * direction;
-            bot.y += perpY * PLAYER_SPEED * 0.5 * direction;
-            updatePlayerPosition(bot.element, bot.x, bot.y);
-        }
-    }
-    
-    // Average player - tries to hit around 85-95% (not perfect, but decent)
-    // When impatient, will attack earlier (70%+)
-    const targetCharge = isImpatient ? (70 + Math.random() * 30) : (85 + Math.random() * 15);
-    
-    if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
-        setTimeout(() => {
-            if (players.get(botId)) {
-                botAttack(botId, playerId);
-                bot.standoffTimer = null; // Reset timer after attacking
+        function mediumBotAI(botId, playerId) {
+            const bot = players.get(botId);
+            const player = players.get(playerId);
+            
+            if (!bot || !player) return;
+            
+            const distance = Math.sqrt(
+                Math.pow(bot.x - player.x, 2) + 
+                Math.pow(bot.y - player.y, 2)
+            );
+            
+            const dx = player.x - bot.x;
+            const dy = player.y - bot.y;
+            const magnitude = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > ATTACK_RANGE - 10 && distance < ATTACK_RANGE + 20) {
+                if (!bot.standoffTimer) bot.standoffTimer = Date.now();
+            } else {
+                bot.standoffTimer = null;
             }
-        }, 250);
-    }
-    
-    // Defensive dash - sometimes dodges when you're charged (50% chance)
-    if (meterCharge >= 88 && distance < 85 && bot.dashReady && Math.random() > 0.3) {
-        setTimeout(() => {
-            if (!players.get(botId)?.dashReady) return;
-            const perpX = -dy / magnitude;
-            const perpY = dx / magnitude;
-            const direction = Math.random() > 0.5 ? 1 : -1;
-            const dashX = bot.x + perpX * DASH_DISTANCE * direction;
-            const dashY = bot.y + perpY * DASH_DISTANCE * direction;
-            botDash(botId, dashX, dashY);
-        }, 200);
-    }
-    
-    // Offensive dash - occasionally dashes in when you're weak (40% chance)
-    // OR always dash in when impatient
-    if ((meterCharge < 40 && distance > 130 && bot.charge >= 75 && Math.random() > 0.6) || 
-        (isImpatient && bot.charge >= 60 && distance > 90)) {
-        if (bot.dashReady) {
-            setTimeout(() => {
-                if (!players.get(botId)?.dashReady) return;
+            
+            const standoffTime = bot.standoffTimer ? Date.now() - bot.standoffTimer : 0;
+            const isImpatient = standoffTime > 2000;
+            
+            if (distance > ATTACK_RANGE + 15 || isImpatient) {
+                bot.x += (dx / magnitude) * PLAYER_SPEED;
+                bot.y += (dy / magnitude) * PLAYER_SPEED;
+                updatePlayerPosition(bot.element, bot.x, bot.y);
+            } else if (distance < ATTACK_RANGE - 10 && !isImpatient) {
+                bot.x -= (dx / magnitude) * PLAYER_SPEED;
+                bot.y -= (dy / magnitude) * PLAYER_SPEED;
+                updatePlayerPosition(bot.element, bot.x, bot.y);
+            } else {
+                if (Math.random() > 0.7) {
+                    const perpX = -dy / magnitude;
+                    const perpY = dx / magnitude;
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    bot.x += perpX * PLAYER_SPEED * 0.5 * direction;
+                    bot.y += perpY * PLAYER_SPEED * 0.5 * direction;
+                    updatePlayerPosition(bot.element, bot.x, bot.y);
+                }
+            }
+            
+            const targetCharge = isImpatient ? (70 + Math.random() * 30) : (85 + Math.random() * 15);
+            
+            if (distance <= ATTACK_RANGE && bot.charge >= targetCharge && bot.canAttack) {
+                setTimeout(() => {
+                    if (players.get(botId)) {
+                        botAttack(botId, playerId);
+                        bot.standoffTimer = null;
+                    }
+                }, 250);
+            }
+            
+            if (meterCharge >= 88 && distance < 85 && bot.dashReady && Math.random() > 0.3) {
+                setTimeout(() => {
+                    if (!players.get(botId)?.dashReady) return;
+                    const perpX = -dy / magnitude;
+                    const perpY = dx / magnitude;
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    const dashX = bot.x + perpX * DASH_DISTANCE * direction;
+                    const dashY = bot.y + perpY * DASH_DISTANCE * direction;
+                    botDash(botId, dashX, dashY);
+                }, 200);
+            }
+            
+            if ((meterCharge < 40 && distance > 130 && bot.charge >= 75 && Math.random() > 0.6) || 
+                (isImpatient && bot.charge >= 60 && distance > 90)) {
+                if (bot.dashReady) {
+                    setTimeout(() => {
+                        if (!players.get(botId)?.dashReady) return;
+                        const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
+                        const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
+                        botDash(botId, dashX, dashY);
+                        bot.standoffTimer = null;
+                    }, 200);
+                }
+            }
+            
+            if (bot.health < 30 && distance < 90 && meterCharge > 70 && !isImpatient) {
+                bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.2;
+                bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.2;
+                updatePlayerPosition(bot.element, bot.x, bot.y);
+            }
+        }
+        
+        function hardBotAI(botId, playerId) {
+            const bot = players.get(botId);
+            const player = players.get(playerId);
+            
+            if (!bot || !player) return;
+            
+            const distance = Math.sqrt(
+                Math.pow(bot.x - player.x, 2) + 
+                Math.pow(bot.y - player.y, 2)
+            );
+            
+            const dx = player.x - bot.x;
+            const dy = player.y - bot.y;
+            const magnitude = Math.sqrt(dx * dx + dy * dy);
+            
+            if (bot.isRetreating && Date.now() < bot.retreatUntil) {
+                const newX = bot.x - (dx / magnitude) * PLAYER_SPEED;
+                const newY = bot.y - (dy / magnitude) * PLAYER_SPEED;
+                
+                const maxX = window.innerWidth / 2 - 60;
+                const maxY = window.innerHeight / 2 - 100;
+                
+                if (Math.abs(newX) < maxX && Math.abs(newY) < maxY) {
+                    bot.x = newX;
+                    bot.y = newY;
+                    updatePlayerPosition(bot.element, bot.x, bot.y);
+                } else {
+                    bot.isRetreating = false;
+                }
+                
+                if (distance <= ATTACK_RANGE && bot.charge >= 20 && bot.canAttack) {
+                    botAttack(botId, playerId);
+                }
+                
+                return;
+            }
+            bot.isRetreating = false;
+            
+            const myPotentialDamage = Math.floor((bot.charge / 100) * 25);
+            const canKillNow = myPotentialDamage >= myHealth;
+            
+            const theirPotentialDamage = Math.floor((meterCharge / 100) * 25);
+            const theyCanKillUs = theirPotentialDamage >= bot.health;
+            
+            if (!bot.playerLastPos) {
+                bot.playerLastPos = { x: player.x, y: player.y, time: Date.now() };
+            }
+            
+            const timeSinceCheck = Date.now() - bot.playerLastPos.time;
+            if (timeSinceCheck > 500) {
+                const playerMoved = Math.sqrt(
+                    Math.pow(player.x - bot.playerLastPos.x, 2) + 
+                    Math.pow(player.y - bot.playerLastPos.y, 2)
+                );
+                
+                const isPlayerCamping = playerMoved < 20;
+                
+                bot.playerLastPos = { x: player.x, y: player.y, time: Date.now() };
+                bot.isPlayerCamping = isPlayerCamping;
+            }
+            
+            if (theyCanKillUs && meterCharge >= 85 && distance < 100 && bot.dashReady) {
+                const perpX = -dy / magnitude;
+                const perpY = dx / magnitude;
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                const dashX = bot.x + perpX * DASH_DISTANCE * direction - (dx / magnitude) * 50;
+                const dashY = bot.y + perpY * DASH_DISTANCE * direction - (dy / magnitude) * 50;
+                botDash(botId, dashX, dashY);
+                return;
+            }
+            
+            if (bot.isPlayerCamping && distance > ATTACK_RANGE) {
+                bot.x += (dx / magnitude) * PLAYER_SPEED;
+                bot.y += (dy / magnitude) * PLAYER_SPEED;
+                updatePlayerPosition(bot.element, bot.x, bot.y);
+            } else {
+                let targetDistance = 70;
+                if (meterCharge >= 85) {
+                    targetDistance = 100;
+                } else if (meterCharge < 30) {
+                    targetDistance = 65;
+                }
+                
+                if (distance > targetDistance + 5) {
+                    bot.x += (dx / magnitude) * PLAYER_SPEED;
+                    bot.y += (dy / magnitude) * PLAYER_SPEED;
+                } else if (distance < targetDistance - 5) {
+                    bot.x -= (dx / magnitude) * PLAYER_SPEED;
+                    bot.y -= (dy / magnitude) * PLAYER_SPEED;
+                } else {
+                    const perpX = -dy / magnitude;
+                    const perpY = dx / magnitude;
+                    const direction = Math.sin(Date.now() / 200) > 0 ? 1 : -1;
+                    bot.x += perpX * PLAYER_SPEED * direction;
+                    bot.y += perpY * PLAYER_SPEED * direction;
+                }
+                updatePlayerPosition(bot.element, bot.x, bot.y);
+            }
+            
+            if (canKillNow && distance <= ATTACK_RANGE && bot.canAttack) {
+                botAttack(botId, playerId);
+                bot.postCritCount = 0;
+                return;
+            }
+            
+            const critThreshold = bot.isPlayerCamping ? 70 : 90;
+            if (distance <= ATTACK_RANGE && bot.charge >= critThreshold && bot.canAttack) {
+                botAttack(botId, playerId);
+                bot.postCritCount = 1;
+                bot.lastAttackTime = Date.now();
+                return;
+            }
+            
+            const timeSinceAttack = Date.now() - (bot.lastAttackTime || 0);
+            if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 2000) {
+                botAttack(botId, playerId);
+                bot.postCritCount = 0;
+                bot.isRetreating = true;
+                bot.retreatUntil = Date.now() + 2500;
+                
+                if (bot.dashReady) {
+                    setTimeout(() => {
+                        if (bot.dashReady && players.get(botId)) {
+                            const escapeX = bot.x - (dx / magnitude) * DASH_DISTANCE;
+                            const escapeY = bot.y - (dy / magnitude) * DASH_DISTANCE;
+                            botDash(botId, escapeX, escapeY);
+                        }
+                    }, 50);
+                }
+            }
+            
+            if (meterCharge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
+                const perpX = -dy / magnitude;
+                const perpY = dx / magnitude;
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                const dashX = bot.x + perpX * DASH_DISTANCE * direction;
+                const dashY = bot.y + perpY * DASH_DISTANCE * direction;
+                botDash(botId, dashX, dashY);
+            }
+            
+            if ((meterCharge < 65 && distance > 120 && bot.charge >= 88 && Math.random() > 0.3) ||
+                (bot.isPlayerCamping && bot.charge >= 60 && distance > 80 && bot.dashReady)) {
                 const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
                 const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
                 botDash(botId, dashX, dashY);
-                bot.standoffTimer = null; // Reset after dashing in
-            }, 200);
-        }
-    }
-    
-    // If low health, play more defensively (but still attack if impatient)
-    if (bot.health < 30 && distance < 90 && meterCharge > 70 && !isImpatient) {
-        bot.x -= (dx / magnitude) * PLAYER_SPEED * 1.2;
-        bot.y -= (dy / magnitude) * PLAYER_SPEED * 1.2;
-        updatePlayerPosition(bot.element, bot.x, bot.y);
-    }
-}
-        
-  function hardBotAI(botId, playerId) {
-    const bot = players.get(botId);
-    const player = players.get(playerId);
-    
-    if (!bot || !player) return;
-    
-    const distance = Math.sqrt(
-        Math.pow(bot.x - player.x, 2) + 
-        Math.pow(bot.y - player.y, 2)
-    );
-    
-    const dx = player.x - bot.x;
-    const dy = player.y - bot.y;
-    const magnitude = Math.sqrt(dx * dx + dy * dy);
-    // If retreating after spam, RUN AWAY but still attack if possible
-if (bot.isRetreating && Date.now() < bot.retreatUntil) {
-    const newX = bot.x - (dx / magnitude) * PLAYER_SPEED;
-    const newY = bot.y - (dy / magnitude) * PLAYER_SPEED;
-    
-    // Check boundaries before moving
-    const maxX = window.innerWidth / 2 - 60;
-    const maxY = window.innerHeight / 2 - 100;
-    
-    if (Math.abs(newX) < maxX && Math.abs(newY) < maxY) {
-        bot.x = newX;
-        bot.y = newY;
-        updatePlayerPosition(bot.element, bot.x, bot.y);
-    } else {
-        // Hit a wall, stop retreating
-        bot.isRetreating = false;
-    }
-    
-    // WHILE RETREATING, still spam if in range and charged!
-    if (distance <= ATTACK_RANGE && bot.charge >= 20 && bot.canAttack) {
-        botAttack(botId, playerId);
-    }
-    
-    return; // Don't do any other AI logic while running
-}
-bot.isRetreating = false;
-    
-    
-    // Calculate if we can finish them with current charge
-    const myPotentialDamage = Math.floor((bot.charge / 100) * 25);
-    const canKillNow = myPotentialDamage >= myHealth;
-    
-    // Calculate if they can kill us with their current charge
-    const theirPotentialDamage = Math.floor((meterCharge / 100) * 25);
-    const theyCanKillUs = theirPotentialDamage >= bot.health;
-    
-    // Track player's last position
-    if (!bot.playerLastPos) {
-        bot.playerLastPos = { x: player.x, y: player.y, time: Date.now() };
-    }
-    
-    const timeSinceCheck = Date.now() - bot.playerLastPos.time;
-    if (timeSinceCheck > 500) { // Check every 500ms
-        const playerMoved = Math.sqrt(
-            Math.pow(player.x - bot.playerLastPos.x, 2) + 
-            Math.pow(player.y - bot.playerLastPos.y, 2)
-        );
-        
-        // If player barely moved (less than 20 units in 500ms), they're camping
-        const isPlayerCamping = playerMoved < 20;
-        
-        bot.playerLastPos = { x: player.x, y: player.y, time: Date.now() };
-        bot.isPlayerCamping = isPlayerCamping;
-    }
-    
-    // SURVIVAL MODE: If they can kill us and we're in range, DASH AWAY immediately
-    if (theyCanKillUs && meterCharge >= 85 && distance < 100 && bot.dashReady) {
-        const perpX = -dy / magnitude;
-        const perpY = dx / magnitude;
-        const direction = Math.random() > 0.5 ? 1 : -1;
-        const dashX = bot.x + perpX * DASH_DISTANCE * direction - (dx / magnitude) * 50;
-        const dashY = bot.y + perpY * DASH_DISTANCE * direction - (dy / magnitude) * 50;
-        botDash(botId, dashX, dashY);
-        return;
-    }
-    
-    // If player is camping, ALWAYS RUSH regardless of charge
-    if (bot.isPlayerCamping && distance > ATTACK_RANGE) {
-        bot.x += (dx / magnitude) * PLAYER_SPEED;
-        bot.y += (dy / magnitude) * PLAYER_SPEED;
-        updatePlayerPosition(bot.element, bot.x, bot.y);
-    } else {
-        // Normal positioning
-        let targetDistance = 70;
-        if (meterCharge >= 85) {
-            targetDistance = 100;
-        } else if (meterCharge < 30) {
-            targetDistance = 65;
-        }
-        
-        if (distance > targetDistance + 5) {
-            bot.x += (dx / magnitude) * PLAYER_SPEED;
-            bot.y += (dy / magnitude) * PLAYER_SPEED;
-        } else if (distance < targetDistance - 5) {
-            bot.x -= (dx / magnitude) * PLAYER_SPEED;
-            bot.y -= (dy / magnitude) * PLAYER_SPEED;
-        } else {
-            const perpX = -dy / magnitude;
-            const perpY = dx / magnitude;
-            const direction = Math.sin(Date.now() / 200) > 0 ? 1 : -1;
-            bot.x += perpX * PLAYER_SPEED * direction;
-            bot.y += perpY * PLAYER_SPEED * direction;
-        }
-        updatePlayerPosition(bot.element, bot.x, bot.y);
-    }
-    
-    // PRIORITY: Finish them if we can!
-    if (canKillNow && distance <= ATTACK_RANGE && bot.canAttack) {
-        botAttack(botId, playerId);
-        bot.postCritCount = 0;
-        return;
-    }
-    
-    // Attack at 70% if player is camping, otherwise 90%
-    const critThreshold = bot.isPlayerCamping ? 70 : 90;
-    if (distance <= ATTACK_RANGE && bot.charge >= critThreshold && bot.canAttack) {
-        botAttack(botId, playerId);
-        bot.postCritCount = 1;
-        bot.lastAttackTime = Date.now();
-        return;
-    }
-    
-
-
-// Single spam after crit - INSTANT SPAM then GTFO AND STAY AWAY
-const timeSinceAttack = Date.now() - (bot.lastAttackTime || 0);
-if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot.canAttack && timeSinceAttack < 2000) {
-    // Spam INSTANTLY at 25% charge
-    botAttack(botId, playerId);
-    bot.postCritCount = 0;
-    bot.isRetreating = true;
-    bot.retreatUntil = Date.now() + 2500; // Stay away for 1.5 seconds
-    
-    // Try to dash away if available
-    if (bot.dashReady) {
-        setTimeout(() => {
-            if (bot.dashReady && players.get(botId)) {
-                const escapeX = bot.x - (dx / magnitude) * DASH_DISTANCE;
-                const escapeY = bot.y - (dy / magnitude) * DASH_DISTANCE;
-                botDash(botId, escapeX, escapeY);
-                // DON'T set isRetreating to false! Let the timer run out
             }
-        }, 50);
-    }
-}
-    
-    // Defensive dash - when player is charged up
-    if (meterCharge >= 85 && distance < 95 && bot.dashReady && Math.random() > 0.2) {
-        const perpX = -dy / magnitude;
-        const perpY = dx / magnitude;
-        const direction = Math.random() > 0.5 ? 1 : -1;
-        const dashX = bot.x + perpX * DASH_DISTANCE * direction;
-        const dashY = bot.y + perpY * DASH_DISTANCE * direction;
-        botDash(botId, dashX, dashY);
-    }
-    
-    // Offensive dash - when player is weak OR player is camping
-    if ((meterCharge < 65 && distance > 120 && bot.charge >= 88 && Math.random() > 0.3) ||
-        (bot.isPlayerCamping && bot.charge >= 60 && distance > 80 && bot.dashReady)) {
-        const dashX = bot.x + (dx / magnitude) * DASH_DISTANCE;
-        const dashY = bot.y + (dy / magnitude) * DASH_DISTANCE;
-        botDash(botId, dashX, dashY);
-    }
-}
+        }
         
         function botAttack(botId, playerId) {
-            if (!currentMatch) return; // Don't attack if match ended
+            if (!currentMatch) return;
             
             const bot = players.get(botId);
             const player = players.get(playerId);
@@ -1449,19 +1439,16 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
             updateHealth(playerId, player.health);
             showDamageNumber(damage, hitType, player.element);
             
-            // Reset charge and set cooldown
             bot.charge = 0;
             bot.canAttack = false;
             
-            // Natural cooldown - same as charge time (2.5 seconds for full charge)
-            // Small cooldown to prevent instant re-attack
             setTimeout(() => {
                 if (players.get(botId)) {
                     players.get(botId).canAttack = true;
                 }
-            }, 200); // Small delay before can attack again (charge still needs to build)
+            }, 200);
             
-            if (player.health <= 0 && currentMatch) { // Check match still exists
+            if (player.health <= 0 && currentMatch) {
                 endMatch(false, false);
             }
         }
@@ -1697,24 +1684,24 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
         function endMatch(won, disconnected) {
             if (!currentMatch) return;
             
-            // Stop all game intervals immediately
+            // Clear match state - we finished properly
+            localStorage.setItem('isPlayingGladiator', '0');
+            localStorage.removeItem('matchStartTime');
+            
             if (chargeInterval) {
                 clearInterval(chargeInterval);
                 chargeInterval = null;
             }
             stopPositionUpdates();
             
-            // Remove event listeners
             document.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('keyup', handleKeyUp);
             document.removeEventListener('click', handleAttack);
             
-            // Calculate ELO change (only for PvP matches)
             const isBot = currentMatch.isBot;
             const eloChange = isBot ? 0 : calculateEloChange(myElo, currentMatch.opponentElo, won);
             const newElo = isBot ? myElo : myElo + eloChange;
             
-            // Send match end to relay if not bot match
             if (!isBot) {
                 relay.sendPlayerAction('match_end', {
                     winner: won ? myPlayerId : currentMatch.opponent,
@@ -1724,12 +1711,12 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
                 });
             }
             
-            // IMPORTANT: Clear the match BEFORE showing results to stop bot AI
             const wasBot = currentMatch.isBot;
             const botDifficulty = currentMatch.botDifficulty;
             const opponentName = currentMatch.opponent;
-            currentMatch = null; // This stops the bot AI in gameLoop
-                        if (wasBot && botDifficulty === 'hard' && won) {
+            currentMatch = null;
+            
+            if (wasBot && botDifficulty === 'hard' && won) {
                 localStorage.setItem('_beatHardBot', '1');
             }
             
@@ -1770,7 +1757,6 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
                     `Previous: ${myElo} → New: ${newElo}` + 
                     (disconnected ? ' (Opponent Disconnected)' : '');
                 
-                // Only save ELO for PvP matches
                 saveElo(newElo);
             }
             
@@ -1791,6 +1777,10 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
             meterCharge = 0;
             canAttack = true;
             isCharging = false;
+            
+            // Clear match state when returning to lobby
+            localStorage.setItem('isPlayingGladiator', '0');
+            localStorage.removeItem('matchStartTime');
             
             if (chargeInterval) {
                 clearInterval(chargeInterval);
@@ -1816,4 +1806,4 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
         init();
     </script>
 </body>
-</html
+</html>
