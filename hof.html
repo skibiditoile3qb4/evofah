@@ -18,7 +18,7 @@
             padding: 40px 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         h1 {
@@ -43,6 +43,142 @@
             background: #252525;
             border-color: #555;
         }
+
+        /* LEADERBOARD STYLES */
+        .leaderboard-section {
+            margin: 30px 0 60px 0;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .leaderboard-section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffd700;
+            font-size: 32px;
+        }
+
+        .sync-status {
+            text-align: center;
+            padding: 10px;
+            background: #0a0a0a;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .sync-status.syncing {
+            color: #fbbf24;
+        }
+
+        .sync-status.synced {
+            color: #4ade80;
+        }
+
+        .sync-status.error {
+            color: #ef4444;
+        }
+
+        .leaderboard-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .leaderboard-container::-webkit-scrollbar-track {
+            background: #0a0a0a;
+            border-radius: 5px;
+        }
+
+        .leaderboard-container::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 5px;
+        }
+
+        .leaderboard-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .leaderboard-entry:hover {
+            transform: scale(1.02);
+            background: #1a1a1a;
+            border-color: #ffd700;
+        }
+
+        .leaderboard-entry.top-1 {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #000;
+            border-color: #ffd700;
+        }
+
+        .leaderboard-entry.top-2 {
+            background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+            color: #000;
+            border-color: #c0c0c0;
+        }
+
+        .leaderboard-entry.top-3 {
+            background: linear-gradient(135deg, #cd7f32 0%, #e89f71 100%);
+            color: #000;
+            border-color: #cd7f32;
+        }
+
+        .leaderboard-rank {
+            font-size: 24px;
+            font-weight: bold;
+            color: #d69e2e;
+            min-width: 60px;
+        }
+
+        .top-1 .leaderboard-rank,
+        .top-2 .leaderboard-rank,
+        .top-3 .leaderboard-rank {
+            color: #000;
+        }
+
+        .leaderboard-username {
+            flex: 1;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .leaderboard-coins {
+            font-size: 20px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .top-1 .leaderboard-coins,
+        .top-2 .leaderboard-coins,
+        .top-3 .leaderboard-coins {
+            color: #000;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-size: 18px;
+        }
+
+        /* LEGENDARY PLAYERS STYLES */
         .legends-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -189,12 +325,24 @@
             font-size: 16px;
         }
     </style>
+    <script src="relay-client.js"></script>
 </head>
 <body>
     <div class="container">
         <button class="back-btn" onclick="window.location.href='index.html'">← BACK</button>
         <h1>🏆 HALL OF FAME</h1>
         
+        <!-- ALL-TIME COINS LEADERBOARD -->
+        <div class="leaderboard-section">
+            <h2>💰 All-Time Coins Leaderboard</h2>
+            <div id="syncStatus" class="sync-status">Connecting...</div>
+            <div id="coinsLeaderboard" class="leaderboard-container">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- LEGENDARY PLAYERS -->
+        <h1 style="margin-top: 60px;">⭐ LEGENDARY PLAYERS</h1>
         <div class="legends-grid">
             <div class="legend-card" onclick="showModal('jiles')">
                 <div class="legend-img">
@@ -227,9 +375,9 @@
                 <h2>ARLTR</h2>
                 <div class="subtitle">Click to learn more</div>
             </div>
-
         </div>
         
+        <!-- HOW TO JOIN -->
         <div class="how-to-join">
             <h2>✨ How to Join the Hall of Fame</h2>
             <div class="criteria-list">
@@ -266,6 +414,7 @@
         </div>
     </div>
 
+    <!-- MODAL -->
     <div class="modal" id="modal">
         <div class="modal-content">
             <h2 id="modalTitle"></h2>
@@ -275,6 +424,153 @@
     </div>
 
     <script>
+        const RELAY_SERVER = 'wss://relayfah.onrender.com';
+        const ROOM_ID = 'gladiator_hof';
+        let relay;
+
+        // Coin decryption functions (same as main game)
+        const _0x4a2b = (s) => btoa(s).split('').reverse().join('');
+        const _0x2b4a = (s) => atob(s.split('').reverse().join(''));
+        const _0x9c3d = 'X2NvaW5EYXRh';
+
+        function getCoins() {
+            try {
+                const stored = localStorage.getItem(_0x2b4a(_0x9c3d));
+                if (stored) {
+                    return parseInt(_0x2b4a(stored));
+                }
+            } catch(e) {}
+            return 0;
+        }
+
+        function getUserProfile() {
+            try {
+                const stored = localStorage.getItem('userProfile');
+                if (stored) {
+                    return JSON.parse(stored);
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        async function connectAndLoadLeaderboard() {
+            const syncStatus = document.getElementById('syncStatus');
+            
+            try {
+                syncStatus.className = 'sync-status syncing';
+                syncStatus.textContent = 'Connecting to server...';
+                
+                relay = new RelayClient(RELAY_SERVER);
+                await relay.connect();
+                
+                // Join HOF room
+                relay.joinRoom(ROOM_ID, 'HOF_Viewer', 'viewer');
+                
+                syncStatus.textContent = 'Syncing your coins...';
+                
+                // Sync current user's coins to database
+                syncMyCoins();
+                
+                // Listen for coins leaderboard data
+                relay.on('coins_leaderboard_data', (data) => {
+                    displayCoinsLeaderboard(data.leaderboard || []);
+                    syncStatus.className = 'sync-status synced';
+                    syncStatus.textContent = '✅ Synced successfully';
+                });
+                
+                // Request the leaderboard after a brief delay for sync
+                setTimeout(() => {
+                    relay.send({ type: 'get_coins_leaderboard' });
+                }, 1500);
+                
+                // Refresh every 10 seconds
+                setInterval(() => {
+                    if (relay && relay.connected) {
+                        relay.send({ type: 'get_coins_leaderboard' });
+                    }
+                }, 10000);
+                
+            } catch (error) {
+                console.error('Failed to connect:', error);
+                syncStatus.className = 'sync-status error';
+                syncStatus.textContent = '❌ Connection failed';
+                document.getElementById('coinsLeaderboard').innerHTML = 
+                    '<div class="loading">Failed to load leaderboard</div>';
+            }
+        }
+
+        function syncMyCoins() {
+            try {
+                const userProfile = getUserProfile();
+                const coins = getCoins();
+                
+                console.log('Syncing coins:', { userProfile, coins });
+                
+                // Only sync if we have valid data
+                if (userProfile && userProfile.permanentId && coins >= 0) {
+                    relay.send({
+                        type: 'update_coins',
+                        userId: userProfile.permanentId,
+                        username: userProfile.username || 'Unknown',
+                        coins: coins
+                    });
+                    
+                    console.log(`✅ Synced ${coins} coins for ${userProfile.username}`);
+                } else {
+                    console.warn('Cannot sync - missing user data or coins');
+                }
+            } catch (error) {
+                console.error('Failed to sync coins:', error);
+            }
+        }
+
+        function displayCoinsLeaderboard(leaderboard) {
+            const container = document.getElementById('coinsLeaderboard');
+            
+            if (leaderboard.length === 0) {
+                container.innerHTML = '<div class="loading">No data yet</div>';
+                return;
+            }
+            
+            const userProfile = getUserProfile();
+            const myUsername = userProfile ? userProfile.username : null;
+            
+            container.innerHTML = leaderboard.map((player, index) => {
+                const rank = index + 1;
+                let rankClass = '';
+                let medal = '';
+                
+                if (rank === 1) {
+                    rankClass = 'top-1';
+                    medal = '🥇';
+                } else if (rank === 2) {
+                    rankClass = 'top-2';
+                    medal = '🥈';
+                } else if (rank === 3) {
+                    rankClass = 'top-3';
+                    medal = '🥉';
+                }
+                
+                const isMe = player.username === myUsername;
+                const youTag = isMe ? ' <span style="color: #4ade80;">(YOU)</span>' : '';
+                
+                return `
+                    <div class="leaderboard-entry ${rankClass}">
+                        <div class="leaderboard-rank">${medal} #${rank}</div>
+                        <div class="leaderboard-username">${escapeHtml(player.username)}${youTag}</div>
+                        <div class="leaderboard-coins">${player.coins.toLocaleString()} 🪙</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // LEGENDARY PLAYERS LOGIC
         const legends = {
             jiles: {
                 name: 'Jiles',
@@ -290,10 +586,8 @@
             },
             ARLTR: {
                 name: 'ARLTR',
-                description: 'Extremely skilled player who has over 53 quadrillion coins from fully legit gameplay. Known for insane efficiency, deep game knowledge, and grinding methods most players can’t even pull off.'
+                description: 'Extremely skilled player who has over 53 quadrillion coins from fully legit gameplay. Known for insane efficiency, deep game knowledge, and grinding methods most players can't even pull off.'
             }
-
-            
         };
 
         function showModal(legendKey) {
@@ -306,6 +600,9 @@
         function closeModal() {
             document.getElementById('modal').classList.remove('show');
         }
+
+        // Start when page loads
+        connectAndLoadLeaderboard();
     </script>
 </body>
 </html>
