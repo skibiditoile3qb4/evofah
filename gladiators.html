@@ -385,6 +385,17 @@
         let matchType = 'pvp'; // 'pvp' or 'bot'
         let selectedDifficulty = 'easy';
         
+        let balance = 0;
+
+        window.parent.postMessage({ type: 'getCoins' }, '*');
+        
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'coinsData') {
+                balance = event.data.coins;
+            }
+        });
+
+        
         // Battle state
         let players = new Map();
         let myHealth = 100, opponentHealth = 100;
@@ -514,6 +525,12 @@
         function updateEloDisplay() {
             document.getElementById('eloValue').textContent = myElo;
         }
+        function updateParentCoins() {
+                window.parent.postMessage({
+                    type: 'updateCoins',
+                    coins: balance
+                }, '*');
+            }
 
         function saveElo(newElo) {
             myElo = newElo;
@@ -1727,91 +1744,116 @@ function showSwordSwing(playerElement) {
         }
 
         function endMatch(won, disconnected) {
-            if (!currentMatch) return;
-            
-            // Clear match state - we finished properly
-            localStorage.setItem('isPlayingGladiator', '0');
-            localStorage.removeItem('matchStartTime');
-            
-            if (chargeInterval) {
-                clearInterval(chargeInterval);
-                chargeInterval = null;
-            }
-            stopPositionUpdates();
-            
-            document.removeEventListener('keydown', handleKeyDown);
-            document.removeEventListener('keyup', handleKeyUp);
-            document.removeEventListener('click', handleAttack);
-            
-            const isBot = currentMatch.isBot;
-            const eloChange = isBot ? 0 : calculateEloChange(myElo, currentMatch.opponentElo, won);
-            const newElo = isBot ? myElo : myElo + eloChange;
-            
-            if (!isBot) {
-                relay.sendPlayerAction('match_end', {
-                    winner: won ? myPlayerId : currentMatch.opponent,
-                    myElo: newElo,
-                    eloChange: eloChange,
-                    disconnected: disconnected
-                });
-            }
-            
-            const wasBot = currentMatch.isBot;
-            const botDifficulty = currentMatch.botDifficulty;
-            const opponentName = currentMatch.opponent;
-            currentMatch = null;
-            
-            if (wasBot && botDifficulty === 'hard' && won) {
-                localStorage.setItem('_beatHardBot', '1');
-            }
-            
-            showMatchResult(won, eloChange, newElo, disconnected, wasBot, botDifficulty, opponentName);
+    if (!currentMatch) return;
+    
+    localStorage.setItem('isPlayingGladiator', '0');
+    localStorage.removeItem('matchStartTime');
+    
+    if (chargeInterval) {
+        clearInterval(chargeInterval);
+        chargeInterval = null;
+    }
+    stopPositionUpdates();
+    
+    document.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('keyup', handleKeyUp);
+    document.removeEventListener('click', handleAttack);
+    
+    const isBot = currentMatch.isBot;
+    const eloChange = isBot ? 0 : calculateEloChange(myElo, currentMatch.opponentElo, won);
+    const newElo = isBot ? myElo : myElo + eloChange;
+    
+    let coinReward = 0;
+    if (won) {
+        if (isBot && currentMatch.botDifficulty === 'hard') {
+            coinReward = 10000;
+        } else if (!isBot && eloChange > 0) {
+            coinReward = 500 * eloChange;
         }
+    }
+    
+    if (!isBot) {
+        relay.sendPlayerAction('match_end', {
+            winner: won ? myPlayerId : currentMatch.opponent,
+            myElo: newElo,
+            eloChange: eloChange,
+            disconnected: disconnected
+        });
+    }
+    
+    const wasBot = currentMatch.isBot;
+    const botDifficulty = currentMatch.botDifficulty;
+    const opponentName = currentMatch.opponent;
+    currentMatch = null;
+    
+    if (wasBot && botDifficulty === 'hard' && won) {
+        localStorage.setItem('_beatHardBot', '1');
+    }
+    
+    showMatchResult(won, eloChange, newElo, disconnected, wasBot, botDifficulty, opponentName, coinReward);
+}
 
         function receiveMatchEnd(data) {
-            // Match ended by opponent
+            
         }
 
-        function showMatchResult(won, eloChange, newElo, disconnected, wasBot, botDifficulty, opponentName) {
-            showScreen('resultsScreen');
-            
-            if (won) {
-                document.getElementById('resultTitle').textContent = '🏆 VICTORY!';
-                document.getElementById('resultTitle').style.color = '#4ade80';
-            } else {
-                document.getElementById('resultTitle').textContent = '💀 DEFEAT';
-                document.getElementById('resultTitle').style.color = '#ef4444';
-            }
-            
-            const eloChangeEl = document.getElementById('eloChange');
-            
-            if (wasBot) {
-                eloChangeEl.className = '';
-                eloChangeEl.style.color = '#888';
-                eloChangeEl.textContent = 'No ELO Change (Practice Match)';
-            } else {
-                eloChangeEl.className = eloChange >= 0 ? 'elo-gain' : 'elo-loss';
-                eloChangeEl.textContent = `${eloChange >= 0 ? '+' : ''}${eloChange} ELO`;
-            }
-            
-            if (wasBot) {
-                document.getElementById('resultStats').textContent = 
-                    `Current ELO: ${myElo} (vs ${botDifficulty.toUpperCase()} Bot)`;
-            } else {
-                document.getElementById('resultStats').textContent = 
-                    `Previous: ${myElo} → New: ${newElo}` + 
-                    (disconnected ? ' (Opponent Disconnected)' : '');
-                
-                saveElo(newElo);
-            }
-            
-            if (relay && relay.connected && !wasBot) {
-                relay.send({ 
-                    type: 'update_status',
-                    status: JSON.stringify({ elo: newElo })
-                });
-            }
+function showMatchResult(won, eloChange, newElo, disconnected, wasBot, botDifficulty, opponentName, coinReward) {
+    showScreen('resultsScreen');
+    
+    if (won) {
+        document.getElementById('resultTitle').textContent = '🏆 VICTORY!';
+        document.getElementById('resultTitle').style.color = '#4ade80';
+    } else {
+        document.getElementById('resultTitle').textContent = '💀 DEFEAT';
+        document.getElementById('resultTitle').style.color = '#ef4444';
+    }
+    
+    const eloChangeEl = document.getElementById('eloChange');
+    
+    if (wasBot) {
+        eloChangeEl.className = '';
+        eloChangeEl.style.color = '#888';
+        
+        if (coinReward > 0) {
+            eloChangeEl.textContent = `+${coinReward} Coins Earned!`;
+            eloChangeEl.style.color = '#ffd700';
+        } else {
+            eloChangeEl.textContent = 'No ELO Change (Practice Match)';
         }
+    } else {
+        eloChangeEl.className = eloChange >= 0 ? 'elo-gain' : 'elo-loss';
+        
+        if (coinReward > 0) {
+            eloChangeEl.textContent = `${eloChange >= 0 ? '+' : ''}${eloChange} ELO | +${coinReward} Coins`;
+        } else {
+            eloChangeEl.textContent = `${eloChange >= 0 ? '+' : ''}${eloChange} ELO`;
+        }
+    }
+    
+    if (wasBot) {
+        document.getElementById('resultStats').textContent = 
+            `Current ELO: ${myElo} (vs ${botDifficulty.toUpperCase()} Bot)`;
+    } else {
+        document.getElementById('resultStats').textContent = 
+            `Previous: ${myElo} → New: ${newElo}` + 
+            (disconnected ? ' (Opponent Disconnected)' : '');
+        
+        saveElo(newElo);
+    }
+    
+    // Add coins to balance, then update parent (EXACTLY like Mines)
+    if (coinReward > 0) {
+        balance += coinReward;
+        updateParentCoins();
+    }
+    
+    if (relay && relay.connected && !wasBot) {
+        relay.send({ 
+            type: 'update_status',
+            status: JSON.stringify({ elo: newElo })
+        });
+    }
+}
 
         function returnToLobby() {
             stopPositionUpdates();
