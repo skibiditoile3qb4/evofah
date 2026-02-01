@@ -1404,6 +1404,14 @@ function getUserProfile() {
             }
             if (!profile.nametag.equipped) profile.nametag.equipped = 'none';
             if (!Array.isArray(profile.nametag.unlocked)) profile.nametag.unlocked = ['none'];
+            if (!profile.gladiatorCosmetics) {
+    profile.gladiatorCosmetics = {
+        icon: '⚔️',
+        slashColor: '#ffffff',
+        ownedIcons: ['⚔️'],
+        ownedSlashColors: ['#ffffff']
+    };
+}
             if (typeof profile.totalDonated === 'undefined') {
                 profile.totalDonated = 0;
             }
