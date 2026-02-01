@@ -129,17 +129,18 @@ class RelayClient {
     }
   }
   
-  joinRoom(room, username, status, permanentId) {
-    this.room = room;
-    this.username = username;
-    this.send({
-      type: 'join',
-      room,
-      username,
-      status: status || 'player',
-      permanentId: permanentId || null
-    });
-  }
+joinRoom(room, username, status, permanentId, gladiatorCosmetics) {
+  this.room = room;
+  this.username = username;
+  this.send({
+    type: 'join',
+    room,
+    username,
+    status: status || 'player',
+    permanentId: permanentId || null,
+    gladiatorCosmetics: gladiatorCosmetics || { icon: '⚔️', slashColor: '#ffffff' }
+  });
+}
   
   sendGameState(state) {
     if (!this.room) {
