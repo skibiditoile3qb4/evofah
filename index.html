@@ -3547,8 +3547,18 @@ async function initChat() {
     if (staffRanks.includes(userProfile.status)) {
         document.getElementById('chatTabs').style.display = 'flex';
     }
+    
     try {
         relay = new RelayClient(RELAY_SERVER);
+        
+         relay.on('connected', (data) => {
+            relay.send({
+                type: 'update_coins',
+                userId: userProfile.permanentId,
+                username: userProfile.username,
+                coins: coins
+            });
+        });
         
 relay.on('joined', (data) => {
             console.log('🎉 JOINED EVENT RECEIVED!', data);
@@ -3725,7 +3735,8 @@ relay.on('players_update', (data) => {
         updateConnectionStatus(true);
         
         console.log('📍 Joining room:', currentChatRoom, 'as', userProfile.username);
-        relay.joinRoom(currentChatRoom, userProfile.username, userProfile.status);
+        relay.joinRoom(currentChatRoom, userProfile.username, userProfile.status)
+
         console.log('✅ Join request sent!');
         
 
