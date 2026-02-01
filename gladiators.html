@@ -907,7 +907,7 @@ function createPlayerElement(username, color, x, y) {
     player.className = 'player';
     player.style.background = color;
     
-    // Apply custom icon
+
     let icon = '⚔️';
     if (username === myPlayerId && userProfile.gladiatorCosmetics) {
         icon = userProfile.gladiatorCosmetics.icon || '⚔️';
@@ -968,10 +968,10 @@ function createPlayerElement(username, color, x, y) {
             const afterimageCount = 5;
             
             for (let i = 0; i < afterimageCount; i++) {
-                setTimeout(() => {
-                    createAfterimage(myData.x, myData.y, playerColor);
-                }, i * 20);
-            }
+    setTimeout(() => {
+        createAfterimage(myData.x, myData.y, playerColor, myPlayerId);  
+    }, i * 20);
+}
             
             const dashSteps = 10;
             let step = 0;
@@ -1009,18 +1009,24 @@ function createPlayerElement(username, color, x, y) {
                 });
             }
         }
-
-        function createAfterimage(x, y, color) {
-            const afterimage = document.createElement('div');
-            afterimage.className = 'dash-afterimage';
-            afterimage.style.background = color;
-            afterimage.textContent = '⚔️';
-            
-            updatePlayerPosition(afterimage, x, y);
-            document.getElementById('battleArena').appendChild(afterimage);
-            
-            setTimeout(() => afterimage.remove(), 500);
-        }
+function createAfterimage(x, y, color, username) {
+    const afterimage = document.createElement('div');
+    afterimage.className = 'dash-afterimage';
+    afterimage.style.background = color;
+    
+    let icon = '⚔️';
+    if (username === myPlayerId && userProfile.gladiatorCosmetics) {
+        icon = userProfile.gladiatorCosmetics.icon || '⚔️';
+    } else if (username && window.playerCosmetics && window.playerCosmetics.has(username)) {
+        icon = window.playerCosmetics.get(username).icon || '⚔️';
+    }
+    afterimage.textContent = icon;
+    
+    updatePlayerPosition(afterimage, x, y);
+    document.getElementById('battleArena').appendChild(afterimage);
+    
+    setTimeout(() => afterimage.remove(), 500);
+}
 
         function startDashCooldown() {
             dashCooldownRemaining = DASH_COOLDOWN;
@@ -1651,7 +1657,7 @@ function createPlayerElement(username, color, x, y) {
             const opponentColor = '#ef4444';
             for (let i = 0; i < 5; i++) {
                 setTimeout(() => {
-                    createAfterimage(playerData.x, playerData.y, opponentColor);
+                    createAfterimage(playerData.x, playerData.y, opponentColor, playerData.username);  // Added playerData.username
                 }, i * 20);
             }
         }
