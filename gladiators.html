@@ -535,7 +535,7 @@
                 relay = new RelayClient(RELAY_SERVER);
                 await relay.connect();
                 
-                relay.joinRoom(ROOM_ID, myPlayerId, JSON.stringify({ elo: myElo }));
+                relay.joinRoom(ROOM_ID, myPlayerId, JSON.stringify({ elo: myElo }), userProfile.permanentId, userProfile.gladiatorCosmetics);
                 relay.send({
                     type: 'update_elo',
                     userId: userProfile.permanentId,
@@ -544,12 +544,26 @@
                 });
                 
                 relay.on('joined', (data) => {
-                    updateLeaderboard();
-                });
+    if (data.players) {
+        data.players.forEach(player => {
+            if (player.gladiatorCosmetics) {
 
-                relay.on('player_joined', (data) => {
-                    updateLeaderboard();
-                });
+                const playerId = player.username; // or player.id
+                if (!window.playerCosmetics) window.playerCosmetics = new Map();
+                window.playerCosmetics.set(playerId, player.gladiatorCosmetics);
+            }
+        });
+    }
+    updateLeaderboard();
+});
+
+relay.on('player_joined', (data) => {
+    if (data.player && data.player.gladiatorCosmetics) {
+        if (!window.playerCosmetics) window.playerCosmetics = new Map();
+        window.playerCosmetics.set(data.player.username, data.player.gladiatorCosmetics);
+    }
+    updateLeaderboard();
+});
                 
                 relay.on('player_left', (data) => {
                     updateLeaderboard();
@@ -893,9 +907,12 @@ function createPlayerElement(username, color, x, y) {
     player.className = 'player';
     player.style.background = color;
     
+    // Apply custom icon
     let icon = '⚔️';
     if (username === myPlayerId && userProfile.gladiatorCosmetics) {
         icon = userProfile.gladiatorCosmetics.icon || '⚔️';
+    } else if (window.playerCosmetics && window.playerCosmetics.has(username)) {
+        icon = window.playerCosmetics.get(username).icon || '⚔️';
     }
     player.textContent = icon;
             
@@ -1643,18 +1660,21 @@ function showSwordSwing(playerElement) {
     const swing = document.createElement('div');
     swing.className = 'sword-swing';
     
-    // Apply custom slash color
+    // Get username from player element
+    const usernameElement = playerElement.querySelector('.player-name');
+    const username = usernameElement ? usernameElement.textContent.replace(' (YOU)', '') : null;
+    
     let slashColor = '#fff';
-    if (userProfile.gladiatorCosmetics) {
+    if (username === myPlayerId && userProfile.gladiatorCosmetics) {
         slashColor = userProfile.gladiatorCosmetics.slashColor || '#ffffff';
-        
-        if (slashColor === 'rainbow') {
-            swing.style.background = 'linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
-        } else {
-            swing.style.background = slashColor;
-        }
+    } else if (username && window.playerCosmetics && window.playerCosmetics.has(username)) {
+        slashColor = window.playerCosmetics.get(username).slashColor || '#ffffff';
+    }
+    
+    if (slashColor === 'rainbow') {
+        swing.style.background = 'linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
     } else {
-        swing.style.background = '#fff';
+        swing.style.background = slashColor;
     }
     
     const rect = playerElement.getBoundingClientRect();
