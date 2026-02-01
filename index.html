@@ -3863,8 +3863,13 @@ function displayChatMessage(message, shouldScroll = true) {
     
     // Create nametag badge HTML
     let nametagHtml = '';
+    if (message.nametag && message.nametag !== 'none') {
+        nametagHtml = `<span class="chat-nametag-badge ${message.nametag}">${message.nametag.toUpperCase()}</span>`;
+    }
     
+    // Create status badge HTML (always show)
     const statusHtml = `<span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>`;
+    ;
     
     msgDiv.innerHTML = `
         <div>
