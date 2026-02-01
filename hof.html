@@ -334,7 +334,7 @@
         
         <!-- ALL-TIME COINS LEADERBOARD -->
         <div class="leaderboard-section">
-            <h2>💰 All-Time Coins Leaderboard</h2>
+            <h2>💰 Top 10</h2>
             <div id="syncStatus" class="sync-status">Connecting...</div>
             <div id="coinsLeaderboard" class="leaderboard-container">
                 <div class="loading">Loading...</div>
@@ -558,7 +558,7 @@
                     <div class="leaderboard-entry ${rankClass}">
                         <div class="leaderboard-rank">${medal} #${rank}</div>
                         <div class="leaderboard-username">${escapeHtml(player.username)}${youTag}</div>
-                        <div class="leaderboard-coins">${player.coins.toLocaleString()} 🪙</div>
+                        <div class="leaderboard-coins">${player.coins.toLocaleString()} 💰</div>
                     </div>
                 `;
             }).join('');
@@ -586,7 +586,7 @@
             },
             ARLTR: {
                 name: 'ARLTR',
-                description: 'Extremely skilled player who has over 53 quadrillion coins from fully legit gameplay. Known for insane efficiency, deep game knowledge, and grinding methods most players cant even pull off.'
+                description: 'Extremely skilled player who has over 53 quadrillion coins from fully legit gameplay. Known for insane efficiency, deep game knowledge, and grinding methods most players can't even pull off.'
             }
         };
 
