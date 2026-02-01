@@ -888,11 +888,16 @@
             document.getElementById('dashIcon').classList.remove('cooling');
         }
 
-        function createPlayerElement(username, color, x, y) {
-            const player = document.createElement('div');
-            player.className = 'player';
-            player.style.background = color;
-            player.textContent = '⚔️';
+function createPlayerElement(username, color, x, y) {
+    const player = document.createElement('div');
+    player.className = 'player';
+    player.style.background = color;
+    
+    let icon = '⚔️';
+    if (username === myPlayerId && userProfile.gladiatorCosmetics) {
+        icon = userProfile.gladiatorCosmetics.icon || '⚔️';
+    }
+    player.textContent = icon;
             
             const nameTag = document.createElement('div');
             nameTag.className = 'player-name';
@@ -1634,16 +1639,30 @@
             }
         }
 
-        function showSwordSwing(playerElement) {
-            const swing = document.createElement('div');
-            swing.className = 'sword-swing';
-            
-            const rect = playerElement.getBoundingClientRect();
-            swing.style.left = rect.left + rect.width / 2 + 'px';
-            swing.style.top = rect.top + rect.height / 2 + 'px';
-            swing.style.opacity = '1';
-            
-            document.body.appendChild(swing);
+function showSwordSwing(playerElement) {
+    const swing = document.createElement('div');
+    swing.className = 'sword-swing';
+    
+    // Apply custom slash color
+    let slashColor = '#fff';
+    if (userProfile.gladiatorCosmetics) {
+        slashColor = userProfile.gladiatorCosmetics.slashColor || '#ffffff';
+        
+        if (slashColor === 'rainbow') {
+            swing.style.background = 'linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
+        } else {
+            swing.style.background = slashColor;
+        }
+    } else {
+        swing.style.background = '#fff';
+    }
+    
+    const rect = playerElement.getBoundingClientRect();
+    swing.style.left = rect.left + rect.width / 2 + 'px';
+    swing.style.top = rect.top + rect.height / 2 + 'px';
+    swing.style.opacity = '1';
+    
+    document.body.appendChild(swing);
             
             setTimeout(() => swing.remove(), 200);
         }
