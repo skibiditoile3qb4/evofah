@@ -363,6 +363,112 @@
         <button id="buyLightningPotion" style="background: #9333ea; border-color: #7e22ce;">Purchase</button>
     </div>
 </div>
+
+<div style="margin-top: 40px; padding-top: 40px; border-top: 1px solid #333;">
+    <h1 style="text-align: center; margin-bottom: 30px; font-size: 28px;">⚔️ GLADIATOR COSMETICS</h1>
+    
+    <h2 style="text-align: center; margin: 30px 0 20px 0; font-size: 22px; color: #888;">Battle Icons</h2>
+    
+    <div class="shop-item">
+        <h2>🛡️ Shield Icon</h2>
+        <p>Replace your sword with shield!</p>
+        <div class="price">15,000 Coins</div>
+        <button id="buyShieldIcon">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>🏹 Bow Icon</h2>
+        <p>Shoot your enemies!(not really)</p>
+        <div class="price">15,000 Coins</div>
+        <button id="buyBowIcon">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>🔱 Trident Icon</h2>
+        <p>Trident icon.</p>
+        <div class="price">20,000 Coins</div>
+        <button id="buyTridentIcon">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>🗡️ Dagger Icon</h2>
+        <p>Swift and deadly.</p>
+        <div class="price">18,000 Coins</div>
+        <button id="buyDaggerIcon">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>⚡ Lightning Bolt Icon</h2>
+        <p>Lightning icon gladiators.</p>
+        <div class="price">25,000 Coins</div>
+        <button id="buyLightningIcon">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>🔥 Fire Icon</h2>
+        <p>Burn your enemies.</p>
+        <div class="price">30,000 Coins</div>
+        <button id="buyFireIcon">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>💀 Skull Icon</h2>
+        <p>Skull icon for pro gamers!</p>
+        <div class="price">35,000 Coins</div>
+        <button id="buySkullIcon">Purchase</button>
+    </div>
+
+    <div class="shop-item" style="border: 2px solid #ffd700;">
+        <h2>👑 Crown Icon</h2>
+        <p>Only for true champions!</p>
+        <div class="price" style="color: #ffd700;">50,000 Coins</div>
+        <button id="buyCrownGladIcon" style="background: #ffd700; border-color: #daa520; color: #000;">Purchase</button>
+    </div>
+
+    <h2 style="text-align: center; margin: 30px 0 20px 0; font-size: 22px; color: #888;">Slash Effects</h2>
+
+    <div class="shop-item">
+        <h2>🔴 Red Slash</h2>
+        <p>Red Slash</p>
+        <div class="price">12,000 Coins</div>
+        <button id="buyRedSlash">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>🔵 Blue Slash</h2>
+        <p>Icy blue strike effects.</p>
+        <div class="price">12,000 Coins</div>
+        <button id="buyBlueSlash">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>🟢 Green Slash</h2>
+        <p>Green Slash</p>
+        <div class="price">12,000 Coins</div>
+        <button id="buyGreenSlash">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>🟡 Golden Slash</h2>
+        <p>Gold Slash</p>
+        <div class="price">20,000 Coins</div>
+        <button id="buyGoldenSlash">Purchase</button>
+    </div>
+
+    <div class="shop-item">
+        <h2>🟣 Purple Slash</h2>
+        <p>Purple Slash</p>
+        <div class="price">18,000 Coins</div>
+        <button id="buyPurpleSlash">Purchase</button>
+    </div>
+
+    <div class="shop-item" style="border: 2px solid #ff00ff;">
+        <h2>🌈 Rainbow Slash</h2>
+        <p>Slash Color</p>
+        <div class="price" style="color: #ff00ff;">40,000 Coins</div>
+        <button id="buyRainbowSlash" style="background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3); border: none; color: #fff;">Purchase</button>
+    </div>
+</div>
 </div>
 
     <script>
@@ -783,7 +889,79 @@ document.getElementById('buyDragonSword').addEventListener('click', () => {
 });
         document.getElementById('buyLightningBlade').addEventListener('click', () => buyCosmetic('swords', 'lightning', 200000, 'buyLightningBlade'));
 
+function buyGladiatorCosmetic(type, item, cost, buttonId, emoji, color) {
+    if (!userProfile.gladiatorCosmetics) {
+        userProfile.gladiatorCosmetics = {
+            icon: '⚔️',
+            slashColor: '#ffffff',
+            ownedIcons: ['⚔️'],
+            ownedSlashColors: ['#ffffff']
+        };
+    }
+    
+    const owned = type === 'icon' ? 
+        userProfile.gladiatorCosmetics.ownedIcons.includes(emoji) :
+        userProfile.gladiatorCosmetics.ownedSlashColors.includes(color);
+    
+    if (owned) {
+        alert('❌ You already own this!');
+        return;
+    }
+    
+    if (coins >= cost) {
+        if (confirm(`Purchase ${item} for ${cost.toLocaleString()} coins?`)) {
+            coins -= cost;
+            setCoins(coins);
+            
+            if (type === 'icon') {
+                userProfile.gladiatorCosmetics.ownedIcons.push(emoji);
+            } else {
+                userProfile.gladiatorCosmetics.ownedSlashColors.push(color);
+            }
+            
+            saveUserProfile(userProfile);
+            alert(`✅ Successfully purchased ${item}!`);
+            document.getElementById('coinAmount').textContent = coins;
+            
+            const button = document.getElementById(buttonId);
+            button.textContent = 'Already Owned';
+            button.disabled = true;
+            button.parentElement.classList.add('purchased');
+        }
+    } else {
+        alert(`❌ Not enough coins! You need ${cost.toLocaleString()} coins.`);
+    }
+}
 
+document.getElementById('buyShieldIcon').addEventListener('click', () => 
+    buyGladiatorCosmetic('icon', 'Shield Icon', 15000, 'buyShieldIcon', '🛡️'));
+document.getElementById('buyBowIcon').addEventListener('click', () => 
+    buyGladiatorCosmetic('icon', 'Bow Icon', 15000, 'buyBowIcon', '🏹'));
+document.getElementById('buyTridentIcon').addEventListener('click', () => 
+    buyGladiatorCosmetic('icon', 'Trident Icon', 20000, 'buyTridentIcon', '🔱'));
+document.getElementById('buyDaggerIcon').addEventListener('click', () => 
+    buyGladiatorCosmetic('icon', 'Dagger Icon', 18000, 'buyDaggerIcon', '🗡️'));
+document.getElementById('buyLightningIcon').addEventListener('click', () => 
+    buyGladiatorCosmetic('icon', 'Lightning Bolt Icon', 25000, 'buyLightningIcon', '⚡'));
+document.getElementById('buyFireIcon').addEventListener('click', () => 
+    buyGladiatorCosmetic('icon', 'Fire Icon', 30000, 'buyFireIcon', '🔥'));
+document.getElementById('buySkullIcon').addEventListener('click', () => 
+    buyGladiatorCosmetic('icon', 'Skull Icon', 35000, 'buySkullIcon', '💀'));
+document.getElementById('buyCrownGladIcon').addEventListener('click', () => 
+    buyGladiatorCosmetic('icon', 'Crown Icon', 50000, 'buyCrownGladIcon', '👑'));
+
+document.getElementById('buyRedSlash').addEventListener('click', () => 
+    buyGladiatorCosmetic('slash', 'Red Slash', 12000, 'buyRedSlash', null, '#ff0000'));
+document.getElementById('buyBlueSlash').addEventListener('click', () => 
+    buyGladiatorCosmetic('slash', 'Blue Slash', 12000, 'buyBlueSlash', null, '#0080ff'));
+document.getElementById('buyGreenSlash').addEventListener('click', () => 
+    buyGladiatorCosmetic('slash', 'Green Slash', 12000, 'buyGreenSlash', null, '#00ff00'));
+document.getElementById('buyGoldenSlash').addEventListener('click', () => 
+    buyGladiatorCosmetic('slash', 'Golden Slash', 20000, 'buyGoldenSlash', null, '#ffd700'));
+document.getElementById('buyPurpleSlash').addEventListener('click', () => 
+    buyGladiatorCosmetic('slash', 'Purple Slash', 18000, 'buyPurpleSlash', null, '#9400d3'));
+document.getElementById('buyRainbowSlash').addEventListener('click', () => 
+    buyGladiatorCosmetic('slash', 'Rainbow Slash', 40000, 'buyRainbowSlash', null, 'rainbow'));
         // Check owned items on page load
         checkOwnedItems();
     </script>
