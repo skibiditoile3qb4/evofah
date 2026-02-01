@@ -34,6 +34,7 @@ class RelayClient {
   save_result: [],
   load_result: [],
   leaderboard_data: [],
+  coins_leaderboard_data: [],  
   error: []
 };
   }
