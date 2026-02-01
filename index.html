@@ -928,76 +928,110 @@
     from { box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
     to { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
 }
-        .chat-nametag-badge.titan {
-    background: linear-gradient(180deg, #1a0a00 0%, #4a1500 30%, #b33000 60%, #ff6600 100%);
+.chat-nametag-badge.titan {
+    background: linear-gradient(180deg, #0d0500 0%, #3d1200 15%, #8b2500 35%, #d94400 50%, #ff5500 60%, #d94400 75%, #8b2500 90%, #3d1200 100%);
+    background-size: 100% 300%;
     color: #fff;
     font-weight: bold;
     position: relative;
     overflow: visible;
-    text-shadow: 0 0 8px rgba(255, 100, 0, 0.8);
-    animation: titanGlow 2s ease-in-out infinite alternate;
+    text-shadow: 0 0 4px rgba(255, 180, 80, 1), 0 0 10px rgba(255, 80, 0, 0.9), 0 0 20px rgba(180, 30, 0, 0.6);
+    border: 1px solid rgba(255, 100, 0, 0.5);
+    animation: titanMolten 4s ease-in-out infinite,
+               titanDrainBg 5s linear infinite;
+    z-index: 1;
 }
 
-@keyframes titanGlow {
-    from { box-shadow: 0 0 8px rgba(180, 40, 0, 0.6), inset 0 0 6px rgba(255, 100, 0, 0.3); }
-    to { box-shadow: 0 0 20px rgba(255, 80, 0, 0.9), inset 0 0 12px rgba(255, 140, 0, 0.5); }
+/* Outer aura - thick, breathing, orange-red */
+.chat-nametag-badge.titan::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 7px;
+    background: radial-gradient(ellipse at 50% 100%, #ff4500 0%, #cc3300 25%, #8b1a00 50%, transparent 75%);
+    z-index: -1;
+    opacity: 0.6;
+    filter: blur(5px);
+    animation: titanAuraPulse 2.5s ease-in-out infinite,
+               titanAuraDrip 3s ease-in-out infinite alternate;
 }
 
+/* Heat shimmer - wide, slow, wavey not sharp */
 .chat-nametag-badge.titan::after {
     content: '';
     position: absolute;
-    bottom: -8px;
-    left: 0;
-    width: 100%;
-    height: 8px;
+    inset: -2px;
+    border-radius: 5px;
     background: repeating-linear-gradient(
-        90deg,
+        180deg,
         transparent 0px,
-        transparent 4px,
-        rgba(255, 80, 0, 0.6) 4px,
-        rgba(255, 80, 0, 0.6) 8px
+        transparent 3px,
+        rgba(255, 120, 0, 0.08) 3px,
+        rgba(255, 120, 0, 0.08) 4px
+    ),
+    linear-gradient(
+        100deg,
+        transparent 0%,
+        transparent 35%,
+        rgba(255, 200, 100, 0.2) 48%,
+        rgba(255, 255, 180, 0.35) 50%
+        rgba(255, 200, 100, 0.2) 52%,
+        transparent 65%,
+        transparent 100%
     );
-    filter: blur(1px);
-    animation: lavaFlow 1.5s linear infinite;
-    background-size: 200% 100%;
+    background-size: 100% 100%, 250% 100%;
+    animation: titanHeatWarp 1.8s ease-in-out infinite,
+               titanSweepSlow 3.5s linear infinite;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 4px;
 }
 
-@keyframes lavaFlow {
-    0% { background-position: 0% 0%; }
-    100% { background-position: 200% 0%; }
+/* Background drains downward like lava flowing */
+@keyframes titanDrainBg {
+    0% { background-position: 50% 0%; }
+    100% { background-position: 50% 300%; }
 }
 
-.chat-nametag-badge.titan .drip {
-    position: absolute;
-    bottom: -14px;
-    width: 4px;
-    background: linear-gradient(180deg, #ff6600, #ff3300, transparent);
-    border-radius: 0 0 50% 50%;
-    animation: lavadrip 2s ease-in infinite;
+/* Whole badge pulses brighter then dimmer */
+@keyframes titanMolten {
+    0%, 100% {
+        box-shadow:
+            0 0 8px rgba(200, 50, 0, 0.8),
+            0 0 18px rgba(255, 70, 0, 0.4),
+            inset 0 0 6px rgba(255, 100, 0, 0.3);
+    }
+    50% {
+        box-shadow:
+            0 0 16px rgba(255, 60, 0, 1),
+            0 0 32px rgba(255, 80, 0, 0.6),
+            0 0 48px rgba(180, 30, 0, 0.3),
+            inset 0 0 12px rgba(255, 160, 0, 0.5);
+    }
 }
 
-.chat-nametag-badge.titan .drip:nth-child(1) { left: 15%; animation-delay: 0s; height: 10px; }
-.chat-nametag-badge.titan .drip:nth-child(2) { left: 40%; animation-delay: 0.6s; height: 14px; }
-.chat-nametag-badge.titan .drip:nth-child(3) { left: 65%; animation-delay: 1.1s; height: 8px; }
-.chat-nametag-badge.titan .drip:nth-child(4) { left: 85%; animation-delay: 1.7s; height: 12px; }
+/* Aura breathes in and out */
+@keyframes titanAuraPulse {
+    0%, 100% { opacity: 0.4; filter: blur(4px); }
+    50% { opacity: 0.75; filter: blur(7px); }
+}
 
-@keyframes lavadrip {
-    0% { transform: scaleY(0); opacity: 1; }
-    60% { transform: scaleY(1); opacity: 1; }
-    100% { transform: scaleY(1.4); opacity: 0; }
+/* Aura shifts downward like it's dripping/pooling */
+@keyframes titanAuraDrip {
+    0% { transform: translateY(0px) scaleY(1); }
+    100% { transform: translateY(3px) scaleY(1.15); }
 }
-        #requestPasswordBtn {
-    padding: 16px 32px;
-    border: 1px solid #059669;
-    border-radius: 8px;
-    color: #fff;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.2s;
+
+/* Horizontal heat lines warp up and down */
+@keyframes titanHeatWarp {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-2px); }
 }
-#requestPasswordBtn:hover {
-    background: #059669 !important;
-    border-color: #047857 !important;
+
+/* Shimmer sweep - slow, not snappy */
+@keyframes titanSweepSlow {
+    0% { background-position: 0% 0%, -250% 0%; }
+    100% { background-position: 0% 0%, 250% 0%; }
 }
     </style>
     <script src="PlayerSphere.js"></script>
@@ -3830,9 +3864,6 @@ function displayChatMessage(message, shouldScroll = true) {
     // Create nametag badge HTML
     let nametagHtml = '';
     if (message.nametag && message.nametag !== 'none') {
-        const drips = message.nametag === 'titan'
-            ? '<span class="drip"></span><span class="drip"></span><span class="drip"></span><span class="drip"></span>'
-            : '';
         nametagHtml = `<span class="chat-nametag-badge ${message.nametag}">${drips}${message.nametag.toUpperCase()}</span>`;
     }
     
