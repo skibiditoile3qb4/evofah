@@ -720,7 +720,7 @@ function displayLeaderboard(allPlayers) {
             const action = data.action;
             
             if (action === 'join_queue') {
-            if (inQueue && !currentMatch && data.playerId !== relay.clientId && data.actionData.username !== myPlayerId) {
+                if (inQueue && !currentMatch && data.playerId !== relay.clientId) {
                     const opponentData = data.actionData;
                     startMatch(data.playerId, opponentData);
                 }
@@ -1711,7 +1711,7 @@ if (bot.postCritCount > 0 && bot.charge >= 25 && distance <= ATTACK_RANGE && bot
             
             // Calculate ELO change (only for PvP matches)
             const isBot = currentMatch.isBot;
-             const eloChange = (isBot || disconnected) ? 0 : calculateEloChange(myElo, currentMatch.opponentElo, won);
+            const eloChange = isBot ? 0 : calculateEloChange(myElo, currentMatch.opponentElo, won);
             const newElo = isBot ? myElo : myElo + eloChange;
             
             // Send match end to relay if not bot match
