@@ -129,14 +129,15 @@ class RelayClient {
     }
   }
   
-  joinRoom(room, username, status) {
+  joinRoom(room, username, status, permanentId) {
     this.room = room;
     this.username = username;
     this.send({
       type: 'join',
       room,
       username,
-      status: status || 'player'
+      status: status || 'player',
+      permanentId: permanentId || null
     });
   }
   
