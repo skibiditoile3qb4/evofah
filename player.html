@@ -219,6 +219,7 @@
                 <button class="tab" data-tab="cosmetics">🎨 Cosmetics</button>
                 <button class="tab" data-tab="potions">🧪 Potions</button>
                 <button class="tab" data-tab="nametags">🎖️ Nametags</button>
+                <button class="tab" data-tab="gladiator">⚔️ Gladiator</button>
             </div>
 
             <!-- Stats Tab -->
@@ -286,6 +287,13 @@
             <div class="tab-content" id="nametags">
     <h3 style="margin-bottom: 20px; color: #d69e2e;">🎖️ Nametags</h3>
     <div class="cosmetics-grid" id="nametagsGrid"></div>
+</div>
+            <div class="tab-content" id="gladiator">
+    <h3 style="margin-bottom: 20px; color: #d69e2e;">⚔️ Battle Icons</h3>
+    <div class="cosmetics-grid" id="gladiatorIconsGrid"></div>
+
+    <h3 style="margin: 30px 0 20px; color: #d69e2e;">✨ Slash Effects</h3>
+    <div class="cosmetics-grid" id="gladiatorSlashGrid"></div>
 </div>
         </div>
     </div>
@@ -722,6 +730,87 @@ cosmetics.swords.forEach(item => {
         grid.appendChild(div);
     });
 }
+        function renderGladiatorCosmetics() {
+    if (!userProfile.gladiatorCosmetics) {
+        userProfile.gladiatorCosmetics = {
+            icon: '⚔️',
+            slashColor: '#ffffff',
+            ownedIcons: ['⚔️'],
+            ownedSlashColors: ['#ffffff']
+        };
+        saveUserProfile(userProfile);
+    }
+    
+    const icons = [
+        { id: '⚔️', name: 'Sword' },
+        { id: '🛡️', name: 'Shield' },
+        { id: '🏹', name: 'Bow' },
+        { id: '🔱', name: 'Trident' },
+        { id: '🗡️', name: 'Dagger' },
+        { id: '⚡', name: 'Lightning' },
+        { id: '🔥', name: 'Fire' },
+        { id: '💀', name: 'Skull' },
+        { id: '👑', name: 'Crown' }
+    ];
+    
+    const slashColors = [
+        { id: '#ffffff', name: 'White', preview: '#ffffff' },
+        { id: '#ff0000', name: 'Red', preview: '#ff0000' },
+        { id: '#0080ff', name: 'Blue', preview: '#0080ff' },
+        { id: '#00ff00', name: 'Green', preview: '#00ff00' },
+        { id: '#ffd700', name: 'Golden', preview: '#ffd700' },
+        { id: '#9400d3', name: 'Purple', preview: '#9400d3' },
+        { id: 'rainbow', name: 'Rainbow', preview: 'linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)' }
+    ];
+    
+    // Render icons
+    const iconsGrid = document.getElementById('gladiatorIconsGrid');
+    iconsGrid.innerHTML = '';
+    icons.forEach(icon => {
+        const owned = userProfile.gladiatorCosmetics.ownedIcons.includes(icon.id);
+        const equipped = userProfile.gladiatorCosmetics.icon === icon.id;
+        
+        const div = document.createElement('div');
+        div.className = 'cosmetic-item' + (equipped ? ' equipped' : '') + (!owned ? ' locked' : '');
+        div.innerHTML = `
+            <div class="cosmetic-preview" style="font-size: 48px;">${icon.id}</div>
+            <div class="cosmetic-name">${icon.name}</div>
+            <div class="cosmetic-status">${equipped ? 'EQUIPPED' : owned ? 'Click to equip' : 'LOCKED'}</div>
+        `;
+        if (owned) {
+            div.onclick = () => {
+                userProfile.gladiatorCosmetics.icon = icon.id;
+                saveUserProfile(userProfile);
+                renderGladiatorCosmetics();
+            };
+        }
+        iconsGrid.appendChild(div);
+    });
+    
+    // Render slash colors
+    const slashGrid = document.getElementById('gladiatorSlashGrid');
+    slashGrid.innerHTML = '';
+    slashColors.forEach(color => {
+        const owned = userProfile.gladiatorCosmetics.ownedSlashColors.includes(color.id);
+        const equipped = userProfile.gladiatorCosmetics.slashColor === color.id;
+        
+        const div = document.createElement('div');
+        div.className = 'cosmetic-item' + (equipped ? ' equipped' : '') + (!owned ? ' locked' : '');
+        div.innerHTML = `
+            <div class="cosmetic-preview" style="background: ${color.preview}; border-radius: 8px; border: 2px solid #333;"></div>
+            <div class="cosmetic-name">${color.name}</div>
+            <div class="cosmetic-status">${equipped ? 'EQUIPPED' : owned ? 'Click to equip' : 'LOCKED'}</div>
+        `;
+        if (owned) {
+            div.onclick = () => {
+                userProfile.gladiatorCosmetics.slashColor = color.id;
+                saveUserProfile(userProfile);
+                renderGladiatorCosmetics();
+            };
+        }
+        slashGrid.appendChild(div);
+    });
+}
 
 function updateActivePotionDisplay() {
     const container = document.getElementById('activePotionEffects');
@@ -826,6 +915,7 @@ function equipCosmetic(type, id) {
         loadProfileData();
         renderCosmetics();
         renderNametags();
+        renderGladiatorCosmetics();
     </script>
 </body>
 </html>
