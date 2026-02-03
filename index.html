@@ -3682,12 +3682,13 @@ async function initChat() {
     try {
         relay = new RelayClient(RELAY_SERVER);
         
-         relay.on('connected', (data) => {
+        relay.on('connected', (data) => {
             relay.send({
                 type: 'update_coins',
                 userId: userProfile.permanentId,
                 username: userProfile.username,
-                coins: coins
+                coins: coins,
+                gems: userProfile.gems || 0
             });
         });
         
