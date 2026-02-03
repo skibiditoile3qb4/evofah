@@ -1033,6 +1033,81 @@
     0% { background-position: 0% 0%, -250% 0%; }
     100% { background-position: 0% 0%, 250% 0%; }
 }
+/* SWEAT NAMETAG - Top 3 Leaderboard */
+.chat-nametag-badge.sweat {
+    background: linear-gradient(135deg, 
+        #1e90ff 0%, 
+        #00d4ff 15%, 
+        #40e0d0 30%, 
+        #48d1cc 45%, 
+        #00ced1 60%, 
+        #4682b4 75%, 
+        #5f9ea0 90%,
+        #1e90ff 100%
+    );
+    background-size: 400% 400%;
+    color: #fff;
+    animation: liquidFlow 5s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 0 8px rgba(64, 224, 208, 0.5),
+        0 0 12px rgba(30, 144, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 5px rgba(64, 224, 208, 0.6);
+}
+
+/* Primary shimmer sweep */
+.chat-nametag-badge.sweat::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.1) 40%,
+        rgba(255, 255, 255, 0.5) 50%,
+        rgba(255, 255, 255, 0.1) 60%,
+        transparent 80%
+    );
+    animation: shimmerSweep 3s linear infinite;
+}
+
+/* Secondary glow effect */
+.chat-nametag-badge.sweat::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(255, 255, 255, 0.2) 0%,
+        transparent 70%
+    );
+    opacity: 0;
+    animation: radialPulse 4s ease-in-out infinite;
+}
+
+@keyframes liquidFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmerSweep {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+@keyframes radialPulse {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.5; }
+}
     </style>
     <script src="PlayerSphere.js"></script>
     <script src="relay-client.js"></script>
@@ -1558,7 +1633,82 @@ function applyStaffBenefits() {
     
     updateCoinDisplay();
 }
-
+async function checkSweatNametag() {
+    if (!relay || !relay.connected) {
+        console.log('⚠️ Cannot check SWEAT nametag - relay not connected');
+        return;
+    }
+    
+    try {
+        console.log('🔍 Checking SWEAT nametag eligibility...');
+        
+        // Request leaderboard data from server
+        relay.send({ type: 'get_coins_leaderboard' });
+        
+        // Set up one-time listener for the response
+        const handleLeaderboardResponse = (data) => {
+            if (data.type === 'coins_leaderboard_data') {
+                // Remove listener after receiving data
+                relay.off('coins_leaderboard_data', handleLeaderboardResponse);
+                
+                const leaderboard = data.leaderboard || [];
+                console.log('📊 Received leaderboard:', leaderboard);
+                
+                // Get top 3 usernames
+                const top3Usernames = leaderboard.slice(0, 3).map(p => p.username);
+                console.log('🏆 Top 3:', top3Usernames);
+                
+                // Check if current user is in top 3
+                if (top3Usernames.includes(userProfile.username)) {
+                    console.log('✅ User is in top 3!');
+                    
+                    // Award nametag if not already unlocked
+                    if (!userProfile.nametag.unlocked.includes('sweat')) {
+                        userProfile.nametag.unlocked.push('sweat');
+                        saveUserProfile(userProfile);
+                        
+                        // Calculate rank
+                        const rank = top3Usernames.indexOf(userProfile.username) + 1;
+                        const medals = ['🥇', '🥈', '🥉'];
+                        
+                        alert(`${medals[rank - 1]} Nametag Unlocked: SWEAT\n\nYou're #${rank} on the all-time coins leaderboard!`);
+                        console.log('💧 SWEAT nametag awarded!');
+                    } else {
+                        console.log('💧 User already has SWEAT nametag');
+                    }
+                } else {
+                    console.log('❌ User not in top 3');
+                    
+                    // Remove nametag if they lost top 3 position
+                    if (userProfile.nametag.unlocked.includes('sweat')) {
+                        const index = userProfile.nametag.unlocked.indexOf('sweat');
+                        userProfile.nametag.unlocked.splice(index, 1);
+                        
+                        // Unequip if currently equipped
+                        if (userProfile.nametag.equipped === 'sweat') {
+                            userProfile.nametag.equipped = 'none';
+                        }
+                        
+                        saveUserProfile(userProfile);
+                        console.log('📉 SWEAT nametag removed - no longer in top 3');
+                    }
+                }
+            }
+        };
+        
+        // Listen for leaderboard data
+        relay.on('coins_leaderboard_data', handleLeaderboardResponse);
+        
+        // Timeout after 5 seconds if no response
+        setTimeout(() => {
+            relay.off('coins_leaderboard_data', handleLeaderboardResponse);
+            console.log('⏱️ Leaderboard check timed out');
+        }, 5000);
+        
+    } catch(e) {
+        console.error('❌ Failed to check SWEAT nametag:', e);
+    }
+}
        function checkNametags() {
     const now = new Date();
     const dayOfWeek = now.getDay(); 
@@ -1657,7 +1807,7 @@ if (isWeekend && !userProfile.nametag.unlocked.includes('freebird')) {
         saveUserProfile(userProfile);
         alert('🔥 Nametag Unlocked: TITAN');
     }
-           
+  checkSweatNametag();         
 }
         
 
@@ -3740,6 +3890,7 @@ relay.on('players_update', (data) => {
             }, 100);
         });
         
+        
         console.log('🔌 Connecting to relay server...');
         await relay.connect();
         
@@ -3791,7 +3942,68 @@ function switchChatRoom(room) {
         relay.joinRoom(room, userProfile.username, userProfile.status, userProfile.permanentId)
     }
 }
+        relay.on('top3_achievement', (data) => {
+    console.log('🏆 Top 3 achievement received!', data);
+    
+    if (!userProfile.nametag.unlocked.includes('sweat')) {
+        userProfile.nametag.unlocked.push('sweat');
+        saveUserProfile(userProfile);
         
+        const medals = ['🥇', '🥈', '🥉'];
+        const rank = data.rank || 1;
+        
+        // Show celebration notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 3px solid #40e0d0;
+            border-radius: 16px;
+            padding: 40px 60px;
+            z-index: 100000;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(64, 224, 208, 0.5);
+            animation: fadeIn 0.3s ease-in;
+        `;
+        
+        notification.innerHTML = `
+            <div style="font-size: 64px; margin-bottom: 20px;">${medals[rank - 1]}</div>
+            <div style="font-size: 32px; font-weight: bold; color: #40e0d0; margin-bottom: 15px;">
+                NAMETAG UNLOCKED!
+            </div>
+            <div style="font-size: 24px; color: #fff; margin-bottom: 10px;">
+                💧 SWEAT
+            </div>
+            <div style="font-size: 16px; color: #ccc; line-height: 1.6;">
+                You're #${rank} on the all-time coins leaderboard!<br>
+                You've earned the SWEAT nametag!
+            </div>
+            <button onclick="this.parentElement.remove()" style="
+                margin-top: 25px;
+                padding: 12px 32px;
+                background: #40e0d0;
+                border: none;
+                border-radius: 8px;
+                color: #000;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 16px;
+            ">Awesome!</button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 10000);
+    }
+});
       
         relay.on('chat_message', (data) => {
             displayChatMessage(data.message, true);
