@@ -1640,7 +1640,7 @@ async function checkSweatNametag() {
     }
     
     try {
-        console.log('🔍 Checking SWEAT nametag eligibility...');
+
         
         // Request leaderboard data from server
         relay.send({ type: 'get_coins_leaderboard' });
@@ -1652,16 +1652,12 @@ async function checkSweatNametag() {
                 relay.off('coins_leaderboard_data', handleLeaderboardResponse);
                 
                 const leaderboard = data.leaderboard || [];
-                console.log('📊 Received leaderboard:', leaderboard);
                 
                 // Get top 3 usernames
                 const top3Usernames = leaderboard.slice(0, 3).map(p => p.username);
-                console.log('🏆 Top 3:', top3Usernames);
                 
                 // Check if current user is in top 3
-                if (top3Usernames.includes(userProfile.username)) {
-                    console.log('✅ User is in top 3!');
-                    
+                if (top3Usernames.includes(userProfile.username)) {                   
                     // Award nametag if not already unlocked
                     if (!userProfile.nametag.unlocked.includes('sweat')) {
                         userProfile.nametag.unlocked.push('sweat');
@@ -1672,12 +1668,9 @@ async function checkSweatNametag() {
                         const medals = ['🥇', '🥈', '🥉'];
                         
                         alert(`${medals[rank - 1]} Nametag Unlocked: SWEAT\n\nYou're #${rank} on the all-time coins leaderboard!`);
-                        console.log('💧 SWEAT nametag awarded!');
-                    } else {
-                        console.log('💧 User already has SWEAT nametag');
+                    } else {;
                     }
                 } else {
-                    console.log('❌ User not in top 3');
                     
                     // Remove nametag if they lost top 3 position
                     if (userProfile.nametag.unlocked.includes('sweat')) {
