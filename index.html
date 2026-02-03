@@ -1619,32 +1619,29 @@ async function checkSweatNametag() {
     }
     
     try {
-
-        
         // Request leaderboard data from server
-        relay.send({ type: 'get_coins_leaderboard' });
+        relay.send({ 
+            type: 'get_coins_leaderboard',
+            requestingUserId: userProfile.permanentId  // ← ADDED
+        });
         
-        // Set up one-time listener for the response
-        const handleLeaderboardResponse = (data) => {
+       const handleLeaderboardResponse = (data) => {
             if (data.type === 'coins_leaderboard_data') {
                 // Remove listener after receiving data
                 relay.off('coins_leaderboard_data', handleLeaderboardResponse);
                 
                 const leaderboard = data.leaderboard || [];
                 
-                // Get top 3 usernames
-                const top3Usernames = leaderboard.slice(0, 3).map(p => p.username);
+                const top3UserIds = leaderboard.slice(0, 3).map(p => p.userId);
                 
-                // Check if current user is in top 3
-                if (top3Usernames.includes(userProfile.username)) {                   
+                if (top3UserIds.includes(userProfile.permanentId)) {  
                     // Award nametag if not already unlocked
-                    if (!userProfile.nametag.unlocked.includes('sweat')) {
+                if (!userProfile.nametag.unlocked.includes('sweat')) {
                         userProfile.nametag.unlocked.push('sweat');
                         saveUserProfile(userProfile);
                         
-                        // Calculate rank
-                        const rank = top3Usernames.indexOf(userProfile.username) + 1;
-                        const medals = ['🥇', '🥈', '🥉'];
+                        // Calculate rank BY PERMANENT ID
+                        const rank = top3UserIds.indexOf(userProfile.permanentId) + 1;
                         
                         alert(`${medals[rank - 1]} Nametag Unlocked: SWEAT\n\nYou're #${rank} on the all-time coins leaderboard!`);
                     } else {;
