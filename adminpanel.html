@@ -202,7 +202,20 @@
         <div id="moderatorSection" style="display: none;">
             <div class="section">
     <h2>🔰 Moderator Controls</h2>
-    
+                
+     <h3>👀 Lookup User</h3>
+    <input type="text" id="lookupUsername" placeholder="Username">
+    <button class="success" id="lookupBtn">Lookup User</button>
+    <div id="lookupResult" style="margin-top: 15px; padding: 15px; background: #0a0a0a; border-radius: 6px; display: none;">
+        <div style="font-size: 14px; color: #ccc; line-height: 1.8;">
+            <strong style="color: #d69e2e;">Username:</strong> <span id="lookupName">-</span><br>
+            <strong style="color: #d69e2e;">Permanent ID:</strong> <span id="lookupId">-</span><br>
+            <strong style="color: #d69e2e;">Coins:</strong> <span id="lookupCoins">-</span><br>
+            <strong style="color: #d69e2e;">Gems:</strong> <span id="lookupGems">-</span><br>
+            <strong style="color: #d69e2e;">Status:</strong> <span id="lookupStatus">-</span>
+        </div>
+    </div>
+                
     <h3>Mute User (24h max)</h3>
     <input type="text" id="muteUsername" placeholder="Username">
     <input type="number" id="muteHours" placeholder="Hours (max 24)" max="24">
