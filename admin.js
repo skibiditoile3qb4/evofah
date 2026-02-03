@@ -105,11 +105,11 @@ class AdminPanel {
                 }
             });
             
-            relay.on('user_lookup_result', (data) => {
+            this.relay.on('user_lookup_result', (data) => {  // ← FIXED: added "this."
                 console.log('📊 User lookup result:', data);
                 this.displayLookupResult(data);
             });
-
+            
             // Listen for connection events
             this.relay.on('connected', () => {
                 console.log('✅ Relay connected event');
