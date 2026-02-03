@@ -36,6 +36,7 @@ class RelayClient {
   leaderboard_data: [],
   coins_leaderboard_data: [],  
   top3_achievement: [],
+  user_lookup_result: [],
   error: []
 };
   }
