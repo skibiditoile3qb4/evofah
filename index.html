@@ -1035,103 +1035,57 @@
 }
 /* SWEAT NAMETAG - Top 3 Leaderboard */
 .chat-nametag-badge.sweat {
-    position: relative;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: 700;
-    color: #ffffff;
-
-    /* Core liquid body */
-    background: linear-gradient(
-        135deg,
-        #1e90ff,
-        #00e5ff,
-        #40e0d0,
-        #7fffd4,
-        #1e90ff
+    background: linear-gradient(135deg, 
+        #1e90ff 0%, 
+        #00d4ff 15%, 
+        #40e0d0 30%, 
+        #48d1cc 45%, 
+        #00ced1 60%, 
+        #4682b4 75%, 
+        #5f9ea0 90%,
+        #1e90ff 100%
     );
     background-size: 400% 400%;
-    animation:
-        liquidFlow 6s ease-in-out infinite,
-        energyPulse 3s ease-in-out infinite;
-
-    text-shadow: 0 0 6px rgba(64, 224, 208, 0.7);
-
-    box-shadow:
-        0 0 10px rgba(64, 224, 208, 0.6),
-        0 0 22px rgba(30, 144, 255, 0.4);
-
+    color: #fff;
+    animation: liquidFlow 5s ease-in-out infinite;
+    position: relative;
     overflow: hidden;
+    box-shadow: 
+        0 0 8px rgba(64, 224, 208, 0.5),
+        0 0 12px rgba(30, 144, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 5px rgba(64, 224, 208, 0.6);
 }
 
-/* Mythic animated border */
-.chat-nametag-badge.sweat::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    background: linear-gradient(
-        120deg,
-        #00ffff,
-        #1e90ff,
-        #40e0d0,
-        #7fffd4,
-        #1e90ff
-    );
-    background-size: 300% 300%;
-    animation: borderShift 4s linear infinite;
-    filter: blur(5px);
-    opacity: 0.85;
-    z-index: -1;
-}
 
-/* Premium shimmer sweep */
+
+/* Secondary glow effect */
 .chat-nametag-badge.sweat::after {
     content: '';
     position: absolute;
-    top: -60%;
-    left: -80%;
-    width: 50%;
-    height: 220%;
-    background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255,255,255,0.35),
-        transparent
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(255, 255, 255, 0.2) 0%,
+        transparent 70%
     );
-    transform: rotate(25deg);
-    animation: shimmer 5s ease-in-out infinite;
-    pointer-events: none;
+    opacity: 0;
+    animation: radialPulse 4s ease-in-out infinite;
 }
 
-/* Animations */
 @keyframes liquidFlow {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
-@keyframes energyPulse {
-    0%, 100% {
-        box-shadow:
-            0 0 8px rgba(64, 224, 208, 0.4),
-            0 0 18px rgba(30, 144, 255, 0.3);
-    }
-    50% {
-        box-shadow:
-            0 0 16px rgba(64, 224, 208, 0.9),
-            0 0 36px rgba(30, 144, 255, 0.7);
-    }
-}
 
-@keyframes borderShift {
-    0%   { background-position: 0% 50%; }
-    100% { background-position: 300% 50%; }
-}
-
-@keyframes shimmer {
-    0%   { left: -80%; }
-    50%  { left: 120%; }
-    100% { left: 120%; }
+@keyframes radialPulse {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.5; }
 }
     </style>
     <script src="PlayerSphere.js"></script>
