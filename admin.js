@@ -104,6 +104,11 @@ class AdminPanel {
                     alert(`❌ ${data.message}`);
                 }
             });
+            
+            relay.on('user_lookup_result', (data) => {
+                console.log('📊 User lookup result:', data);
+                this.displayLookupResult(data);
+            });
 
             // Listen for connection events
             this.relay.on('connected', () => {
@@ -142,6 +147,11 @@ class AdminPanel {
     setupEventListeners() {
         console.log('🎯 Setting up event listeners...');
         
+         const lookupBtn = document.getElementById('lookupBtn');
+        if (lookupBtn) {
+            lookupBtn.addEventListener('click', () => this.handleLookup());
+            console.log('✅ Lookup button listener added');
+        }
         // OWNER: Promote/Demote
         const promoteBtn = document.getElementById('promoteBtn');
         if (promoteBtn) {
@@ -435,7 +445,49 @@ handleUnban() {
 
     document.getElementById('unbanUsername').value = '';
 }
-  
+  handleLookup() {
+        console.log('👀 Lookup button clicked');
+        const username = document.getElementById('lookupUsername').value.trim();
+
+        if (!username) {
+            alert('Enter a username');
+            return;
+        }
+
+        if (!this.relay || !this.relay.connected) {
+            alert('Not connected to server!');
+            console.error('❌ Relay not connected');
+            return;
+        }
+
+        console.log('📤 Sending lookup request:', { username });
+
+        this.relay.send({
+            type: 'admin_action',
+            action: 'lookup',
+            targetUsername: username,
+            adminUsername: this.userProfile.username,
+            adminRank: this.userProfile.status
+        });
+    }
+
+    displayLookupResult(data) {
+        const resultDiv = document.getElementById('lookupResult');
+        
+        if (!data.success) {
+            alert(`❌ ${data.message}`);
+            resultDiv.style.display = 'none';
+            return;
+        }
+
+        document.getElementById('lookupName').textContent = data.username;
+        document.getElementById('lookupId').textContent = data.permanentId || 'N/A';
+        document.getElementById('lookupCoins').textContent = data.coins.toLocaleString();
+        document.getElementById('lookupGems').textContent = data.gems.toLocaleString();
+        document.getElementById('lookupStatus').textContent = data.status;
+        
+        resultDiv.style.display = 'block';
+    }
 }
 
 // Initialize admin panel when page loads
