@@ -803,10 +803,10 @@ window.addEventListener('message', (event) => {
 
             const betAmount = parseInt(document.getElementById('betAmount').value);
             
-            if (betAmount <= 0) {
-                showMessage('Please enter a valid bet amount!', 2000, 'lose');
-                return;
-            }
+            if (betAmount <= 0 || !Number.isInteger(betAmount)) {
+    showMessage('Please enter a valid bet amount!', 2000, 'lose');
+    return;
+}
 
             const totalBets = state.bets.reduce((sum, bet) => sum + bet.amount, 0);
             if (totalBets + betAmount > state.balance) {
