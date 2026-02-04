@@ -172,6 +172,12 @@ class AdminPanel {
             srBanBtn.addEventListener('click', () => this.handleSrBan());
             console.log('✅ Sr ban button listener added');
         }
+        
+        const resetBtn = document.getElementById('resetBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.handleReset());
+            console.log('✅ Reset button listener added');
+        }
 
         // ADMIN: Ban
         const adminBanBtn = document.getElementById('adminBanBtn');
@@ -274,7 +280,37 @@ if (unbanBtn) {
         document.getElementById('permBanUsername').value = '';
         document.getElementById('permBanDays').value = '';
     }
+ handleReset() {
+        console.log('🔄 Reset button clicked');
+        const username = document.getElementById('resetUsername').value.trim();
 
+        if (!username) {
+            alert('Enter a username');
+            return;
+        }
+
+        if (!this.relay || !this.relay.connected) {
+            alert('Not connected to server!');
+            console.error('❌ Relay not connected');
+            return;
+        }
+
+        if (!confirm(`⚠️ RESET ${username}?\n\nThis will:\n- Set coins to 10\n- Set gems to 0\n\nThis cannot be undone!`)) {
+            return;
+        }
+
+        console.log('📤 Sending reset:', { username });
+
+        this.relay.send({
+            type: 'admin_action',
+            action: 'reset',
+            targetUsername: username,
+            adminUsername: this.userProfile.username,
+            adminRank: this.userProfile.status
+        });
+
+        document.getElementById('resetUsername').value = '';
+    }
     handleSrBan() {
         console.log('⚡ Sr ban button clicked');
         const username = document.getElementById('srBanUsername').value.trim();
