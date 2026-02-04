@@ -4372,7 +4372,7 @@ if (localStorage.getItem('good') === '1') {
   // Auto-save every 1 second
   setInterval(() => {
     if (relay && relay.connected) {
-      saveGameSilent();
+      saveGame();
     }
   }, 1000);
 }
