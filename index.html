@@ -1905,7 +1905,7 @@ function updateSphereAnimation() {
     }
 }
        function unbanAllUsersOnce() {
-    const unbanFlag = localStorage.getItem('_massUnban2025');
+    const unbanFlag = localStorage.getItem('_massUnban2026');
     
     if (!unbanFlag) {
         const keys = Object.keys(localStorage);
@@ -1920,7 +1920,7 @@ function updateSphereAnimation() {
             }
         });
         
-        localStorage.setItem('_massUnban2025', '1');
+        localStorage.setItem('_massUnban2026', '1');
         
         // Only show notification if THIS user was actually unbanned
         if (unbannedCount > 0) {
@@ -2009,8 +2009,8 @@ function updateSphereAnimation() {
 }
 
 function checkAndResetAbsurdMoney() {
-    const resetFlag = localStorage.getItem('_moneyResetDone3');
-    const coinThreshold = 10116508849506; 
+    const resetFlag = localStorage.getItem('_moneyResetDone4');
+    const coinThreshold = 3589735983598693399; 
     const gemThreshold = 100000;
     
     let needsReset = false;
@@ -2069,7 +2069,7 @@ function checkAndResetAbsurdMoney() {
                 }, 300);
             }, 5000);
         }
-        localStorage.setItem('_moneyResetDone3', '1');
+        localStorage.setItem('_moneyResetDone4', '1');
     }
 }
 function checkAndHandleBan() {
