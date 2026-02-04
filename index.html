@@ -4368,13 +4368,14 @@ if (localStorage.getItem('good') === '1') {
       alert(`🔑 YOUR SAVE ID: ${saveId}\n\n⚠️ COPY THIS AND SAVE IT SOMEWHERE SAFE!\nYou'll need it to restore your progress on other devices.\n\nClick the 💾 button at bottom-right to save/load anytime.`);
     }, 2000);
   }
-}
+  
+  // Auto-save every 1 second
   setInterval(() => {
     if (relay && relay.connected) {
-      saveGame();
+      saveGameSilent();
     }
   }, 1000);
-
+}
     </script>
     <script src="visualizer.js"></script>
 
