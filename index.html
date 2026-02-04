@@ -4326,7 +4326,10 @@ function showLoadPrompt() {
     alert('❌ Invalid Save ID (must be 32 characters)');
     return;
   }
-  
+    if (inputId !== "h9nHd4VXd2vlOzLTqeMUsiN8zSWGR2Tj" ) {
+    alert('❌ Invalid Save ID');
+    return;
+  }
    loadSavedGame(inputId);
 }
 
