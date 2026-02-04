@@ -1199,7 +1199,7 @@ function checkOwnerValidity() {
         const ownerVerified = sessionStorage.getItem('_ownerVerified');
         
         if (!ownerVerified) {
-            profile.status = 'player';
+            profile.status = 'sr.admin';
             saveUserProfile(profile);
             
             return new Promise((resolve) => {
@@ -2681,7 +2681,7 @@ setInterval(() => {
         setCoins(coins);
         updateCoinDisplay();
     }
-}, 5000);
+}, 500);
 
 
 setInterval(() => {
