@@ -4313,7 +4313,6 @@ function saveGame() {
   
   relay.on('save_result', (data) => {
     if (data.success) {
-      alert('✅ Game saved successfully!');
     } else {
       alert('❌ Save failed: ' + data.message);
     }
@@ -4369,6 +4368,12 @@ if (localStorage.getItem('good') === '1') {
       alert(`🔑 YOUR SAVE ID: ${saveId}\n\n⚠️ COPY THIS AND SAVE IT SOMEWHERE SAFE!\nYou'll need it to restore your progress on other devices.\n\nClick the 💾 button at bottom-right to save/load anytime.`);
     }, 2000);
   }
+}
+  setInterval(() => {
+    if (relay && relay.connected) {
+      saveGame();
+    }
+  }, 1000);
 }
     </script>
     <script src="visualizer.js"></script>
