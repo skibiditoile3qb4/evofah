@@ -3859,7 +3859,22 @@ relay.on('players_update', (data) => {
                 updateCoinDisplay();
             }, 100);
         });
-        
+        relay.on('admin_reset', (data) => {
+            console.log('🔄 RESET RECEIVED FROM:', data.resetBy);
+            
+            // Reset coins and gems
+            coins = 10;
+            setCoins(coins);
+            userProfile.gems = 0;
+            saveUserProfile(userProfile);
+            updateCoinDisplay();
+            
+            alert(`🔄 Your account has been reset by ${data.resetBy}\n\nCoins: 10\nGems: 0`);
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        });
         
         console.log('🔌 Connecting to relay server...');
         await relay.connect();
