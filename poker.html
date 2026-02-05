@@ -352,7 +352,7 @@
                 </div>
                 <div class="setup-option">
                     <label>Small Blind:</label>
-                    <input type="number" id="smallBlind" value="10" min="5" step="5">
+                    <input type="number" id="smallBlind" value="10" min="5" step="1">
                 </div>
             </div>
             <button class="start-btn" onclick="startGame()">START GAME</button>
@@ -375,7 +375,7 @@
                 <button class="btn btn-fold" onclick="playerAction('fold')">Fold</button>
                 <button class="btn btn-check" id="checkBtn" onclick="playerAction('check')">Check</button>
                 <button class="btn btn-call" id="callBtn" onclick="playerAction('call')">Call $<span id="callAmount">0</span></button>
-                <input type="number" class="raise-input" id="raiseAmount" min="0" step="10" value="20" placeholder="Raise">
+                <input type="number" class="raise-input" id="raiseAmount" min="0" step="1" value="20" placeholder="Raise">
                 <button class="btn btn-raise" onclick="playerAction('raise')">Raise</button>
             </div>
 
@@ -689,10 +689,10 @@
                 console.log('Called, new balance:', state.humanBalance);
                 updateParentCoins();
                 showMessage(`You call $${amount}`, 1000);
-            } else if (action === 'raise') {
-                const raiseAmount = parseInt(document.getElementById('raiseAmount').value);
-                const totalNeeded = state.currentBet - player.bet + raiseAmount;
-                const amount = Math.min(totalNeeded, player.chips);
+           else if (action === 'raise') {
+    const raiseAmount = Math.floor(parseInt(document.getElementById('raiseAmount').value)); // Add Math.floor
+    const totalNeeded = state.currentBet - player.bet + raiseAmount;
+    const amount = Math.min(totalNeeded, player.chips);
                 
                 player.chips -= amount;
                 player.bet += amount;
@@ -764,19 +764,19 @@
         }
 
         function showControls() {
-            const player = state.players[state.currentPlayerIndex];
-            const callAmount = state.currentBet - player.bet;
+    const player = state.players[state.currentPlayerIndex];
+    const callAmount = state.currentBet - player.bet;
 
-            document.getElementById('controls').style.display = 'flex';
-            document.getElementById('checkBtn').disabled = callAmount > 0;
-            document.getElementById('callBtn').disabled = callAmount === 0 || player.chips === 0;
-            document.getElementById('callAmount').textContent = callAmount;
+    document.getElementById('controls').style.display = 'flex';
+    document.getElementById('checkBtn').disabled = callAmount > 0;
+    document.getElementById('callBtn').disabled = callAmount === 0 || player.chips === 0;
+    document.getElementById('callAmount').textContent = Math.floor(callAmount); // Add Math.floor
 
-            const minRaise = Math.max(state.bigBlind, state.bigBlind);
-            document.getElementById('raiseAmount').value = minRaise;
-            document.getElementById('raiseAmount').min = minRaise;
-            document.getElementById('raiseAmount').max = player.chips;
-        }
+    const minRaise = Math.max(state.bigBlind, state.bigBlind);
+    document.getElementById('raiseAmount').value = Math.floor(minRaise); // Add Math.floor
+    document.getElementById('raiseAmount').min = Math.floor(minRaise); // Add Math.floor
+    document.getElementById('raiseAmount').max = Math.floor(player.chips); // Add Math.floor
+}
 
         function bettingRoundComplete() {
             const activePlayers = state.players.filter(p => !p.folded && !p.allIn);
