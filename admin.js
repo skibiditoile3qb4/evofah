@@ -481,32 +481,39 @@ handleUnban() {
 
     document.getElementById('unbanUsername').value = '';
 }
-  handleLookup() {
-        console.log('👀 Lookup button clicked');
-        const username = document.getElementById('lookupUsername').value.trim();
+ handleLookup() {
+    console.log('👀 Lookup button clicked');
+    const username = document.getElementById('lookupUsername').value.trim();
 
-        if (!username) {
-            alert('Enter a username');
-            return;
-        }
-
-        if (!this.relay || !this.relay.connected) {
-            alert('Not connected to server!');
-            console.error('❌ Relay not connected');
-            return;
-        }
-
-        console.log('📤 Sending lookup request:', { username });
-
-        this.relay.send({
-            type: 'admin_action',
-            action: 'lookup',
-            targetUsername: username,
-            adminUsername: this.userProfile.username,
-            adminRank: this.userProfile.status
-        });
+    if (!username) {
+        alert('Enter a username');
+        return;
     }
 
+    if (!this.relay || !this.relay.connected) {
+        alert('Not connected to server!');
+        console.error('❌ Relay not connected');
+        return;
+    }
+
+    const resultDiv = document.getElementById('lookupResult');
+    resultDiv.style.display = 'block';
+    document.getElementById('lookupName').textContent = 'Loading...';
+    document.getElementById('lookupId').textContent = '...';
+    document.getElementById('lookupCoins').textContent = '...';
+    document.getElementById('lookupGems').textContent = '...';
+    document.getElementById('lookupStatus').textContent = '...';
+
+    console.log('📤 Sending lookup request (DB query):', { username });
+
+    this.relay.send({
+        type: 'admin_action',
+        action: 'lookup',
+        targetUsername: username,
+        adminUsername: this.userProfile.username,
+        adminRank: this.userProfile.status
+    });
+}
     displayLookupResult(data) {
         const resultDiv = document.getElementById('lookupResult');
         
