@@ -419,7 +419,7 @@ function getRebirthRequirements(tier) {
     // Tier 6+ formulas - exponential scaling for coins
     const excess = tier - 5;
     return {
-        coins: Math.floor(2500000 * Math.pow(2.5, excess)), // Much faster exponential growth
+        coins: Math.floor(2500000 * Math.pow(3, excess)), // Much faster exponential growth
         cosmetics: 21, // Maxed out
         games: 15, // Maxed out
         swords: 3, // Maxed out
