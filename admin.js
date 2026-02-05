@@ -560,7 +560,7 @@ handleUnban() {
     
     resultDiv.style.display = 'block';
 }
-
+}
 // Initialize admin panel when page loads
 let adminPanel = null;
 
