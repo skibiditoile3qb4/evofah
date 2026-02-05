@@ -496,13 +496,10 @@ handleUnban() {
         return;
     }
 
+    // Show loading state
     const resultDiv = document.getElementById('lookupResult');
     resultDiv.style.display = 'block';
-    document.getElementById('lookupName').textContent = 'Loading...';
-    document.getElementById('lookupId').textContent = '...';
-    document.getElementById('lookupCoins').textContent = '...';
-    document.getElementById('lookupGems').textContent = '...';
-    document.getElementById('lookupStatus').textContent = '...';
+    resultDiv.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Loading...</div>';
 
     console.log('📤 Sending lookup request (DB query):', { username });
 
