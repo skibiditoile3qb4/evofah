@@ -514,23 +514,51 @@ handleUnban() {
         adminRank: this.userProfile.status
     });
 }
-    displayLookupResult(data) {
-        const resultDiv = document.getElementById('lookupResult');
-        
-        if (!data.success) {
-            alert(`❌ ${data.message}`);
-            resultDiv.style.display = 'none';
-            return;
-        }
-
-        document.getElementById('lookupName').textContent = data.username;
-        document.getElementById('lookupId').textContent = data.permanentId || 'N/A';
-        document.getElementById('lookupCoins').textContent = data.coins.toLocaleString();
-        document.getElementById('lookupGems').textContent = data.gems.toLocaleString();
-        document.getElementById('lookupStatus').textContent = data.status;
-        
-        resultDiv.style.display = 'block';
+   displayLookupResult(data) {
+    const resultDiv = document.getElementById('lookupResult');
+    
+    if (!data.success) {
+        alert(`❌ ${data.message}`);
+        resultDiv.style.display = 'none';
+        return;
     }
+
+    // Create expanded display HTML
+    resultDiv.innerHTML = `
+        <div style="font-size: 14px; color: #ccc; line-height: 1.8;">
+            <strong style="color: #d69e2e;">🔹 Basic Info</strong><br>
+            <strong>Username:</strong> ${data.username}<br>
+            <strong>Permanent ID:</strong> ${data.permanentId}<br>
+            <strong>Status:</strong> ${data.status}<br>
+            <strong>Hours Played:</strong> ${data.hoursPlayed}h<br><br>
+            
+            <strong style="color: #d69e2e;">💰 Currency</strong><br>
+            <strong>Coins:</strong> ${data.coins.toLocaleString()}<br>
+            <strong>Gems:</strong> ${data.gems.toLocaleString()}<br>
+            <strong>Total Donated:</strong> ${data.totalDonated.toLocaleString()}<br><br>
+            
+            <strong style="color: #d69e2e;">✨ Prestige</strong><br>
+            <strong>Total Rebirths:</strong> ${data.rebirths}<br>
+            <strong>Rebirth Tier:</strong> ${data.rebirthTier}<br>
+            <strong>Total Gems Earned:</strong> ${data.totalGemsEarned}<br><br>
+            
+            <strong style="color: #d69e2e;">🎮 Games & Combat</strong><br>
+            <strong>Unlocked Games:</strong> ${data.unlockedGamesCount}<br>
+            <strong>Gladiator ELO:</strong> ${data.gladiatorElo}<br><br>
+            
+            <strong style="color: #d69e2e;">🎨 Cosmetics</strong><br>
+            <strong>Nametag:</strong> ${data.nametag} (${data.unlockedNametags})<br>
+            <strong>Effect:</strong> ${data.equippedEffect}<br>
+            <strong>Sword:</strong> ${data.equippedSword}<br>
+            <strong>Hat:</strong> ${data.equippedHat}<br>
+            <strong>Face:</strong> ${data.equippedFace}<br>
+            <strong>Color:</strong> ${data.equippedColor}<br><br>
+            
+            <strong style="color: #666; font-size: 12px;">Last Save: ${new Date(data.lastUpdated).toLocaleString()}</strong>
+        </div>
+    `;
+    
+    resultDiv.style.display = 'block';
 }
 
 // Initialize admin panel when page loads
