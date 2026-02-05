@@ -526,10 +526,10 @@
 
             const betAmount = parseInt(document.getElementById('betAmount').value);
             
-            if (betAmount <= 0) {
-                showMessage('Enter valid bet!', 2000, 'lose');
-                return;
-            }
+            if (!Number.isInteger(betAmount) || betAmount <= 0) {
+    showMessage('Enter valid bet!', 2000, 'lose');
+    return;
+}
 
             if (betAmount > state.balance) {
                 showMessage('Insufficient balance!', 2000, 'lose');
