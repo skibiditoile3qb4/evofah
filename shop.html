@@ -158,7 +158,7 @@
 
         <div class="shop-item" id="visualizerItem">
             <h2>🎮 Gaming Visualizer</h2>
-            <p>Gaming visualizer with custom themes. U to open menu.</p>
+            <p>Gaming visualizer with custom themes. Right Bracket to open menu.</p>
             <div class="price">40,000 Coins</div>
             <button id="buyVisualizer">Purchase</button>
         </div>
@@ -657,7 +657,7 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
                     setCoins(coins);
                     userProfile.visualizerEnabled = true;
                     saveUserProfile(userProfile);
-                    alert('✅ Success! Gaming Visualizer activated!\n\nThe visualizer will appear when you play games. Press U to open settings and customize themes, crosshair, and more!');
+                    alert('✅ Success! Gaming Visualizer activated!\n\nThe visualizer will appear when you play games. Press ] to open settings and customize themes, crosshair, and more!');
                     document.getElementById('coinAmount').textContent = coins;
                     markAsOwned('buyVisualizer', document.getElementById('visualizerItem'));
                 }
