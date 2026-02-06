@@ -800,7 +800,7 @@ mouseVisualizer.style.display = state.mouse.visible ? "block" : "none";
     document.body.appendChild(infoButton);
 
     const infoTooltip = document.createElement("div");
-    infoTooltip.innerHTML = `<b>Press \ to open settings</b>`;
+    infoTooltip.innerHTML = `<b>Press ] to open settings</b>`;
     infoTooltip.style.position = "fixed";
     infoTooltip.style.top = "60px";
     infoTooltip.style.right = "20px";
@@ -822,11 +822,12 @@ mouseVisualizer.style.display = state.mouse.visible ? "block" : "none";
         infoTooltip.style.display = "none";
     });
 
-    document.addEventListener("keydown", e => {
-        if (e.key.toLowerCase() === "\") {
-            mainMenu.style.display = mainMenu.style.display === "none" ? "block" : "none";
-        }
-    });
+document.addEventListener("keydown", e => {
+    if (e.key === "]") {
+        mainMenu.style.display =
+            mainMenu.style.display === "none" ? "block" : "none";
+    }
+});
 
 })(); 
 } 
