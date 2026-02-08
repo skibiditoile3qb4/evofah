@@ -891,19 +891,34 @@ function render() {
         }
     }
     
-    for (const player of players.values()) {
-        const screenX = player.x - cameraX;
-        const screenY = player.y - cameraY;
-        
-        ctx.fillStyle = player.color || '#ef4444';
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.font = '24px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(player.icon, screenX, screenY);
+for (const player of players.values()) {
+    const screenX = player.x - cameraX;
+    const screenY = player.y - cameraY;
+    
+    // Handle rainbow color
+    let displayColor = player.color || '#ef4444';
+    if (displayColor === 'rainbow') {
+        const gradient = ctx.createLinearGradient(screenX - 15, screenY - 15, screenX + 15, screenY + 15);
+        gradient.addColorStop(0, '#ff0000');
+        gradient.addColorStop(0.17, '#ff7f00');
+        gradient.addColorStop(0.33, '#ffff00');
+        gradient.addColorStop(0.5, '#00ff00');
+        gradient.addColorStop(0.67, '#0000ff');
+        gradient.addColorStop(0.83, '#4b0082');
+        gradient.addColorStop(1, '#9400d3');
+        ctx.fillStyle = gradient;
+    } else {
+        ctx.fillStyle = displayColor;
+    }
+    
+    ctx.beginPath();
+    ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(player.icon, screenX, screenY);;
         
         ctx.font = '14px Arial';
         ctx.fillStyle = '#fff';
@@ -918,20 +933,35 @@ function render() {
         ctx.fillRect(screenX - 25, screenY - 40, 50 * (player.health / 100), 5);
     }
     
-    const myScreenX = myPlayerData.x - cameraX;
-    const myScreenY = myPlayerData.y - cameraY;
-    
-    const myColor = userProfile.gladiatorCosmetics?.slashColor || '#3b82f6';
+const myScreenX = myPlayerData.x - cameraX;
+const myScreenY = myPlayerData.y - cameraY;
+
+const myColor = userProfile.gladiatorCosmetics?.slashColor || '#3b82f6';
+
+// Handle rainbow for your player
+if (myColor === 'rainbow') {
+    const gradient = ctx.createLinearGradient(myScreenX - 15, myScreenY - 15, myScreenX + 15, myScreenY + 15);
+    gradient.addColorStop(0, '#ff0000');
+    gradient.addColorStop(0.17, '#ff7f00');
+    gradient.addColorStop(0.33, '#ffff00');
+    gradient.addColorStop(0.5, '#00ff00');
+    gradient.addColorStop(0.67, '#0000ff');
+    gradient.addColorStop(0.83, '#4b0082');
+    gradient.addColorStop(1, '#9400d3');
+    ctx.fillStyle = gradient;
+} else {
     ctx.fillStyle = myColor;
-    ctx.beginPath();
-    ctx.arc(myScreenX, myScreenY, 15, 0, Math.PI * 2);
-    ctx.fill();
-    
-    const myIcon = userProfile.gladiatorCosmetics?.icon || '⚔️';
-    ctx.font = '24px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(myIcon, myScreenX, myScreenY);
+}
+
+ctx.beginPath();
+ctx.arc(myScreenX, myScreenY, 15, 0, Math.PI * 2);
+ctx.fill();
+
+const myIcon = userProfile.gladiatorCosmetics?.icon || '⚔️';
+ctx.font = '24px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText(myIcon, myScreenX, myScreenY);
     
     ctx.font = '14px Arial';
     ctx.fillStyle = '#4ade80';
