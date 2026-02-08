@@ -625,13 +625,15 @@ function handleResourceDamage(data) {
     const resource = resourceNodes.get(data.resourceId);
     if (!resource) return;
     
-    resource.health -= data.damage;
+    // Use server's authoritative health value
+    if (data.currentHealth !== undefined) {
+        resource.health = data.currentHealth;
+    }
     
     if (data.destroyed) {
         resourceNodes.delete(data.resourceId);
     }
 }
-
 function handleResourceSpawn(data) {
     data.nodes.forEach(node => {
         resourceNodes.set(node.id, node);
@@ -655,7 +657,10 @@ function handleBuildingDamage(data) {
     const building = buildings.get(data.buildingId);
     if (!building) return;
     
-    building.health -= data.damage;
+    // Use server's authoritative health value
+    if (data.currentHealth !== undefined) {
+        building.health = data.currentHealth;
+    }
     
     if (data.destroyed) {
         buildings.delete(data.buildingId);
