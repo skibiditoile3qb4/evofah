@@ -5,6 +5,7 @@ const TILE_SIZE = 40;
 const SWING_CHARGE_TIME = 2000;
 const PLAYER_SPEED = 5;
 const ATTACK_RANGE = 60;
+const BUILD_RANGE = 150;
 const SPAWN_SIZE = 5;
 const PICKUP_RANGE = 50;
 
@@ -403,24 +404,84 @@ function handleMouseMove(e) {
         const mouseWorldX = e.clientX - rect.left + cameraX;
         const mouseWorldY = e.clientY - rect.top + cameraY;
         
+        const gridX = Math.floor(mouseWorldX / TILE_SIZE) * TILE_SIZE;
+        const gridY = Math.floor(mouseWorldY / TILE_SIZE) * TILE_SIZE;
+        
         buildPreview = {
-            x: Math.floor(mouseWorldX / TILE_SIZE) * TILE_SIZE,
-            y: Math.floor(mouseWorldY / TILE_SIZE) * TILE_SIZE
+            x: gridX,
+            y: gridY,
+            valid: canPlaceBuild(gridX, gridY)
         };
     } else {
         buildPreview = null;
     }
 }
 
+function canPlaceBuild(x, y) {
+    // Check range
+    const distance = Math.sqrt(
+        Math.pow(x + TILE_SIZE/2 - myPlayerData.x, 2) + 
+        Math.pow(y + TILE_SIZE/2 - myPlayerData.y, 2)
+    );
+    if (distance > BUILD_RANGE) {
+        return false;
+    }
+    
+    // Check if in spawn
+    if (isInSpawn(x, y)) {
+        return false;
+    }
+    
+    // Check resources
+    const buildTypes = ['axe', 'wood_wall', 'stone_wall', 'wood_floor'];
+    const buildType = buildTypes[selectedSlot];
+    
+    const costs = {
+        wood_wall: { wood: 5 },
+        stone_wall: { stone: 8 },
+        wood_floor: { wood: 3 }
+    };
+    
+    const cost = costs[buildType];
+    if (cost) {
+        for (const [resource, amount] of Object.entries(cost)) {
+            if ((inventory[resource] || 0) < amount) {
+                return false;
+            }
+        }
+    }
+    
+    // Check collision with existing buildings
+    for (const building of buildings.values()) {
+        if (Math.abs(building.x - x) < TILE_SIZE && Math.abs(building.y - y) < TILE_SIZE) {
+            return false;
+        }
+    }
+    
+    // Check collision with players
+    for (const player of players.values()) {
+        const playerInBuild = player.x >= x && player.x <= x + TILE_SIZE &&
+                             player.y >= y && player.y <= y + TILE_SIZE;
+        if (playerInBuild) {
+            return false;
+        }
+    }
+    
+    // Check collision with yourself
+    const myInBuild = myPlayerData.x >= x && myPlayerData.x <= x + TILE_SIZE &&
+                      myPlayerData.y >= y && myPlayerData.y <= y + TILE_SIZE;
+    if (myInBuild) {
+        return false;
+    }
+    
+    return true;
+}
+
 function placeBuild(worldX, worldY) {
-    if (!buildPreview) return;
+    if (!buildPreview || !buildPreview.valid) return;
     
     const x = buildPreview.x;
     const y = buildPreview.y;
-    
-    if (isInSpawn(x, y)) {
-        return;
-    }
     
     const buildTypes = ['axe', 'wood_wall', 'stone_wall', 'wood_floor'];
     const buildType = buildTypes[selectedSlot];
@@ -434,22 +495,12 @@ function placeBuild(worldX, worldY) {
     const cost = costs[buildType];
     if (!cost) return;
     
-    for (const [resource, amount] of Object.entries(cost)) {
-        if (inventory[resource] < amount) {
-            return;
-        }
-    }
-    
-    for (const building of buildings.values()) {
-        if (Math.abs(building.x - x) < TILE_SIZE && Math.abs(building.y - y) < TILE_SIZE) {
-            return;
-        }
-    }
-    
+    // Deduct resources
     for (const [resource, amount] of Object.entries(cost)) {
         inventory[resource] -= amount;
     }
     
+    // Create building
     const buildingId = 'building_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     const building = {
         id: buildingId,
@@ -463,6 +514,7 @@ function placeBuild(worldX, worldY) {
     
     buildings.set(buildingId, building);
     
+    // Send to server
     if (relay && relay.connected) {
         relay.sendPlayerAction('build', building);
     }
@@ -538,11 +590,14 @@ function handlePlayerAttack(attackerId, data) {
 }
 
 function handleDeath() {
+    const deathX = myPlayerData.x;
+    const deathY = myPlayerData.y;
+    
     // Drop all items at death location
     if (relay && relay.connected) {
         relay.sendPlayerAction('death_drop', {
-            x: myPlayerData.x,
-            y: myPlayerData.y,
+            x: deathX,
+            y: deathY,
             inventory: inventory
         });
     }
@@ -551,6 +606,30 @@ function handleDeath() {
     inventory = { wood: 0, stone: 0 };
     updateInventoryUI();
     
+    // Teleport to spawn IMMEDIATELY (before showing death screen)
+    myPlayerData.x = WORLD_SIZE / 2;
+    myPlayerData.y = WORLD_SIZE / 2;
+    myPlayerData.health = 100;
+    health = 100;
+    
+    // Update camera to spawn
+    cameraX = myPlayerData.x - canvas.width / 2;
+    cameraY = myPlayerData.y - canvas.height / 2;
+    
+    // Send respawn position to server immediately
+    if (relay && relay.connected) {
+        relay.sendPlayerAction('player_update', {
+            x: myPlayerData.x,
+            y: myPlayerData.y,
+            health: health,
+            inventory: inventory
+        });
+    }
+    
+    // Update health UI
+    document.getElementById('healthValue').textContent = 100;
+    
+    // Show death screen but keep rendering
     showDeathScreen();
 }
 
@@ -645,28 +724,9 @@ function showDeathScreen() {
 }
 
 function respawn() {
-    health = 100;
-    myPlayerData.health = 100;
-    myPlayerData.x = WORLD_SIZE / 2;
-    myPlayerData.y = WORLD_SIZE / 2;
-    
-    // Update UI immediately
-    updateInventoryUI();
-    document.getElementById('healthValue').textContent = 100;
-    
-    // Force camera to follow player at spawn
-    cameraX = myPlayerData.x - canvas.width / 2;
-    cameraY = myPlayerData.y - canvas.height / 2;
-    
-    // Send update to server immediately
-    if (relay && relay.connected) {
-        relay.sendPlayerAction('player_update', {
-            x: myPlayerData.x,
-            y: myPlayerData.y,
-            health: health,
-            inventory: inventory
-        });
-    }
+    // Player is already at spawn (moved there on death)
+    // Just force a render to ensure everything is visible
+    render();
 }
 
 function render() {
@@ -834,11 +894,11 @@ function render() {
         const previewX = buildPreview.x - cameraX;
         const previewY = buildPreview.y - cameraY;
         
-        const canPlace = !isInSpawn(buildPreview.x, buildPreview.y);
+        const isValid = buildPreview.valid;
         
-        ctx.fillStyle = canPlace ? 'rgba(100, 200, 100, 0.3)' : 'rgba(200, 100, 100, 0.3)';
+        ctx.fillStyle = isValid ? 'rgba(100, 200, 100, 0.3)' : 'rgba(200, 100, 100, 0.3)';
         ctx.fillRect(previewX, previewY, TILE_SIZE, TILE_SIZE);
-        ctx.strokeStyle = canPlace ? '#4ade80' : '#ef4444';
+        ctx.strokeStyle = isValid ? '#4ade80' : '#ef4444';
         ctx.lineWidth = 2;
         ctx.strokeRect(previewX, previewY, TILE_SIZE, TILE_SIZE);
     }
