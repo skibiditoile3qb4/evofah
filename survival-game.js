@@ -8,12 +8,15 @@ const ATTACK_RANGE = 60;
 const BUILD_RANGE = 150;
 const SPAWN_SIZE = 5;
 const PICKUP_RANGE = 50;
+const MAX_RESOURCE_NODES = 16;
+const RESOURCE_RESPAWN_DELAY = 30000; // 30 seconds after all nodes are gone
 
 let relay, userProfile, canvas, ctx;
 let myPlayerId, myPlayerData;
 let players = new Map();
 let buildings = new Map();
 let drops = new Map();
+let resourceNodes = new Map();
 let hasLoadedFromDB = false;
 
 // Player state
@@ -146,6 +149,13 @@ async function connectToServer() {
                 });
             }
             
+            // Load resource nodes
+            if (data.worldState && data.worldState.resourceNodes) {
+                data.worldState.resourceNodes.forEach(r => {
+                    resourceNodes.set(r.id, r);
+                });
+            }
+            
             // Load saved data from database
             let startX = WORLD_SIZE / 2;
             let startY = WORLD_SIZE / 2;
@@ -255,6 +265,12 @@ function handlePlayerAction(data) {
             break;
         case 'pickup_drop':
             handleRemotePickup(actionData);
+            break;
+        case 'damage_resource':
+            handleResourceDamage(actionData);
+            break;
+        case 'spawn_resources':
+            handleResourceSpawn(actionData);
             break;
     }
 }
@@ -380,6 +396,17 @@ function handleClick(e) {
         
         const damage = Math.floor((meterCharge / 100) * 25);
         
+        // Check for resource nodes first
+        for (const resource of resourceNodes.values()) {
+            if (checkCollision(mouseWorldX, mouseWorldY, 10, resource.x, resource.y, 40)) {
+                damageResource(resource.id, damage);
+                meterCharge = 0;
+                document.getElementById('meterFill').style.width = '0%';
+                return;
+            }
+        }
+        
+        // Then check buildings
         for (const building of buildings.values()) {
             if (checkCollision(mouseWorldX, mouseWorldY, 10, building.x, building.y, TILE_SIZE)) {
                 damageBuilding(building.id, damage);
@@ -389,6 +416,7 @@ function handleClick(e) {
             }
         }
         
+        // Then check players
         for (const player of players.values()) {
             if (checkCollision(mouseWorldX, mouseWorldY, 10, player.x, player.y, 20)) {
                 attackPlayer(player.id, damage);
@@ -546,6 +574,65 @@ function damageBuilding(buildingId, damage) {
             destroyed: destroyed
         });
     }
+}
+
+function damageResource(resourceId, damage) {
+    const resource = resourceNodes.get(resourceId);
+    if (!resource) return;
+    
+    resource.health -= damage;
+    
+    let destroyed = false;
+    let reward = null;
+    
+    if (resource.health <= 0) {
+        destroyed = true;
+        
+        // Give rewards
+        if (resource.type === 'tree') {
+            inventory.wood += 10;
+            reward = { wood: 10 };
+        } else if (resource.type === 'stone') {
+            inventory.stone += 5;
+            reward = { stone: 5 };
+        }
+        
+        updateInventoryUI();
+        
+        // Visual feedback
+        canvas.style.filter = 'brightness(1.3)';
+        setTimeout(() => {
+            canvas.style.filter = 'brightness(1)';
+        }, 100);
+        
+        resourceNodes.delete(resourceId);
+    }
+    
+    if (relay && relay.connected) {
+        relay.sendPlayerAction('damage_resource', {
+            resourceId: resourceId,
+            damage: damage,
+            destroyed: destroyed,
+            reward: reward
+        });
+    }
+}
+
+function handleResourceDamage(data) {
+    const resource = resourceNodes.get(data.resourceId);
+    if (!resource) return;
+    
+    resource.health -= data.damage;
+    
+    if (data.destroyed) {
+        resourceNodes.delete(data.resourceId);
+    }
+}
+
+function handleResourceSpawn(data) {
+    data.nodes.forEach(node => {
+        resourceNodes.set(node.id, node);
+    });
 }
 
 function attackPlayer(targetId, damage) {
@@ -818,6 +905,73 @@ function render() {
         spawnPixelSize
     );
     
+    // Draw resource nodes
+    for (const resource of resourceNodes.values()) {
+        const screenX = resource.x - cameraX;
+        const screenY = resource.y - cameraY;
+        
+        if (resource.type === 'tree') {
+            // Draw tree
+            // Trunk
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(screenX + 15, screenY + 20, 10, 20);
+            
+            // Leaves (3 circles for a fuller look)
+            const leafGradient = ctx.createRadialGradient(screenX + 20, screenY + 15, 5, screenX + 20, screenY + 15, 18);
+            leafGradient.addColorStop(0, '#22c55e');
+            leafGradient.addColorStop(1, '#166534');
+            
+            ctx.fillStyle = leafGradient;
+            ctx.beginPath();
+            ctx.arc(screenX + 20, screenY + 10, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(screenX + 10, screenY + 18, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(screenX + 30, screenY + 18, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+        } else if (resource.type === 'stone') {
+            // Draw stone rock with gradient
+            const rockGradient = ctx.createRadialGradient(screenX + 20, screenY + 20, 5, screenX + 20, screenY + 20, 18);
+            rockGradient.addColorStop(0, '#9ca3af');
+            rockGradient.addColorStop(1, '#4b5563');
+            
+            ctx.fillStyle = rockGradient;
+            ctx.beginPath();
+            ctx.arc(screenX + 20, screenY + 20, 18, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add some darker spots for texture
+            ctx.fillStyle = '#374151';
+            ctx.beginPath();
+            ctx.arc(screenX + 15, screenY + 18, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(screenX + 26, screenY + 23, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Highlight
+            ctx.fillStyle = 'rgba(229, 231, 235, 0.5)';
+            ctx.beginPath();
+            ctx.arc(screenX + 17, screenY + 15, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Health bar for resources (only show if damaged)
+        if (resource.health < resource.maxHealth) {
+            const healthPercent = resource.health / resource.maxHealth;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(screenX, screenY - 8, 40, 5);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(screenX, screenY - 8, 40 * healthPercent, 5);
+        }
+    }
+    
     // Draw death drops
     for (const drop of drops.values()) {
         const screenX = drop.x - cameraX;
@@ -891,34 +1045,34 @@ function render() {
         }
     }
     
-for (const player of players.values()) {
-    const screenX = player.x - cameraX;
-    const screenY = player.y - cameraY;
-    
-    // Handle rainbow color
-    let displayColor = player.color || '#ef4444';
-    if (displayColor === 'rainbow') {
-        const gradient = ctx.createLinearGradient(screenX - 15, screenY - 15, screenX + 15, screenY + 15);
-        gradient.addColorStop(0, '#ff0000');
-        gradient.addColorStop(0.17, '#ff7f00');
-        gradient.addColorStop(0.33, '#ffff00');
-        gradient.addColorStop(0.5, '#00ff00');
-        gradient.addColorStop(0.67, '#0000ff');
-        gradient.addColorStop(0.83, '#4b0082');
-        gradient.addColorStop(1, '#9400d3');
-        ctx.fillStyle = gradient;
-    } else {
-        ctx.fillStyle = displayColor;
-    }
-    
-    ctx.beginPath();
-    ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.font = '24px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(player.icon, screenX, screenY);;
+    for (const player of players.values()) {
+        const screenX = player.x - cameraX;
+        const screenY = player.y - cameraY;
+        
+        // Handle rainbow color
+        let displayColor = player.color || '#ef4444';
+        if (displayColor === 'rainbow') {
+            const gradient = ctx.createLinearGradient(screenX - 15, screenY - 15, screenX + 15, screenY + 15);
+            gradient.addColorStop(0, '#ff0000');
+            gradient.addColorStop(0.17, '#ff7f00');
+            gradient.addColorStop(0.33, '#ffff00');
+            gradient.addColorStop(0.5, '#00ff00');
+            gradient.addColorStop(0.67, '#0000ff');
+            gradient.addColorStop(0.83, '#4b0082');
+            gradient.addColorStop(1, '#9400d3');
+            ctx.fillStyle = gradient;
+        } else {
+            ctx.fillStyle = displayColor;
+        }
+        
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.font = '24px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(player.icon, screenX, screenY);
         
         ctx.font = '14px Arial';
         ctx.fillStyle = '#fff';
@@ -933,35 +1087,35 @@ for (const player of players.values()) {
         ctx.fillRect(screenX - 25, screenY - 40, 50 * (player.health / 100), 5);
     }
     
-const myScreenX = myPlayerData.x - cameraX;
-const myScreenY = myPlayerData.y - cameraY;
-
-const myColor = userProfile.gladiatorCosmetics?.slashColor || '#3b82f6';
-
-// Handle rainbow for your player
-if (myColor === 'rainbow') {
-    const gradient = ctx.createLinearGradient(myScreenX - 15, myScreenY - 15, myScreenX + 15, myScreenY + 15);
-    gradient.addColorStop(0, '#ff0000');
-    gradient.addColorStop(0.17, '#ff7f00');
-    gradient.addColorStop(0.33, '#ffff00');
-    gradient.addColorStop(0.5, '#00ff00');
-    gradient.addColorStop(0.67, '#0000ff');
-    gradient.addColorStop(0.83, '#4b0082');
-    gradient.addColorStop(1, '#9400d3');
-    ctx.fillStyle = gradient;
-} else {
-    ctx.fillStyle = myColor;
-}
-
-ctx.beginPath();
-ctx.arc(myScreenX, myScreenY, 15, 0, Math.PI * 2);
-ctx.fill();
-
-const myIcon = userProfile.gladiatorCosmetics?.icon || '⚔️';
-ctx.font = '24px Arial';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-ctx.fillText(myIcon, myScreenX, myScreenY);
+    const myScreenX = myPlayerData.x - cameraX;
+    const myScreenY = myPlayerData.y - cameraY;
+    
+    const myColor = userProfile.gladiatorCosmetics?.slashColor || '#3b82f6';
+    
+    // Handle rainbow for your player
+    if (myColor === 'rainbow') {
+        const gradient = ctx.createLinearGradient(myScreenX - 15, myScreenY - 15, myScreenX + 15, myScreenY + 15);
+        gradient.addColorStop(0, '#ff0000');
+        gradient.addColorStop(0.17, '#ff7f00');
+        gradient.addColorStop(0.33, '#ffff00');
+        gradient.addColorStop(0.5, '#00ff00');
+        gradient.addColorStop(0.67, '#0000ff');
+        gradient.addColorStop(0.83, '#4b0082');
+        gradient.addColorStop(1, '#9400d3');
+        ctx.fillStyle = gradient;
+    } else {
+        ctx.fillStyle = myColor;
+    }
+    
+    ctx.beginPath();
+    ctx.arc(myScreenX, myScreenY, 15, 0, Math.PI * 2);
+    ctx.fill();
+    
+    const myIcon = userProfile.gladiatorCosmetics?.icon || '⚔️';
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(myIcon, myScreenX, myScreenY);
     
     ctx.font = '14px Arial';
     ctx.fillStyle = '#4ade80';
