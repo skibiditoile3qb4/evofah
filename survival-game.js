@@ -1,25 +1,23 @@
-// survival-game.js - Main game logic for shared world survival game
+// survival-game.js - Fixed survival game
 
 const RELAY_SERVER = 'wss://relayfah.onrender.com';
 const ROOM_ID = 'survival_world';
-const WORLD_SIZE = 500;
-const TILE_SIZE = 20;
+const WORLD_SIZE = 2000; // Much larger world
+const TILE_SIZE = 40; // Larger tiles
 const SWING_CHARGE_TIME = 2000;
-const PLAYER_SPEED = 3;
-const ATTACK_RANGE = 40;
-const SPAWN_SIZE = 10; // 10x10 protected spawn
+const PLAYER_SPEED = 5;
+const ATTACK_RANGE = 60;
+const SPAWN_SIZE = 5; // 5x5 tile protected spawn
 
 let relay, userProfile, canvas, ctx;
 let myPlayerId, myPlayerData;
-let world = null;
 let players = new Map();
 let buildings = new Map();
-let resources = new Map();
 
 // Player state
 let keys = {};
 let health = 100;
-let inventory = { wood: 20, stone: 10 };
+let inventory = { wood: 200, stone: 100 }; // Start with lots of resources
 let meterCharge = 0;
 let isCharging = false;
 let chargeInterval = null;
@@ -27,13 +25,9 @@ let chargeInterval = null;
 // Camera
 let cameraX = 0, cameraY = 0;
 
-// Building mode
-let buildMode = false;
-let selectedBuildType = null;
+// Hotbar
+let selectedSlot = 0; // 0=axe, 1=wood wall, 2=stone wall, 3=floor
 let buildPreview = null;
-
-// Trade
-let tradeRequests = [];
 
 // Initialize
 function init() {
@@ -89,12 +83,9 @@ function setupControls() {
     document.addEventListener('keydown', (e) => {
         keys[e.key.toLowerCase()] = true;
         
-        if (e.key.toLowerCase() === 'b') {
-            toggleBuildMenu();
-        }
-        
-        if (e.key.toLowerCase() === 't') {
-            toggleTradeCenter();
+        // Number keys for hotbar
+        if (e.key >= '1' && e.key <= '4') {
+            selectSlot(parseInt(e.key) - 1);
         }
     });
     
@@ -104,16 +95,28 @@ function setupControls() {
     
     canvas.addEventListener('click', handleClick);
     canvas.addEventListener('mousemove', handleMouseMove);
-    
-    // Build menu options
-    document.querySelectorAll('.build-option').forEach(opt => {
-        opt.addEventListener('click', () => {
-            document.querySelectorAll('.build-option').forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            selectedBuildType = opt.dataset.type;
-        });
-    });
 }
+
+function selectSlot(slot) {
+    selectedSlot = slot;
+    
+    // Update UI
+    document.querySelectorAll('.hotbar-slot').forEach((el, idx) => {
+        if (idx === slot) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
+    });
+    
+    // Show/hide swing meter based on slot
+    if (slot === 0) {
+        document.getElementById('swingMeter').style.display = 'block';
+    }
+}
+
+// Make selectSlot globally accessible
+window.selectSlot = selectSlot;
 
 async function connectToServer() {
     try {
@@ -127,9 +130,10 @@ async function connectToServer() {
         relay.on('joined', (data) => {
             console.log('Joined survival world!', data);
             
-            if (data.worldState) {
-                world = data.worldState;
-                loadWorldState(world);
+            if (data.worldState && data.worldState.buildings) {
+                data.worldState.buildings.forEach(b => {
+                    buildings.set(b.id, b);
+                });
             }
             
             if (data.players) {
@@ -138,9 +142,9 @@ async function connectToServer() {
                         players.set(p.permanentId, {
                             id: p.permanentId,
                             username: p.username,
-                            x: p.x || 250,
-                            y: p.y || 250,
-                            health: p.health || 100,
+                            x: WORLD_SIZE / 2,
+                            y: WORLD_SIZE / 2,
+                            health: 100,
                             icon: p.gladiatorCosmetics?.icon || '⚔️',
                             color: p.gladiatorCosmetics?.slashColor || '#ffffff'
                         });
@@ -151,8 +155,8 @@ async function connectToServer() {
             myPlayerData = {
                 id: myPlayerId,
                 username: userProfile.username,
-                x: 250,
-                y: 250,
+                x: WORLD_SIZE / 2,
+                y: WORLD_SIZE / 2,
                 health: health,
                 inventory: inventory
             };
@@ -162,13 +166,12 @@ async function connectToServer() {
         });
         
         relay.on('player_joined', (data) => {
-            console.log('Player joined:', data.player);
             if (data.player.permanentId !== myPlayerId) {
                 players.set(data.player.permanentId, {
                     id: data.player.permanentId,
                     username: data.player.username,
-                    x: 250,
-                    y: 250,
+                    x: WORLD_SIZE / 2,
+                    y: WORLD_SIZE / 2,
                     health: 100,
                     icon: data.player.gladiatorCosmetics?.icon || '⚔️',
                     color: data.player.gladiatorCosmetics?.slashColor || '#ffffff'
@@ -186,10 +189,6 @@ async function connectToServer() {
             handlePlayerAction(data);
         });
         
-        relay.on('world_update', (data) => {
-            handleWorldUpdate(data);
-        });
-        
         startHeartbeat();
         
     } catch (error) {
@@ -198,74 +197,10 @@ async function connectToServer() {
     }
 }
 
-function loadWorldState(worldData) {
-    // Load buildings
-    if (worldData.buildings) {
-        worldData.buildings.forEach(b => {
-            buildings.set(b.id, b);
-        });
-    }
-    
-    // Load resources
-    if (worldData.resources) {
-        worldData.resources.forEach(r => {
-            resources.set(r.id, r);
-        });
-    } else {
-        // Generate initial resources if world is new
-        generateInitialResources();
-    }
-}
-
-function generateInitialResources() {
-    // Generate trees
-    for (let i = 0; i < 50; i++) {
-        let x, y;
-        do {
-            x = Math.random() * WORLD_SIZE;
-            y = Math.random() * WORLD_SIZE;
-        } while (isInSpawn(x, y));
-        
-        const id = 'tree_' + Date.now() + '_' + i;
-        resources.set(id, {
-            id: id,
-            type: 'tree',
-            x: x,
-            y: y,
-            health: 50
-        });
-    }
-    
-    // Generate stone nodes
-    for (let i = 0; i < 30; i++) {
-        let x, y;
-        do {
-            x = Math.random() * WORLD_SIZE;
-            y = Math.random() * WORLD_SIZE;
-        } while (isInSpawn(x, y));
-        
-        const id = 'stone_' + Date.now() + '_' + i;
-        resources.set(id, {
-            id: id,
-            type: 'stone',
-            x: x,
-            y: y,
-            health: 80
-        });
-    }
-    
-    // Send to server
-    if (relay && relay.connected) {
-        relay.sendPlayerAction('init_resources', {
-            resources: Array.from(resources.values())
-        });
-    }
-}
-
 function isInSpawn(x, y) {
     const spawnX = WORLD_SIZE / 2;
     const spawnY = WORLD_SIZE / 2;
-    const spawnRadius = SPAWN_SIZE / 2;
+    const spawnRadius = (SPAWN_SIZE * TILE_SIZE) / 2;
     
     return Math.abs(x - spawnX) < spawnRadius && Math.abs(y - spawnY) < spawnRadius;
 }
@@ -298,11 +233,8 @@ function handlePlayerAction(data) {
         case 'damage_building':
             handleBuildingDamage(actionData);
             break;
-        case 'damage_resource':
-            handleResourceDamage(actionData);
-            break;
         case 'attack_player':
-            handlePlayerAttack(actionData);
+            handlePlayerAttack(playerId, actionData);
             break;
     }
 }
@@ -314,7 +246,7 @@ function updateOtherPlayer(playerId, data) {
             username: data.username || 'Unknown',
             x: data.x,
             y: data.y,
-            health: data.health,
+            health: data.health || 100,
             icon: data.icon || '⚔️',
             color: data.color || '#ffffff'
         });
@@ -323,18 +255,6 @@ function updateOtherPlayer(playerId, data) {
         player.x = data.x;
         player.y = data.y;
         player.health = data.health;
-    }
-}
-
-function handleWorldUpdate(data) {
-    if (data.buildings) {
-        buildings.clear();
-        data.buildings.forEach(b => buildings.set(b.id, b));
-    }
-    
-    if (data.resources) {
-        resources.clear();
-        data.resources.forEach(r => resources.set(r.id, r));
     }
 }
 
@@ -360,7 +280,7 @@ function gameLoop() {
         // Check collision with buildings
         let canMove = true;
         for (const building of buildings.values()) {
-            if (checkCollision(newX, newY, 10, building.x, building.y, TILE_SIZE)) {
+            if (checkCollision(newX, newY, 20, building.x, building.y, TILE_SIZE)) {
                 canMove = false;
                 break;
             }
@@ -382,7 +302,7 @@ function gameLoop() {
 
 function startCharging() {
     chargeInterval = setInterval(() => {
-        if (meterCharge < 100) {
+        if (selectedSlot === 0 && meterCharge < 100) { // Only charge if axe is selected
             meterCharge += (100 / (SWING_CHARGE_TIME / 50));
             if (meterCharge > 100) meterCharge = 100;
             document.getElementById('meterFill').style.width = meterCharge + '%';
@@ -391,77 +311,84 @@ function startCharging() {
 }
 
 function handleClick(e) {
-    if (buildMode && selectedBuildType) {
-        placeBuild(e);
+    const rect = canvas.getBoundingClientRect();
+    const mouseWorldX = e.clientX - rect.left + cameraX;
+    const mouseWorldY = e.clientY - rect.top + cameraY;
+    
+    // Building mode (slots 1-3)
+    if (selectedSlot >= 1 && selectedSlot <= 3) {
+        placeBuild(mouseWorldX, mouseWorldY);
         return;
     }
     
-    // Attack
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left + cameraX;
-    const mouseY = e.clientY - rect.top + cameraY;
-    
-    const distance = Math.sqrt(
-        Math.pow(mouseX - myPlayerData.x, 2) + 
-        Math.pow(mouseY - myPlayerData.y, 2)
-    );
-    
-    if (distance > ATTACK_RANGE) return;
-    
-    const damage = Math.floor((meterCharge / 100) * 25);
-    
-    // Check if hitting building
-    for (const building of buildings.values()) {
-        if (checkCollision(mouseX, mouseY, 5, building.x, building.y, TILE_SIZE)) {
-            damageBuilding(building.id, damage);
+    // Attack mode (slot 0 - axe)
+    if (selectedSlot === 0) {
+        const distance = Math.sqrt(
+            Math.pow(mouseWorldX - myPlayerData.x, 2) + 
+            Math.pow(mouseWorldY - myPlayerData.y, 2)
+        );
+        
+        if (distance > ATTACK_RANGE) {
             meterCharge = 0;
             document.getElementById('meterFill').style.width = '0%';
             return;
         }
-    }
-    
-    // Check if hitting resource
-    for (const resource of resources.values()) {
-        if (checkCollision(mouseX, mouseY, 5, resource.x, resource.y, TILE_SIZE)) {
-            damageResource(resource.id, damage);
-            meterCharge = 0;
-            document.getElementById('meterFill').style.width = '0%';
-            return;
+        
+        const damage = Math.floor((meterCharge / 100) * 25);
+        
+        // Check if hitting building
+        for (const building of buildings.values()) {
+            if (checkCollision(mouseWorldX, mouseWorldY, 10, building.x, building.y, TILE_SIZE)) {
+                damageBuilding(building.id, damage);
+                meterCharge = 0;
+                document.getElementById('meterFill').style.width = '0%';
+                return;
+            }
         }
-    }
-    
-    // Check if hitting player
-    for (const player of players.values()) {
-        if (checkCollision(mouseX, mouseY, 5, player.x, player.y, 20)) {
-            attackPlayer(player.id, damage);
-            meterCharge = 0;
-            document.getElementById('meterFill').style.width = '0%';
-            return;
+        
+        // Check if hitting player
+        for (const player of players.values()) {
+            if (checkCollision(mouseWorldX, mouseWorldY, 10, player.x, player.y, 20)) {
+                attackPlayer(player.id, damage);
+                meterCharge = 0;
+                document.getElementById('meterFill').style.width = '0%';
+                return;
+            }
         }
+        
+        meterCharge = 0;
+        document.getElementById('meterFill').style.width = '0%';
     }
-    
-    meterCharge = 0;
-    document.getElementById('meterFill').style.width = '0%';
 }
 
 function handleMouseMove(e) {
-    if (buildMode && selectedBuildType) {
+    if (selectedSlot >= 1 && selectedSlot <= 3) {
         const rect = canvas.getBoundingClientRect();
+        const mouseWorldX = e.clientX - rect.left + cameraX;
+        const mouseWorldY = e.clientY - rect.top + cameraY;
+        
         buildPreview = {
-            x: Math.floor((e.clientX - rect.left + cameraX) / TILE_SIZE) * TILE_SIZE,
-            y: Math.floor((e.clientY - rect.top + cameraY) / TILE_SIZE) * TILE_SIZE
+            x: Math.floor(mouseWorldX / TILE_SIZE) * TILE_SIZE,
+            y: Math.floor(mouseWorldY / TILE_SIZE) * TILE_SIZE
         };
+    } else {
+        buildPreview = null;
     }
 }
 
-function placeBuild(e) {
+function placeBuild(worldX, worldY) {
     if (!buildPreview) return;
     
+    const x = buildPreview.x;
+    const y = buildPreview.y;
+    
     // Check if in spawn
-    if (isInSpawn(buildPreview.x, buildPreview.y)) {
-        alert('Cannot build in spawn area!');
-        return;
+    if (isInSpawn(x, y)) {
+        return; // Silently fail
     }
+    
+    const buildTypes = ['axe', 'wood_wall', 'stone_wall', 'wood_floor'];
+    const buildType = buildTypes[selectedSlot];
     
     const costs = {
         wood_wall: { wood: 5 },
@@ -469,22 +396,20 @@ function placeBuild(e) {
         wood_floor: { wood: 3 }
     };
     
-    const cost = costs[selectedBuildType];
+    const cost = costs[buildType];
     if (!cost) return;
     
     // Check resources
     for (const [resource, amount] of Object.entries(cost)) {
         if (inventory[resource] < amount) {
-            alert(`Not enough ${resource}!`);
-            return;
+            return; // Silently fail
         }
     }
     
     // Check collision
     for (const building of buildings.values()) {
-        if (building.x === buildPreview.x && building.y === buildPreview.y) {
-            alert('Space occupied!');
-            return;
+        if (Math.abs(building.x - x) < TILE_SIZE && Math.abs(building.y - y) < TILE_SIZE) {
+            return; // Silently fail
         }
     }
     
@@ -497,10 +422,11 @@ function placeBuild(e) {
     const buildingId = 'building_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     const building = {
         id: buildingId,
-        type: selectedBuildType,
-        x: buildPreview.x,
-        y: buildPreview.y,
-        health: selectedBuildType.includes('stone') ? 100 : 60,
+        type: buildType,
+        x: x,
+        y: y,
+        health: buildType.includes('stone') ? 100 : 60,
+        maxHealth: buildType.includes('stone') ? 100 : 60,
         owner: myPlayerId
     };
     
@@ -512,7 +438,6 @@ function placeBuild(e) {
     }
     
     updateInventoryUI();
-    closeBuildMenu();
 }
 
 function damageBuilding(buildingId, damage) {
@@ -521,7 +446,9 @@ function damageBuilding(buildingId, damage) {
     
     building.health -= damage;
     
-    if (building.health <= 0) {
+    const destroyed = building.health <= 0;
+    
+    if (destroyed) {
         buildings.delete(buildingId);
     }
     
@@ -530,34 +457,7 @@ function damageBuilding(buildingId, damage) {
         relay.sendPlayerAction('damage_building', {
             buildingId: buildingId,
             damage: damage,
-            destroyed: building.health <= 0
-        });
-    }
-}
-
-function damageResource(resourceId, damage) {
-    const resource = resources.get(resourceId);
-    if (!resource) return;
-    
-    resource.health -= damage;
-    
-    if (resource.health <= 0) {
-        // Give resources
-        const reward = resource.type === 'tree' ? { wood: 5 } : { stone: 8 };
-        for (const [type, amount] of Object.entries(reward)) {
-            inventory[type] = (inventory[type] || 0) + amount;
-        }
-        
-        resources.delete(resourceId);
-        updateInventoryUI();
-    }
-    
-    // Send to server
-    if (relay && relay.connected) {
-        relay.sendPlayerAction('damage_resource', {
-            resourceId: resourceId,
-            damage: damage,
-            destroyed: resource.health <= 0
+            destroyed: destroyed
         });
     }
 }
@@ -587,26 +487,29 @@ function handleBuildingDamage(data) {
     }
 }
 
-function handleResourceDamage(data) {
-    const resource = resources.get(data.resourceId);
-    if (!resource) return;
-    
-    resource.health -= data.damage;
-    
-    if (data.destroyed) {
-        resources.delete(data.resourceId);
-    }
-}
-
-function handlePlayerAttack(data) {
+function handlePlayerAttack(attackerId, data) {
     if (data.targetId === myPlayerId) {
         health = Math.max(0, health - data.damage);
         myPlayerData.health = health;
         document.getElementById('healthValue').textContent = health;
         
+        // Visual damage effect
+        canvas.style.filter = 'brightness(0.5)';
+        setTimeout(() => {
+            canvas.style.filter = 'brightness(1)';
+        }, 100);
+        
         if (health <= 0) {
-            alert('You died! Respawning...');
-            respawn();
+            setTimeout(() => {
+                alert('You died! Respawning...');
+                respawn();
+            }, 500);
+        }
+    } else {
+        // Update other player's health
+        const player = players.get(data.targetId);
+        if (player) {
+            player.health = Math.max(0, player.health - data.damage);
         }
     }
 }
@@ -614,9 +517,9 @@ function handlePlayerAttack(data) {
 function respawn() {
     health = 100;
     myPlayerData.health = 100;
-    myPlayerData.x = 250;
-    myPlayerData.y = 250;
-    inventory = { wood: 20, stone: 10 };
+    myPlayerData.x = WORLD_SIZE / 2;
+    myPlayerData.y = WORLD_SIZE / 2;
+    inventory = { wood: 200, stone: 100 };
     updateInventoryUI();
     document.getElementById('healthValue').textContent = 100;
 }
@@ -624,32 +527,46 @@ function respawn() {
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // Draw grid for reference
+    ctx.strokeStyle = 'rgba(100, 100, 100, 0.1)';
+    ctx.lineWidth = 1;
+    
+    const startX = Math.floor(cameraX / TILE_SIZE) * TILE_SIZE;
+    const startY = Math.floor(cameraY / TILE_SIZE) * TILE_SIZE;
+    
+    for (let x = startX; x < cameraX + canvas.width; x += TILE_SIZE) {
+        ctx.beginPath();
+        ctx.moveTo(x - cameraX, 0);
+        ctx.lineTo(x - cameraX, canvas.height);
+        ctx.stroke();
+    }
+    
+    for (let y = startY; y < cameraY + canvas.height; y += TILE_SIZE) {
+        ctx.beginPath();
+        ctx.moveTo(0, y - cameraY);
+        ctx.lineTo(canvas.width, y - cameraY);
+        ctx.stroke();
+    }
+    
     // Draw spawn area
     ctx.fillStyle = 'rgba(100, 200, 100, 0.1)';
+    ctx.strokeStyle = 'rgba(100, 200, 100, 0.5)';
+    ctx.lineWidth = 2;
     const spawnScreenX = WORLD_SIZE / 2 - cameraX;
     const spawnScreenY = WORLD_SIZE / 2 - cameraY;
+    const spawnPixelSize = SPAWN_SIZE * TILE_SIZE;
     ctx.fillRect(
-        spawnScreenX - (SPAWN_SIZE * TILE_SIZE) / 2,
-        spawnScreenY - (SPAWN_SIZE * TILE_SIZE) / 2,
-        SPAWN_SIZE * TILE_SIZE,
-        SPAWN_SIZE * TILE_SIZE
+        spawnScreenX - spawnPixelSize / 2,
+        spawnScreenY - spawnPixelSize / 2,
+        spawnPixelSize,
+        spawnPixelSize
     );
-    
-    // Draw resources
-    for (const resource of resources.values()) {
-        const screenX = resource.x - cameraX;
-        const screenY = resource.y - cameraY;
-        
-        if (resource.type === 'tree') {
-            ctx.fillStyle = '#22c55e';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, 10, 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            ctx.fillStyle = '#71717a';
-            ctx.fillRect(screenX - 10, screenY - 10, 20, 20);
-        }
-    }
+    ctx.strokeRect(
+        spawnScreenX - spawnPixelSize / 2,
+        spawnScreenY - spawnPixelSize / 2,
+        spawnPixelSize,
+        spawnPixelSize
+    );
     
     // Draw buildings
     for (const building of buildings.values()) {
@@ -659,17 +576,23 @@ function render() {
         if (building.type.includes('wall')) {
             ctx.fillStyle = building.type.includes('stone') ? '#78716c' : '#92400e';
             ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
         } else if (building.type.includes('floor')) {
             ctx.fillStyle = '#854d0e';
             ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
         }
         
         // Health bar
-        const healthPercent = building.health / (building.type.includes('stone') ? 100 : 60);
+        const healthPercent = building.health / building.maxHealth;
         ctx.fillStyle = '#333';
-        ctx.fillRect(screenX, screenY - 8, TILE_SIZE, 4);
+        ctx.fillRect(screenX, screenY - 8, TILE_SIZE, 5);
         ctx.fillStyle = '#4ade80';
-        ctx.fillRect(screenX, screenY - 8, TILE_SIZE * healthPercent, 4);
+        ctx.fillRect(screenX, screenY - 8, TILE_SIZE * healthPercent, 5);
     }
     
     // Draw other players
@@ -679,25 +602,28 @@ function render() {
         
         ctx.fillStyle = player.color || '#ef4444';
         ctx.beginPath();
-        ctx.arc(screenX, screenY, 10, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
         ctx.fill();
         
         // Icon
-        ctx.font = '20px Arial';
+        ctx.font = '24px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(player.icon, screenX, screenY);
         
         // Username
-        ctx.font = '12px Arial';
+        ctx.font = '14px Arial';
         ctx.fillStyle = '#fff';
-        ctx.fillText(player.username, screenX, screenY - 20);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(player.username, screenX, screenY - 30);
+        ctx.fillText(player.username, screenX, screenY - 30);
         
         // Health bar
         ctx.fillStyle = '#333';
-        ctx.fillRect(screenX - 20, screenY - 30, 40, 4);
+        ctx.fillRect(screenX - 25, screenY - 40, 50, 5);
         ctx.fillStyle = '#4ade80';
-        ctx.fillRect(screenX - 20, screenY - 30, 40 * (player.health / 100), 4);
+        ctx.fillRect(screenX - 25, screenY - 40, 50 * (player.health / 100), 5);
     }
     
     // Draw my player
@@ -707,33 +633,38 @@ function render() {
     const myColor = userProfile.gladiatorCosmetics?.slashColor || '#3b82f6';
     ctx.fillStyle = myColor;
     ctx.beginPath();
-    ctx.arc(myScreenX, myScreenY, 10, 0, Math.PI * 2);
+    ctx.arc(myScreenX, myScreenY, 15, 0, Math.PI * 2);
     ctx.fill();
     
     const myIcon = userProfile.gladiatorCosmetics?.icon || '⚔️';
-    ctx.font = '20px Arial';
+    ctx.font = '24px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(myIcon, myScreenX, myScreenY);
     
-    ctx.font = '12px Arial';
-    ctx.fillStyle = '#fff';
-    ctx.fillText(userProfile.username + ' (YOU)', myScreenX, myScreenY - 20);
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#4ade80';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.strokeText(userProfile.username + ' (YOU)', myScreenX, myScreenY - 30);
+    ctx.fillText(userProfile.username + ' (YOU)', myScreenX, myScreenY - 30);
     
     // Build preview
-    if (buildMode && buildPreview) {
+    if (buildPreview && selectedSlot >= 1) {
         const previewX = buildPreview.x - cameraX;
         const previewY = buildPreview.y - cameraY;
         
-        ctx.fillStyle = 'rgba(214, 158, 46, 0.5)';
+        const canPlace = !isInSpawn(buildPreview.x, buildPreview.y);
+        
+        ctx.fillStyle = canPlace ? 'rgba(100, 200, 100, 0.3)' : 'rgba(200, 100, 100, 0.3)';
         ctx.fillRect(previewX, previewY, TILE_SIZE, TILE_SIZE);
-        ctx.strokeStyle = '#d69e2e';
+        ctx.strokeStyle = canPlace ? '#4ade80' : '#ef4444';
         ctx.lineWidth = 2;
         ctx.strokeRect(previewX, previewY, TILE_SIZE, TILE_SIZE);
     }
     
-    // Show swing meter if charging
-    if (meterCharge > 0) {
+    // Show swing meter if axe selected
+    if (selectedSlot === 0) {
         document.getElementById('swingMeter').style.display = 'block';
     } else {
         document.getElementById('swingMeter').style.display = 'none';
@@ -743,72 +674,6 @@ function render() {
 function checkCollision(x1, y1, size1, x2, y2, size2) {
     return Math.abs(x1 - x2) < (size1 + size2) / 2 &&
            Math.abs(y1 - y2) < (size1 + size2) / 2;
-}
-
-function toggleBuildMenu() {
-    buildMode = !buildMode;
-    const menu = document.getElementById('buildMenu');
-    menu.style.display = buildMode ? 'block' : 'none';
-    
-    if (!buildMode) {
-        selectedBuildType = null;
-        buildPreview = null;
-    }
-}
-
-function closeBuildMenu() {
-    buildMode = false;
-    selectedBuildType = null;
-    buildPreview = null;
-    document.getElementById('buildMenu').style.display = 'none';
-}
-
-function toggleTradeCenter() {
-    const center = document.getElementById('tradeCenter');
-    const isOpen = center.style.display === 'block';
-    center.style.display = isOpen ? 'none' : 'block';
-}
-
-function closeTradeCenter() {
-    document.getElementById('tradeCenter').style.display = 'none';
-}
-
-function createTrade() {
-    const offerType = document.getElementById('offerType').value;
-    const offerAmount = parseInt(document.getElementById('offerAmount').value);
-    const requestType = document.getElementById('requestType').value;
-    const requestAmount = parseInt(document.getElementById('requestAmount').value);
-    
-    if (!offerAmount || !requestAmount || offerAmount <= 0 || requestAmount <= 0) {
-        alert('Invalid amounts!');
-        return;
-    }
-    
-    if (inventory[offerType] < offerAmount) {
-        alert(`Not enough ${offerType}!`);
-        return;
-    }
-    
-    // Deduct offered resources
-    inventory[offerType] -= offerAmount;
-    updateInventoryUI();
-    
-    const trade = {
-        id: 'trade_' + Date.now(),
-        trader: userProfile.username,
-        traderId: myPlayerId,
-        offer: { type: offerType, amount: offerAmount },
-        request: { type: requestType, amount: requestAmount }
-    };
-    
-    tradeRequests.push(trade);
-    
-    // Send to server
-    if (relay && relay.connected) {
-        relay.sendPlayerAction('create_trade', trade);
-    }
-    
-    alert('Trade posted!');
 }
 
 function updateInventoryUI() {
