@@ -649,9 +649,24 @@ function respawn() {
     myPlayerData.health = 100;
     myPlayerData.x = WORLD_SIZE / 2;
     myPlayerData.y = WORLD_SIZE / 2;
-    // DON'T give items on respawn - they keep their empty inventory
+    
+    // Update UI immediately
     updateInventoryUI();
     document.getElementById('healthValue').textContent = 100;
+    
+    // Force camera to follow player at spawn
+    cameraX = myPlayerData.x - canvas.width / 2;
+    cameraY = myPlayerData.y - canvas.height / 2;
+    
+    // Send update to server immediately
+    if (relay && relay.connected) {
+        relay.sendPlayerAction('player_update', {
+            x: myPlayerData.x,
+            y: myPlayerData.y,
+            health: health,
+            inventory: inventory
+        });
+    }
 }
 
 function render() {
