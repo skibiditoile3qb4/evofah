@@ -1,21 +1,24 @@
 const RELAY_SERVER = 'wss://relayfah.onrender.com';
 const ROOM_ID = 'survival_world';
-const WORLD_SIZE = 6000; // 3x bigger
+const WORLD_SIZE = 6000;
 const TILE_SIZE = 40;
 const SWING_CHARGE_TIME = 2000;
 const PLAYER_SPEED = 5;
 const ATTACK_RANGE = 60;
-const SPAWN_SIZE = 5; // 5x5 tile protected spawn
+const SPAWN_SIZE = 5;
+const PICKUP_RANGE = 50;
 
 let relay, userProfile, canvas, ctx;
 let myPlayerId, myPlayerData;
 let players = new Map();
 let buildings = new Map();
+let drops = new Map();
+let hasLoadedFromDB = false;
 
 // Player state
 let keys = {};
 let health = 100;
-let inventory = { wood: 20, stone: 10 }; // Fixed starting resources
+let inventory = { wood: 0, stone: 0 };
 let meterCharge = 0;
 let isCharging = false;
 let chargeInterval = null;
@@ -24,7 +27,7 @@ let chargeInterval = null;
 let cameraX = 0, cameraY = 0;
 
 // Hotbar
-let selectedSlot = 0; // 0=axe, 1=wood wall, 2=stone wall, 3=floor
+let selectedSlot = 0;
 let buildPreview = null;
 
 // Initialize
@@ -81,9 +84,13 @@ function setupControls() {
     document.addEventListener('keydown', (e) => {
         keys[e.key.toLowerCase()] = true;
         
-        // Number keys for hotbar
         if (e.key >= '1' && e.key <= '4') {
             selectSlot(parseInt(e.key) - 1);
+        }
+        
+        // E key to pickup nearby drops
+        if (e.key.toLowerCase() === 'e') {
+            tryPickupNearbyDrop();
         }
     });
     
@@ -98,7 +105,6 @@ function setupControls() {
 function selectSlot(slot) {
     selectedSlot = slot;
     
-    // Update UI
     document.querySelectorAll('.hotbar-slot').forEach((el, idx) => {
         if (idx === slot) {
             el.classList.add('active');
@@ -108,7 +114,6 @@ function selectSlot(slot) {
     });
 }
 
-// Make selectSlot globally accessible
 window.selectSlot = selectSlot;
 
 async function connectToServer() {
@@ -129,28 +134,45 @@ async function connectToServer() {
                 });
             }
             
-            // DON'T add other players here - they'll broadcast their position via heartbeat
-            
-            // Load saved inventory if available
-            if (data.savedInventory) {
-                inventory = data.savedInventory;
-                console.log('Loaded saved inventory:', inventory);
+            if (data.worldState && data.worldState.drops) {
+                data.worldState.drops.forEach(d => {
+                    drops.set(d.id, d);
+                });
             }
             
-            if (data.savedHealth) {
+            // Load saved data from database
+            let startX = WORLD_SIZE / 2;
+            let startY = WORLD_SIZE / 2;
+            
+            if (data.savedX !== null && data.savedY !== null) {
+                startX = data.savedX;
+                startY = data.savedY;
+                hasLoadedFromDB = true;
+            }
+            
+            if (data.savedInventory) {
+                inventory = data.savedInventory;
+                hasLoadedFromDB = true;
+                console.log('Loaded saved inventory:', inventory);
+            } else {
+                // Only give starting materials if no saved data exists
+                inventory = { wood: 20, stone: 10 };
+            }
+            
+            if (data.savedHealth !== null) {
                 health = data.savedHealth;
+                hasLoadedFromDB = true;
                 console.log('Loaded saved health:', health);
             }
             
-            // Update UI AFTER loading saved data
             updateInventoryUI();
             document.getElementById('healthValue').textContent = health;
             
             myPlayerData = {
                 id: myPlayerId,
                 username: userProfile.username,
-                x: WORLD_SIZE / 2,
-                y: WORLD_SIZE / 2,
+                x: startX,
+                y: startY,
                 health: health,
                 inventory: inventory,
                 icon: userProfile.gladiatorCosmetics?.icon || '⚔️',
@@ -162,7 +184,6 @@ async function connectToServer() {
         });
         
         relay.on('player_joined', (data) => {
-            // Don't add them yet - wait for their first heartbeat with position data
             console.log('Player joined:', data.player.username);
             updatePlayerList();
         });
@@ -198,8 +219,8 @@ function startHeartbeat() {
             relay.sendPlayerAction('player_update', {
                 x: myPlayerData.x,
                 y: myPlayerData.y,
-                health: health, // Use the global health variable that gets updated
-                inventory: inventory // Send inventory to server
+                health: health,
+                inventory: inventory
             });
         }
     }, 100);
@@ -223,6 +244,12 @@ function handlePlayerAction(data) {
         case 'attack_player':
             handlePlayerAttack(playerId, actionData);
             break;
+        case 'death_drop':
+            handleRemoteDeathDrop(actionData);
+            break;
+        case 'pickup_drop':
+            handleRemotePickup(actionData);
+            break;
     }
 }
 
@@ -244,7 +271,6 @@ function updateOtherPlayer(playerId, data) {
         player.y = data.y;
         player.health = data.health;
         player.inventory = data.inventory || player.inventory;
-        // Update name/cosmetics if they changed
         if (data.username) player.username = data.username;
         if (data.icon) player.icon = data.icon;
         if (data.color) player.color = data.color;
@@ -257,17 +283,14 @@ function startGameLoop() {
 }
 
 let lastFrameTime = Date.now();
-const TARGET_FPS = 60;
-const FRAME_TIME = 1000 / TARGET_FPS;
 
 function gameLoop() {
     if (!myPlayerData) return;
     
     const now = Date.now();
-    const deltaTime = (now - lastFrameTime) / (1000 / 60); // Normalize to 60fps
+    const deltaTime = (now - lastFrameTime) / (1000 / 60);
     lastFrameTime = now;
     
-    // Move player with delta time for smooth movement
     let dx = 0, dy = 0;
     const speed = PLAYER_SPEED * deltaTime;
     if (keys['w']) dy -= speed;
@@ -279,15 +302,12 @@ function gameLoop() {
         const newX = Math.max(0, Math.min(WORLD_SIZE, myPlayerData.x + dx));
         const newY = Math.max(0, Math.min(WORLD_SIZE, myPlayerData.y + dy));
         
-        // Check collision with buildings - using AABB collision
         let canMove = true;
-        const playerRadius = 15; // Player is 15px radius circle
+        const playerRadius = 15;
         
         for (const building of buildings.values()) {
-            // Skip floors - you can walk over them
             if (building.type.includes('floor')) continue;
             
-            // AABB collision for walls
             const buildLeft = building.x;
             const buildRight = building.x + TILE_SIZE;
             const buildTop = building.y;
@@ -313,7 +333,6 @@ function gameLoop() {
         }
     }
     
-    // Update camera
     cameraX = myPlayerData.x - canvas.width / 2;
     cameraY = myPlayerData.y - canvas.height / 2;
     
@@ -323,7 +342,7 @@ function gameLoop() {
 
 function startCharging() {
     chargeInterval = setInterval(() => {
-        if (selectedSlot === 0 && meterCharge < 100) { // Only charge if axe is selected
+        if (selectedSlot === 0 && meterCharge < 100) {
             meterCharge += (100 / (SWING_CHARGE_TIME / 50));
             if (meterCharge > 100) meterCharge = 100;
             document.getElementById('meterFill').style.width = meterCharge + '%';
@@ -336,13 +355,11 @@ function handleClick(e) {
     const mouseWorldX = e.clientX - rect.left + cameraX;
     const mouseWorldY = e.clientY - rect.top + cameraY;
     
-    // Building mode (slots 1-3)
     if (selectedSlot >= 1 && selectedSlot <= 3) {
         placeBuild(mouseWorldX, mouseWorldY);
         return;
     }
     
-    // Attack mode (slot 0 - axe)
     if (selectedSlot === 0) {
         const distance = Math.sqrt(
             Math.pow(mouseWorldX - myPlayerData.x, 2) + 
@@ -357,7 +374,6 @@ function handleClick(e) {
         
         const damage = Math.floor((meterCharge / 100) * 25);
         
-        // Check if hitting building
         for (const building of buildings.values()) {
             if (checkCollision(mouseWorldX, mouseWorldY, 10, building.x, building.y, TILE_SIZE)) {
                 damageBuilding(building.id, damage);
@@ -367,7 +383,6 @@ function handleClick(e) {
             }
         }
         
-        // Check if hitting player
         for (const player of players.values()) {
             if (checkCollision(mouseWorldX, mouseWorldY, 10, player.x, player.y, 20)) {
                 attackPlayer(player.id, damage);
@@ -403,9 +418,8 @@ function placeBuild(worldX, worldY) {
     const x = buildPreview.x;
     const y = buildPreview.y;
     
-    // Check if in spawn
     if (isInSpawn(x, y)) {
-        return; // Silently fail
+        return;
     }
     
     const buildTypes = ['axe', 'wood_wall', 'stone_wall', 'wood_floor'];
@@ -420,26 +434,22 @@ function placeBuild(worldX, worldY) {
     const cost = costs[buildType];
     if (!cost) return;
     
-    // Check resources
     for (const [resource, amount] of Object.entries(cost)) {
         if (inventory[resource] < amount) {
-            return; // Silently fail
+            return;
         }
     }
     
-    // Check collision
     for (const building of buildings.values()) {
         if (Math.abs(building.x - x) < TILE_SIZE && Math.abs(building.y - y) < TILE_SIZE) {
-            return; // Silently fail
+            return;
         }
     }
     
-    // Deduct resources
     for (const [resource, amount] of Object.entries(cost)) {
         inventory[resource] -= amount;
     }
     
-    // Create building
     const buildingId = 'building_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     const building = {
         id: buildingId,
@@ -453,7 +463,6 @@ function placeBuild(worldX, worldY) {
     
     buildings.set(buildingId, building);
     
-    // Send to server
     if (relay && relay.connected) {
         relay.sendPlayerAction('build', building);
     }
@@ -473,7 +482,6 @@ function damageBuilding(buildingId, damage) {
         buildings.delete(buildingId);
     }
     
-    // Send to server
     if (relay && relay.connected) {
         relay.sendPlayerAction('damage_building', {
             buildingId: buildingId,
@@ -484,7 +492,6 @@ function damageBuilding(buildingId, damage) {
 }
 
 function attackPlayer(targetId, damage) {
-    // Send to server
     if (relay && relay.connected) {
         relay.sendPlayerAction('attack_player', {
             targetId: targetId,
@@ -514,20 +521,79 @@ function handlePlayerAttack(attackerId, data) {
         myPlayerData.health = health;
         document.getElementById('healthValue').textContent = health;
         
-        // Visual damage effect
         canvas.style.filter = 'brightness(0.5)';
         setTimeout(() => {
             canvas.style.filter = 'brightness(1)';
         }, 100);
         
         if (health <= 0) {
-            showDeathScreen();
+            handleDeath();
         }
     } else {
-        // Update other player's health
         const player = players.get(data.targetId);
         if (player) {
             player.health = Math.max(0, player.health - data.damage);
+        }
+    }
+}
+
+function handleDeath() {
+    // Drop all items at death location
+    if (relay && relay.connected) {
+        relay.sendPlayerAction('death_drop', {
+            x: myPlayerData.x,
+            y: myPlayerData.y,
+            inventory: inventory
+        });
+    }
+    
+    // Clear inventory immediately
+    inventory = { wood: 0, stone: 0 };
+    updateInventoryUI();
+    
+    showDeathScreen();
+}
+
+function handleRemoteDeathDrop(dropData) {
+    drops.set(dropData.id, dropData);
+}
+
+function handleRemotePickup(data) {
+    drops.delete(data.dropId);
+}
+
+function tryPickupNearbyDrop() {
+    for (const drop of drops.values()) {
+        const distance = Math.sqrt(
+            Math.pow(drop.x - myPlayerData.x, 2) + 
+            Math.pow(drop.y - myPlayerData.y, 2)
+        );
+        
+        if (distance < PICKUP_RANGE) {
+            // Add items to inventory
+            for (const [resource, amount] of Object.entries(drop.inventory)) {
+                inventory[resource] = (inventory[resource] || 0) + amount;
+            }
+            
+            updateInventoryUI();
+            
+            // Tell server to remove drop
+            if (relay && relay.connected) {
+                relay.sendPlayerAction('pickup_drop', {
+                    dropId: drop.id
+                });
+            }
+            
+            // Remove locally
+            drops.delete(drop.id);
+            
+            // Visual feedback
+            canvas.style.filter = 'brightness(1.3)';
+            setTimeout(() => {
+                canvas.style.filter = 'brightness(1)';
+            }, 100);
+            
+            break; // Only pickup one drop per press
         }
     }
 }
@@ -553,6 +619,7 @@ function showDeathScreen() {
         <div style="text-align: center;">
             <div style="font-size: 72px; margin-bottom: 20px;">💀</div>
             <div style="font-size: 48px; color: #ff4444; font-weight: bold; margin-bottom: 30px;">YOU DIED</div>
+            <div style="font-size: 18px; color: #aaa; margin-bottom: 30px;">Your items have been dropped</div>
             <button id="respawnBtn" style="
                 padding: 15px 40px;
                 background: #4ade80;
@@ -582,7 +649,7 @@ function respawn() {
     myPlayerData.health = 100;
     myPlayerData.x = WORLD_SIZE / 2;
     myPlayerData.y = WORLD_SIZE / 2;
-    inventory = { wood: 20, stone: 10 }; // Fixed respawn resources
+    // DON'T give items on respawn - they keep their empty inventory
     updateInventoryUI();
     document.getElementById('healthValue').textContent = 100;
 }
@@ -590,7 +657,6 @@ function respawn() {
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw grid for reference
     ctx.strokeStyle = 'rgba(100, 100, 100, 0.1)';
     ctx.lineWidth = 1;
     
@@ -611,7 +677,6 @@ function render() {
         ctx.stroke();
     }
     
-    // Draw spawn area
     ctx.fillStyle = 'rgba(100, 200, 100, 0.1)';
     ctx.strokeStyle = 'rgba(100, 200, 100, 0.5)';
     ctx.lineWidth = 2;
@@ -631,7 +696,51 @@ function render() {
         spawnPixelSize
     );
     
-    // Draw buildings
+    // Draw death drops
+    for (const drop of drops.values()) {
+        const screenX = drop.x - cameraX;
+        const screenY = drop.y - cameraY;
+        
+        // Pulsing effect
+        const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+        
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        
+        // Draw glowing chest
+        ctx.fillStyle = '#fbbf24';
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw chest icon
+        ctx.font = '28px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#000';
+        ctx.fillText('📦', screenX, screenY);
+        
+        ctx.restore();
+        
+        // Show "E to pickup" if player is nearby
+        const distance = Math.sqrt(
+            Math.pow(drop.x - myPlayerData.x, 2) + 
+            Math.pow(drop.y - myPlayerData.y, 2)
+        );
+        
+        if (distance < PICKUP_RANGE) {
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.strokeText('[E] Pickup', screenX, screenY - 35);
+            ctx.fillText('[E] Pickup', screenX, screenY - 35);
+        }
+    }
+    
     for (const building of buildings.values()) {
         const screenX = building.x - cameraX;
         const screenY = building.y - cameraY;
@@ -650,7 +759,6 @@ function render() {
             ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
         }
         
-        // Health bar
         const healthPercent = building.health / building.maxHealth;
         ctx.fillStyle = '#333';
         ctx.fillRect(screenX, screenY - 8, TILE_SIZE, 5);
@@ -658,7 +766,6 @@ function render() {
         ctx.fillRect(screenX, screenY - 8, TILE_SIZE * healthPercent, 5);
     }
     
-    // Draw other players
     for (const player of players.values()) {
         const screenX = player.x - cameraX;
         const screenY = player.y - cameraY;
@@ -668,13 +775,11 @@ function render() {
         ctx.arc(screenX, screenY, 15, 0, Math.PI * 2);
         ctx.fill();
         
-        // Icon
         ctx.font = '24px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(player.icon, screenX, screenY);
         
-        // Username
         ctx.font = '14px Arial';
         ctx.fillStyle = '#fff';
         ctx.strokeStyle = '#000';
@@ -682,14 +787,12 @@ function render() {
         ctx.strokeText(player.username, screenX, screenY - 30);
         ctx.fillText(player.username, screenX, screenY - 30);
         
-        // Health bar
         ctx.fillStyle = '#333';
         ctx.fillRect(screenX - 25, screenY - 40, 50, 5);
         ctx.fillStyle = '#4ade80';
         ctx.fillRect(screenX - 25, screenY - 40, 50 * (player.health / 100), 5);
     }
     
-    // Draw my player
     const myScreenX = myPlayerData.x - cameraX;
     const myScreenY = myPlayerData.y - cameraY;
     
@@ -712,7 +815,6 @@ function render() {
     ctx.strokeText(userProfile.username + ' (YOU)', myScreenX, myScreenY - 30);
     ctx.fillText(userProfile.username + ' (YOU)', myScreenX, myScreenY - 30);
     
-    // Build preview
     if (buildPreview && selectedSlot >= 1) {
         const previewX = buildPreview.x - cameraX;
         const previewY = buildPreview.y - cameraY;
@@ -726,7 +828,6 @@ function render() {
         ctx.strokeRect(previewX, previewY, TILE_SIZE, TILE_SIZE);
     }
     
-    // Show swing meter if axe selected
     if (selectedSlot === 0) {
         document.getElementById('swingMeter').style.display = 'block';
     } else {
@@ -748,14 +849,12 @@ function updatePlayerList() {
     const list = document.getElementById('playersListContent');
     list.innerHTML = '';
     
-    // Add yourself
     const myEntry = document.createElement('div');
     myEntry.className = 'player-entry';
     myEntry.textContent = userProfile.username + ' (You)';
     myEntry.style.color = '#4ade80';
     list.appendChild(myEntry);
     
-    // Add others
     for (const player of players.values()) {
         const entry = document.createElement('div');
         entry.className = 'player-entry';
@@ -766,5 +865,4 @@ function updatePlayerList() {
     document.getElementById('playerCount').textContent = players.size + 1;
 }
 
-// Start game
 init();
