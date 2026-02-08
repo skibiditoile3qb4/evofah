@@ -194,7 +194,8 @@ async function connectToServer() {
                 icon: userProfile.gladiatorCosmetics?.icon || '⚔️',
                 color: userProfile.gladiatorCosmetics?.slashColor || '#ffffff'
             };
-            
+            document.getElementById('posX').textContent = Math.floor(startX);
+            document.getElementById('posY').textContent = Math.floor(startY);
             updatePlayerList();
             startGameLoop();
         });
@@ -352,6 +353,8 @@ function gameLoop() {
         if (canMove) {
             myPlayerData.x = newX;
             myPlayerData.y = newY;
+            document.getElementById('posX').textContent = Math.floor(newX);
+            document.getElementById('posY').textContent = Math.floor(newY);
         }
     }
     
