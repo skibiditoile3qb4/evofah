@@ -93,6 +93,11 @@ function setupControls() {
         if (e.key.toLowerCase() === 'e') {
             tryPickupNearbyDrop();
         }
+        
+        // Q key to drop items
+        if (e.key.toLowerCase() === 'q') {
+            dropItem();
+        }
     });
     
     document.addEventListener('keyup', (e) => {
@@ -677,6 +682,37 @@ function tryPickupNearbyDrop() {
     }
 }
 
+function dropItem() {
+    // Determine which resource to drop (prioritize whichever you have more of)
+    let resourceToDrop = null;
+    
+    if ((inventory.wood || 0) > 0 && (inventory.wood || 0) >= (inventory.stone || 0)) {
+        resourceToDrop = 'wood';
+    } else if ((inventory.stone || 0) > 0) {
+        resourceToDrop = 'stone';
+    }
+    
+    if (!resourceToDrop) {
+        return; // Nothing to drop
+    }
+    
+    // Remove 1 from inventory
+    inventory[resourceToDrop] -= 1;
+    updateInventoryUI();
+    
+    // Create drop at player position
+    const dropInventory = { wood: 0, stone: 0 };
+    dropInventory[resourceToDrop] = 1;
+    
+    if (relay && relay.connected) {
+        relay.sendPlayerAction('death_drop', {
+            x: myPlayerData.x,
+            y: myPlayerData.y,
+            inventory: dropInventory
+        });
+    }
+}
+
 function showDeathScreen() {
     const deathScreen = document.createElement('div');
     deathScreen.id = 'deathScreen';
@@ -834,11 +870,14 @@ function render() {
             ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
         }
         
-        const healthPercent = building.health / building.maxHealth;
-        ctx.fillStyle = '#333';
-        ctx.fillRect(screenX, screenY - 8, TILE_SIZE, 5);
-        ctx.fillStyle = '#4ade80';
-        ctx.fillRect(screenX, screenY - 8, TILE_SIZE * healthPercent, 5);
+        // Only show health bar if damaged
+        if (building.health < building.maxHealth) {
+            const healthPercent = building.health / building.maxHealth;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(screenX, screenY - 8, TILE_SIZE, 5);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(screenX, screenY - 8, TILE_SIZE * healthPercent, 5);
+        }
     }
     
     for (const player of players.values()) {
