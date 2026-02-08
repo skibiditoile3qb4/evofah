@@ -1,5 +1,3 @@
-// survival-game.js - Fixed survival game
-
 const RELAY_SERVER = 'wss://relayfah.onrender.com';
 const ROOM_ID = 'survival_world';
 const WORLD_SIZE = 6000; // 3x bigger
@@ -132,6 +130,21 @@ async function connectToServer() {
             }
             
             // DON'T add other players here - they'll broadcast their position via heartbeat
+            
+            // Load saved inventory if available
+            if (data.savedInventory) {
+                inventory = data.savedInventory;
+                console.log('Loaded saved inventory:', inventory);
+            }
+            
+            if (data.savedHealth) {
+                health = data.savedHealth;
+                console.log('Loaded saved health:', health);
+            }
+            
+            // Update UI AFTER loading saved data
+            updateInventoryUI();
+            document.getElementById('healthValue').textContent = health;
             
             myPlayerData = {
                 id: myPlayerId,
