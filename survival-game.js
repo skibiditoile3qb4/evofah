@@ -205,10 +205,10 @@ async function connectToServer() {
             updatePlayerList();
         });
         
-        relay.on('player_left', (data) => {
-            players.delete(data.player.permanentId);
-            updatePlayerList();
-        });
+       relay.on('player_left', (data) => {
+    players.delete(data.player.permanentId); 
+    updatePlayerList();
+});
         
         relay.on('player_action', (data) => {
             handlePlayerAction(data);
