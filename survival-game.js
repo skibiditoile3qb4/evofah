@@ -1,3 +1,4 @@
+// survival-game.js - Fixed survival game
 
 const RELAY_SERVER = 'wss://relayfah.onrender.com';
 const ROOM_ID = 'survival_world';
@@ -185,7 +186,7 @@ function startHeartbeat() {
                 x: myPlayerData.x,
                 y: myPlayerData.y,
                 health: health, // Use the global health variable that gets updated
-                inventory: myPlayerData.inventory
+                inventory: inventory // Send inventory to server
             });
         }
     }, 100);
@@ -221,13 +222,15 @@ function updateOtherPlayer(playerId, data) {
             y: data.y,
             health: data.health || 100,
             icon: data.icon || '⚔️',
-            color: data.color || '#ffffff'
+            color: data.color || '#ffffff',
+            inventory: data.inventory || { wood: 0, stone: 0 }
         });
     } else {
         const player = players.get(playerId);
         player.x = data.x;
         player.y = data.y;
         player.health = data.health;
+        player.inventory = data.inventory || player.inventory;
         // Update name/cosmetics if they changed
         if (data.username) player.username = data.username;
         if (data.icon) player.icon = data.icon;
@@ -240,15 +243,24 @@ function startGameLoop() {
     startCharging();
 }
 
+let lastFrameTime = Date.now();
+const TARGET_FPS = 60;
+const FRAME_TIME = 1000 / TARGET_FPS;
+
 function gameLoop() {
     if (!myPlayerData) return;
     
-    // Move player
+    const now = Date.now();
+    const deltaTime = (now - lastFrameTime) / (1000 / 60); // Normalize to 60fps
+    lastFrameTime = now;
+    
+    // Move player with delta time for smooth movement
     let dx = 0, dy = 0;
-    if (keys['w']) dy -= PLAYER_SPEED;
-    if (keys['s']) dy += PLAYER_SPEED;
-    if (keys['a']) dx -= PLAYER_SPEED;
-    if (keys['d']) dx += PLAYER_SPEED;
+    const speed = PLAYER_SPEED * deltaTime;
+    if (keys['w']) dy -= speed;
+    if (keys['s']) dy += speed;
+    if (keys['a']) dx -= speed;
+    if (keys['d']) dx += speed;
     
     if (dx !== 0 || dy !== 0) {
         const newX = Math.max(0, Math.min(WORLD_SIZE, myPlayerData.x + dx));
@@ -496,10 +508,7 @@ function handlePlayerAttack(attackerId, data) {
         }, 100);
         
         if (health <= 0) {
-            setTimeout(() => {
-                alert('You died! Respawning...');
-                respawn();
-            }, 500);
+            showDeathScreen();
         }
     } else {
         // Update other player's health
@@ -508,6 +517,51 @@ function handlePlayerAttack(attackerId, data) {
             player.health = Math.max(0, player.health - data.damage);
         }
     }
+}
+
+function showDeathScreen() {
+    const deathScreen = document.createElement('div');
+    deathScreen.id = 'deathScreen';
+    deathScreen.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    deathScreen.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 72px; margin-bottom: 20px;">💀</div>
+            <div style="font-size: 48px; color: #ff4444; font-weight: bold; margin-bottom: 30px;">YOU DIED</div>
+            <button id="respawnBtn" style="
+                padding: 15px 40px;
+                background: #4ade80;
+                border: none;
+                border-radius: 8px;
+                color: #000;
+                font-size: 20px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.2s;
+            " onmouseover="this.style.background='#22c55e'" onmouseout="this.style.background='#4ade80'">
+                RESPAWN
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(deathScreen);
+    
+    document.getElementById('respawnBtn').addEventListener('click', () => {
+        deathScreen.remove();
+        respawn();
+    });
 }
 
 function respawn() {
