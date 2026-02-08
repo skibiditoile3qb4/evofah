@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survival Arena</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #1a1a1a;
+            image-rendering: pixelated;
+        }
+
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+        }
+
+        .resource-bar {
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        #swingMeter {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            display: none;
+        }
+
+        #meterBar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #meterFill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #4ade80 100%);
+            transition: width 0.05s linear;
+        }
+
+        #inventory {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .inv-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        #buildMenu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 26, 26, 0.95);
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            display: none;
+            z-index: 200;
+        }
+
+        .build-option {
+            padding: 12px 20px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .build-option:hover {
+            background: #2a2a2a;
+            border-color: #555;
+        }
+
+        .build-option.selected {
+            background: #d69e2e;
+            border-color: #b7791f;
+            color: #000;
+        }
+
+        #tradeCenter {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 26, 26, 0.95);
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            display: none;
+            z-index: 200;
+            max-width: 500px;
+        }
+
+        .trade-request {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #d69e2e;
+            border: 2px solid #b7791f;
+            border-radius: 6px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #b7791f;
+        }
+
+        .btn-cancel {
+            background: #333;
+            border-color: #555;
+            color: #fff;
+        }
+
+        #playerList {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .player-entry {
+            padding: 5px;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+    </style>
+    <script src="relay-client.js"></script>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui">
+        <div class="resource-bar">
+            <div>❤️ Health: <span id="healthValue">100</span>/100</div>
+        </div>
+        <div class="resource-bar">
+            <div>👥 Players: <span id="playerCount">1</span></div>
+        </div>
+    </div>
+
+    <div id="swingMeter">
+        <div style="text-align: center; margin-bottom: 5px; font-size: 12px;">Swing Power</div>
+        <div id="meterBar">
+            <div id="meterFill"></div>
+        </div>
+        <div style="text-align: center; margin-top: 5px; font-size: 11px;">Click to swing</div>
+    </div>
+
+    <div id="inventory">
+        <div style="font-weight: bold; margin-bottom: 10px;">Inventory</div>
+        <div class="inv-item">
+            <span>🪵 Wood:</span>
+            <span id="woodCount">20</span>
+        </div>
+        <div class="inv-item">
+            <span>🪨 Stone:</span>
+            <span id="stoneCount">10</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 11px; color: #888;">
+            Press B to build<br>
+            WASD to move<br>
+            Click to attack
+        </div>
+    </div>
+
+    <div id="buildMenu">
+        <h3 style="margin-bottom: 15px;">Build Structure</h3>
+        <div class="build-option" data-type="wood_wall">
+            <div style="font-weight: bold;">🪵 Wood Wall</div>
+            <div style="font-size: 12px; color: #888;">Cost: 5 Wood</div>
+        </div>
+        <div class="build-option" data-type="stone_wall">
+            <div style="font-weight: bold;">🪨 Stone Wall</div>
+            <div style="font-size: 12px; color: #888;">Cost: 8 Stone</div>
+        </div>
+        <div class="build-option" data-type="wood_floor">
+            <div style="font-weight: bold;">🟫 Wood Floor</div>
+            <div style="font-size: 12px; color: #888;">Cost: 3 Wood</div>
+        </div>
+        <button class="btn btn-cancel" onclick="closeBuildMenu()">Cancel</button>
+    </div>
+
+    <div id="tradeCenter">
+        <h3 style="margin-bottom: 15px;">Trading Center</h3>
+        <div style="margin-bottom: 20px;">
+            <h4>Create Trade Request</h4>
+            <div style="margin: 10px 0;">
+                <label>Offer:</label>
+                <select id="offerType">
+                    <option value="wood">Wood</option>
+                    <option value="stone">Stone</option>
+                </select>
+                <input type="number" id="offerAmount" placeholder="Amount" min="1" style="width: 80px; padding: 5px;">
+            </div>
+            <div style="margin: 10px 0;">
+                <label>Request:</label>
+                <select id="requestType">
+                    <option value="wood">Wood</option>
+                    <option value="stone">Stone</option>
+                </select>
+                <input type="number" id="requestAmount" placeholder="Amount" min="1" style="width: 80px; padding: 5px;">
+            </div>
+            <button class="btn" onclick="createTrade()">Post Trade</button>
+        </div>
+        <div id="tradesList"></div>
+        <button class="btn btn-cancel" onclick="closeTradeCenter()">Close</button>
+    </div>
+
+    <div id="playerList">
+        <div style="font-weight: bold; margin-bottom: 10px;">Online Players</div>
+        <div id="playersListContent"></div>
+    </div>
+
+    <script src="survival-game.js"></script>
+</body>
+</html>
