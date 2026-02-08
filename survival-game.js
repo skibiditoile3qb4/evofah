@@ -683,16 +683,27 @@ function tryPickupNearbyDrop() {
 }
 
 function dropItem() {
-    // Determine which resource to drop (prioritize whichever you have more of)
-    let resourceToDrop = null;
-    
-    if ((inventory.wood || 0) > 0 && (inventory.wood || 0) >= (inventory.stone || 0)) {
-        resourceToDrop = 'wood';
-    } else if ((inventory.stone || 0) > 0) {
-        resourceToDrop = 'stone';
+    // Can't drop axe (slot 0)
+    if (selectedSlot === 0) {
+        return;
     }
     
-    if (!resourceToDrop) {
+    // Determine which resource to drop based on selected slot
+    let resourceToDrop = null;
+    
+    if (selectedSlot === 1) {
+        // Wood wall slot = drop wood
+        resourceToDrop = 'wood';
+    } else if (selectedSlot === 2) {
+        // Stone wall slot = drop stone
+        resourceToDrop = 'stone';
+    } else if (selectedSlot === 3) {
+        // Wood floor slot = drop wood
+        resourceToDrop = 'wood';
+    }
+    
+    // Check if you have any of that resource
+    if (!resourceToDrop || (inventory[resourceToDrop] || 0) <= 0) {
         return; // Nothing to drop
     }
     
@@ -700,7 +711,7 @@ function dropItem() {
     inventory[resourceToDrop] -= 1;
     updateInventoryUI();
     
-    // Create drop at player position
+    // Create drop at player position with ONLY the item being dropped
     const dropInventory = { wood: 0, stone: 0 };
     dropInventory[resourceToDrop] = 1;
     
