@@ -1,9 +1,8 @@
-// survival-game.js - Fixed survival game
 
 const RELAY_SERVER = 'wss://relayfah.onrender.com';
 const ROOM_ID = 'survival_world';
-const WORLD_SIZE = 2000; // Much larger world
-const TILE_SIZE = 40; // Larger tiles
+const WORLD_SIZE = 6000; // 3x bigger
+const TILE_SIZE = 40;
 const SWING_CHARGE_TIME = 2000;
 const PLAYER_SPEED = 5;
 const ATTACK_RANGE = 60;
@@ -17,7 +16,7 @@ let buildings = new Map();
 // Player state
 let keys = {};
 let health = 100;
-let inventory = { wood: 200, stone: 100 }; // Start with lots of resources
+let inventory = { wood: 20, stone: 10 }; // Fixed starting resources
 let meterCharge = 0;
 let isCharging = false;
 let chargeInterval = null;
@@ -108,11 +107,6 @@ function selectSlot(slot) {
             el.classList.remove('active');
         }
     });
-    
-    // Show/hide swing meter based on slot
-    if (slot === 0) {
-        document.getElementById('swingMeter').style.display = 'block';
-    }
 }
 
 // Make selectSlot globally accessible
@@ -136,21 +130,7 @@ async function connectToServer() {
                 });
             }
             
-            if (data.players) {
-                data.players.forEach(p => {
-                    if (p.permanentId !== myPlayerId) {
-                        players.set(p.permanentId, {
-                            id: p.permanentId,
-                            username: p.username,
-                            x: WORLD_SIZE / 2,
-                            y: WORLD_SIZE / 2,
-                            health: 100,
-                            icon: p.gladiatorCosmetics?.icon || '⚔️',
-                            color: p.gladiatorCosmetics?.slashColor || '#ffffff'
-                        });
-                    }
-                });
-            }
+            // DON'T add other players here - they'll broadcast their position via heartbeat
             
             myPlayerData = {
                 id: myPlayerId,
@@ -158,7 +138,9 @@ async function connectToServer() {
                 x: WORLD_SIZE / 2,
                 y: WORLD_SIZE / 2,
                 health: health,
-                inventory: inventory
+                inventory: inventory,
+                icon: userProfile.gladiatorCosmetics?.icon || '⚔️',
+                color: userProfile.gladiatorCosmetics?.slashColor || '#ffffff'
             };
             
             updatePlayerList();
@@ -166,17 +148,8 @@ async function connectToServer() {
         });
         
         relay.on('player_joined', (data) => {
-            if (data.player.permanentId !== myPlayerId) {
-                players.set(data.player.permanentId, {
-                    id: data.player.permanentId,
-                    username: data.player.username,
-                    x: WORLD_SIZE / 2,
-                    y: WORLD_SIZE / 2,
-                    health: 100,
-                    icon: data.player.gladiatorCosmetics?.icon || '⚔️',
-                    color: data.player.gladiatorCosmetics?.slashColor || '#ffffff'
-                });
-            }
+            // Don't add them yet - wait for their first heartbeat with position data
+            console.log('Player joined:', data.player.username);
             updatePlayerList();
         });
         
@@ -211,7 +184,7 @@ function startHeartbeat() {
             relay.sendPlayerAction('player_update', {
                 x: myPlayerData.x,
                 y: myPlayerData.y,
-                health: myPlayerData.health,
+                health: health, // Use the global health variable that gets updated
                 inventory: myPlayerData.inventory
             });
         }
@@ -255,6 +228,10 @@ function updateOtherPlayer(playerId, data) {
         player.x = data.x;
         player.y = data.y;
         player.health = data.health;
+        // Update name/cosmetics if they changed
+        if (data.username) player.username = data.username;
+        if (data.icon) player.icon = data.icon;
+        if (data.color) player.color = data.color;
     }
 }
 
@@ -277,10 +254,29 @@ function gameLoop() {
         const newX = Math.max(0, Math.min(WORLD_SIZE, myPlayerData.x + dx));
         const newY = Math.max(0, Math.min(WORLD_SIZE, myPlayerData.y + dy));
         
-        // Check collision with buildings
+        // Check collision with buildings - using AABB collision
         let canMove = true;
+        const playerRadius = 15; // Player is 15px radius circle
+        
         for (const building of buildings.values()) {
-            if (checkCollision(newX, newY, 20, building.x, building.y, TILE_SIZE)) {
+            // Skip floors - you can walk over them
+            if (building.type.includes('floor')) continue;
+            
+            // AABB collision for walls
+            const buildLeft = building.x;
+            const buildRight = building.x + TILE_SIZE;
+            const buildTop = building.y;
+            const buildBottom = building.y + TILE_SIZE;
+            
+            const playerLeft = newX - playerRadius;
+            const playerRight = newX + playerRadius;
+            const playerTop = newY - playerRadius;
+            const playerBottom = newY + playerRadius;
+            
+            if (playerRight > buildLeft && 
+                playerLeft < buildRight && 
+                playerBottom > buildTop && 
+                playerTop < buildBottom) {
                 canMove = false;
                 break;
             }
@@ -519,7 +515,7 @@ function respawn() {
     myPlayerData.health = 100;
     myPlayerData.x = WORLD_SIZE / 2;
     myPlayerData.y = WORLD_SIZE / 2;
-    inventory = { wood: 200, stone: 100 };
+    inventory = { wood: 20, stone: 10 }; // Fixed respawn resources
     updateInventoryUI();
     document.getElementById('healthValue').textContent = 100;
 }
