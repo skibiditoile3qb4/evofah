@@ -81,60 +81,65 @@
             font-size: 14px;
         }
 
-        #buildMenu {
+        #hotbar {
             position: fixed;
-            top: 50%;
+            bottom: 20px;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(26, 26, 26, 0.95);
-            border: 2px solid #333;
-            border-radius: 12px;
-            padding: 20px;
-            display: none;
-            z-index: 200;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
         }
 
-        .build-option {
-            padding: 12px 20px;
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 6px;
-            margin-bottom: 10px;
+        .hotbar-slot {
+            width: 70px;
+            height: 70px;
+            background: rgba(26, 26, 26, 0.9);
+            border: 3px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
         }
 
-        .build-option:hover {
-            background: #2a2a2a;
+        .hotbar-slot:hover {
+            background: rgba(42, 42, 42, 0.9);
             border-color: #555;
+            transform: translateY(-3px);
         }
 
-        .build-option.selected {
-            background: #d69e2e;
-            border-color: #b7791f;
-            color: #000;
+        .hotbar-slot.active {
+            border-color: #d69e2e;
+            background: rgba(214, 158, 46, 0.2);
         }
 
-        #tradeCenter {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(26, 26, 26, 0.95);
-            border: 2px solid #333;
-            border-radius: 12px;
-            padding: 20px;
-            display: none;
-            z-index: 200;
-            max-width: 500px;
+        .slot-icon {
+            font-size: 32px;
         }
 
-        .trade-request {
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
+        .slot-label {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 11px;
+            color: #888;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .slot-cost {
+            position: absolute;
+            bottom: 2px;
+            font-size: 9px;
+            color: #aaa;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2px 4px;
+            border-radius: 3px;
         }
 
         .btn {
@@ -209,53 +214,32 @@
             <span id="stoneCount">10</span>
         </div>
         <div style="margin-top: 10px; font-size: 11px; color: #888;">
-            Press B to build<br>
-            WASD to move<br>
-            Click to attack
+            1-4: Select tool/block<br>
+            WASD: Move<br>
+            Click: Use tool
         </div>
     </div>
 
-    <div id="buildMenu">
-        <h3 style="margin-bottom: 15px;">Build Structure</h3>
-        <div class="build-option" data-type="wood_wall">
-            <div style="font-weight: bold;">🪵 Wood Wall</div>
-            <div style="font-size: 12px; color: #888;">Cost: 5 Wood</div>
+    <div id="hotbar">
+        <div class="hotbar-slot active" data-slot="0" onclick="selectSlot(0)">
+            <div class="slot-icon">🪓</div>
+            <div class="slot-label">1</div>
         </div>
-        <div class="build-option" data-type="stone_wall">
-            <div style="font-weight: bold;">🪨 Stone Wall</div>
-            <div style="font-size: 12px; color: #888;">Cost: 8 Stone</div>
+        <div class="hotbar-slot" data-slot="1" onclick="selectSlot(1)">
+            <div class="slot-icon">🪵</div>
+            <div class="slot-label">2</div>
+            <div class="slot-cost">5 wood</div>
         </div>
-        <div class="build-option" data-type="wood_floor">
-            <div style="font-weight: bold;">🟫 Wood Floor</div>
-            <div style="font-size: 12px; color: #888;">Cost: 3 Wood</div>
+        <div class="hotbar-slot" data-slot="2" onclick="selectSlot(2)">
+            <div class="slot-icon">🪨</div>
+            <div class="slot-label">3</div>
+            <div class="slot-cost">8 stone</div>
         </div>
-        <button class="btn btn-cancel" onclick="closeBuildMenu()">Cancel</button>
-    </div>
-
-    <div id="tradeCenter">
-        <h3 style="margin-bottom: 15px;">Trading Center</h3>
-        <div style="margin-bottom: 20px;">
-            <h4>Create Trade Request</h4>
-            <div style="margin: 10px 0;">
-                <label>Offer:</label>
-                <select id="offerType">
-                    <option value="wood">Wood</option>
-                    <option value="stone">Stone</option>
-                </select>
-                <input type="number" id="offerAmount" placeholder="Amount" min="1" style="width: 80px; padding: 5px;">
-            </div>
-            <div style="margin: 10px 0;">
-                <label>Request:</label>
-                <select id="requestType">
-                    <option value="wood">Wood</option>
-                    <option value="stone">Stone</option>
-                </select>
-                <input type="number" id="requestAmount" placeholder="Amount" min="1" style="width: 80px; padding: 5px;">
-            </div>
-            <button class="btn" onclick="createTrade()">Post Trade</button>
+        <div class="hotbar-slot" data-slot="3" onclick="selectSlot(3)">
+            <div class="slot-icon">🟫</div>
+            <div class="slot-label">4</div>
+            <div class="slot-cost">3 wood</div>
         </div>
-        <div id="tradesList"></div>
-        <button class="btn btn-cancel" onclick="closeTradeCenter()">Close</button>
     </div>
 
     <div id="playerList">
