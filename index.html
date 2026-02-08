@@ -1227,6 +1227,28 @@
                  <button id="moreBtn" style="background: linear-gradient(135deg, #d69e2e 0%, #ffd700 100%); border: 2px solid #ffd700; animation: sparkle 2s infinite;">PRESTIGE ✨</button>
                
                 <button id="gladiatorsBtn" style="background: #ff4500; border: 1px solid #cc3700;">GLADIATORS ⚔️</button>
+                <button id="survivalBtn" style="
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+    border: 2px solid #10b981;
+    position: relative;
+    overflow: visible;
+">
+    SURVIVAL 🌲
+    <span style="
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid #fff;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+    ">BETA</span>
+</button>
+                
             </div>
             <div id="gameList"></div>
             <div class="dev-section">
@@ -3255,7 +3277,12 @@ function loadGame(game) {
     gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
     return;
-    } else if (game === 'stick-fighter') {
+    } else if (game === 'survival') {
+    document.getElementById('gameFrame').src = 'survival.html';
+    gameIsPlaying = true;
+    document.getElementById('saveLoadBtn').style.display = 'none';
+    return;
+    }else if (game === 'stick-fighter') {
      document.getElementById('gameFrame').src = 'https://gswitch3.github.io/g6/stick-fighter/';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
@@ -3489,6 +3516,9 @@ function backToMain() {
 
         document.getElementById('gladiatorsBtn').addEventListener('click', () => {
     loadGame('gladiators');
+});
+        document.getElementById('survivalBtn').addEventListener('click', () => {
+    loadGame('survival');
 });
         document.getElementById('requestPasswordBtn').addEventListener('click', () => {
     const subject = 'Password Request';
