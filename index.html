@@ -4532,24 +4532,31 @@ function updateFireButton() {
     attackerNotice.textContent = `💣 AIRSTRIKED BY ${attacker}!`;
     overlay.querySelector('.ad-content').appendChild(attackerNotice);
     
-    if (ad.type === 'video') {
-        adTitle.style.display = 'none';
-        adText.style.display = 'none';
-        document.getElementById('adTimer').style.display = 'none';
+   if (ad.type === 'video') {
+    adTitle.style.display = 'none';
+    adText.style.display = 'none';
+    document.getElementById('adTimer').style.display = 'none';
+    
+    const videoContainer = document.createElement('div');
+    videoContainer.id = 'videoAdContainer';
+    videoContainer.innerHTML = `
+        <video id="adVideo" autoplay style="width: 100%; max-width: 800px; border-radius: 12px;">
+            <source src="${ad.videoUrl}" type="video/mp4">
+        </video>
+        <div id="videoTimer" style="margin-top: 20px; font-size: 18px; color: #ff4444; font-weight: bold;">Skip available in <span id="videoCountdown">5</span>s</div>
+    `;
+    overlay.querySelector('.ad-content').appendChild(videoContainer);
+    
+    const videoCountdownEl = document.getElementById('videoCountdown');
+    let timeLeft = 25; // Fixed to 15 seconds for airstrike ads
+    videoCountdownEl.textContent = timeLeft;
+    
+    const videoInterval = setInterval(() => {
+        timeLeft--;
+        videoCountdownEl.textContent = timeLeft;
         
-        const videoContainer = document.createElement('div');
-        videoContainer.id = 'videoAdContainer';
-        videoContainer.innerHTML = `
-            <video id="adVideo" autoplay style="width: 100%; max-width: 800px; border-radius: 12px;">
-                <source src="${ad.videoUrl}" type="video/mp4">
-            </video>
-            <div id="videoTimer" style="margin-top: 20px; font-size: 18px; color: #ff4444; font-weight: bold;">Ad will close automatically...</div>
-        `;
-        overlay.querySelector('.ad-content').appendChild(videoContainer);
-        
-        // Make video unskippable - wait for video to end
-        const video = document.getElementById('adVideo');
-        video.addEventListener('ended', () => {
+        if (timeLeft <= 0) {
+            clearInterval(videoInterval);
             const attackerEl = document.getElementById('attackerNotice');
             if (attackerEl) attackerEl.remove();
             videoContainer.remove();
@@ -4558,10 +4565,10 @@ function updateFireButton() {
             adTitle.style.display = 'block';
             adText.style.display = 'block';
             document.getElementById('adTimer').style.display = 'block';
-        });
-        
-        // Prevent skipping by clicking
-        video.addEventListener('click', (e) => e.preventDefault());
+        }
+    }, 1000);
+    
+    window.currentAdInterval = videoInterval;
         
     } else {
         adTitle.style.display = 'block';
