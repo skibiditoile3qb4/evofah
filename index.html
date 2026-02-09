@@ -4364,223 +4364,7 @@ relay.on('player_left', (data) => {
     // Player count updated via heartbeat/players_update
 });
         
-        // Airstrike functionality
-        let selectedAdType = null;
-        let airstrikeCooldownEnd = 0;
 
-        function loadAirstrikeCooldown() {
-            try {
-                const stored = localStorage.getItem('_airstrikeCooldown');
-                if (stored) {
-                    airstrikeCooldownEnd = parseInt(stored);
-                    const now = Date.now();
-                    if (now < airstrikeCooldownEnd) {
-                        startCooldownTimer();
-                    } else {
-                        airstrikeCooldownEnd = 0;
-                        localStorage.removeItem('_airstrikeCooldown');
-                    }
-                }
-            } catch(e) {}
-        }
-
-        function startCooldownTimer() {
-            const timerEl = document.getElementById('airstrikeCooldown');
-            if (!timerEl) return;
-            timerEl.style.display = 'block';
-            
-            const interval = setInterval(() => {
-                const now = Date.now();
-                const remaining = Math.max(0, airstrikeCooldownEnd - now);
-                
-                if (remaining <= 0) {
-                    clearInterval(interval);
-                    timerEl.style.display = 'none';
-                    airstrikeCooldownEnd = 0;
-                    localStorage.removeItem('_airstrikeCooldown');
-                    alert('⚡ Airstrike is ready to use again!');
-                } else {
-                    const minutes = Math.floor(remaining / 60000);
-                    const seconds = Math.floor((remaining % 60000) / 1000);
-                    timerEl.textContent = `Cooldown: ${minutes}m ${seconds}s`;
-                }
-            }, 1000);
-        }
-
-        function openAirstrikePanel() {
-            const now = Date.now();
-            if (now < airstrikeCooldownEnd) {
-                const remaining = Math.ceil((airstrikeCooldownEnd - now) / 1000);
-                alert(`⏱️ Airstrike is on cooldown! ${Math.floor(remaining / 60)}m ${remaining % 60}s remaining`);
-                return;
-            }
-            
-            document.getElementById('airstrikePanel').style.display = 'block';
-            document.getElementById('airstrikeTarget').value = '';
-            selectedAdType = null;
-            document.querySelectorAll('.ad-type-btn').forEach(btn => btn.classList.remove('selected'));
-            document.getElementById('fireAirstrike').disabled = true;
-        }
-
-        function closeAirstrikePanel() {
-            document.getElementById('airstrikePanel').style.display = 'none';
-        }
-
-        // Ad type selection
-        document.querySelectorAll('.ad-type-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.ad-type-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedAdType = btn.dataset.ad;
-                updateFireButton();
-            });
-        });
-
-        // Target input
-        document.getElementById('airstrikeTarget')?.addEventListener('input', updateFireButton);
-
-        function updateFireButton() {
-            const target = document.getElementById('airstrikeTarget').value.trim();
-            const canFire = target && selectedAdType;
-            document.getElementById('fireAirstrike').disabled = !canFire;
-        }
-
-        // Fire button
-        document.getElementById('fireAirstrike')?.addEventListener('click', () => {
-            const target = document.getElementById('airstrikeTarget').value.trim();
-            
-            if (!target || !selectedAdType) return;
-            
-            if (target === userProfile.username) {
-                alert('❌ Cannot airstrike yourself!');
-                return;
-            }
-            
-            if (!relay || !relay.connected) {
-                alert('❌ Not connected to server');
-                return;
-            }
-            
-            if (confirm(`🚀 Launch airstrike on ${target}?`)) {
-                relay.send({
-                    type: 'airstrike',
-                    targetUsername: target,
-                    adType: selectedAdType
-                });
-                
-                closeAirstrikePanel();
-            }
-        });
-
-        // Cancel button
-        document.getElementById('cancelAirstrike')?.addEventListener('click', closeAirstrikePanel);
-
-        function showForcedAd(adType, attacker) {
-            const overlay = document.getElementById('adOverlay');
-            const skipBtn = document.getElementById('skipAdBtn');
-            const adTitle = document.getElementById('adTitle');
-            const adText = document.getElementById('adText');
-            const countdown = document.getElementById('adCountdown');
-            const gameFrame = document.getElementById('gameFrame');
-            
-            const adMessages = {
-                'support': { title: '💛 Support the Creator!', text: 'Thanks for playing! Your support means everything.' },
-                'donate': { title: '🔔 Don\'t Forget to Donate Money!', text: 'Stay updated with new games and features.' },
-                'share': { title: '⭐ Enjoying the Game?', text: 'Share it with your friends and spread the fun!' },
-                'keep': { title: '🎮 Keep Playing!', text: 'Every minute you play helps support development.' },
-                'coins': { title: '🤑 Tip: Every 30 seconds you play you get 100 coins!', text: 'Keep gaming to earn more!' },
-                'gems': { title: '💎 Trick: Click on prestige to earn GEMS!', text: 'Buy useful upgrades and elite games!' },
-                'video1': { type: 'video', videoUrl: 'media/ad.mp4', duration: 15 },
-                'video2': { type: 'video', videoUrl: 'media/ad2.mp4', duration: 15 },
-                'video3': { type: 'video', videoUrl: 'media/ad3.mp4', duration: 15 }
-            };
-            
-            const ad = adMessages[adType] || adMessages['support'];
-            
-            overlay.classList.add('show');
-            skipBtn.style.display = 'none';
-            gameFrame.style.pointerEvents = 'none';
-            
-            // Show who airstriked them
-            const attackerNotice = document.createElement('div');
-            attackerNotice.id = 'attackerNotice';
-            attackerNotice.style.cssText = `
-                position: absolute;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #ff4444;
-                color: #fff;
-                padding: 10px 20px;
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 16px;
-                z-index: 1000;
-            `;
-            attackerNotice.textContent = `💣 AIRSTRIKED BY ${attacker}!`;
-            overlay.querySelector('.ad-content').appendChild(attackerNotice);
-            
-            if (ad.type === 'video') {
-                adTitle.style.display = 'none';
-                adText.style.display = 'none';
-                document.getElementById('adTimer').style.display = 'none';
-                
-                const videoContainer = document.createElement('div');
-                videoContainer.id = 'videoAdContainer';
-                videoContainer.innerHTML = `
-                    <video id="adVideo" autoplay style="width: 100%; max-width: 800px; border-radius: 12px;">
-                        <source src="${ad.videoUrl}" type="video/mp4">
-                    </video>
-                    <div id="videoTimer" style="margin-top: 20px; font-size: 18px; color: #ff4444; font-weight: bold;">Ad will close automatically...</div>
-                `;
-                overlay.querySelector('.ad-content').appendChild(videoContainer);
-                
-                // Make video unskippable - wait for video to end
-                const video = document.getElementById('adVideo');
-                video.addEventListener('ended', () => {
-                    const attackerEl = document.getElementById('attackerNotice');
-                    if (attackerEl) attackerEl.remove();
-                    videoContainer.remove();
-                    overlay.classList.remove('show');
-                    gameFrame.style.pointerEvents = 'auto';
-                    adTitle.style.display = 'block';
-                    adText.style.display = 'block';
-                    document.getElementById('adTimer').style.display = 'block';
-                });
-                
-                // Prevent skipping by clicking
-                video.addEventListener('click', (e) => e.preventDefault());
-                
-            } else {
-                adTitle.style.display = 'block';
-                adText.style.display = 'block';
-                document.getElementById('adTimer').style.display = 'block';
-                
-                adTitle.textContent = ad.title;
-                adText.textContent = ad.text;
-                
-                let timeLeft = 15; // 15 seconds for non-video ads
-                countdown.textContent = timeLeft;
-                
-                const adInterval = setInterval(() => {
-                    timeLeft--;
-                    countdown.textContent = timeLeft;
-                    
-                    if (timeLeft <= 0) {
-                        clearInterval(adInterval);
-                        const attackerEl = document.getElementById('attackerNotice');
-                        if (attackerEl) attackerEl.remove();
-                        overlay.classList.remove('show');
-                        gameFrame.style.pointerEvents = 'auto';
-                    }
-                }, 1000);
-                
-                window.currentAdInterval = adInterval;
-            }
-        }
-
-        // Load cooldown on page load
-        loadAirstrikeCooldown();
         
         relay.on('donation', (data) => {
     if (data.targetUsername === userProfile.username) {
@@ -4636,7 +4420,228 @@ relay.on('player_left', (data) => {
     }
 }
 
+// Move these OUTSIDE the initChat() function - make them global
+let selectedAdType = null;
+let airstrikeCooldownEnd = 0;
 
+function loadAirstrikeCooldown() {
+    try {
+        const stored = localStorage.getItem('_airstrikeCooldown');
+        if (stored) {
+            airstrikeCooldownEnd = parseInt(stored);
+            const now = Date.now();
+            if (now < airstrikeCooldownEnd) {
+                startCooldownTimer();
+            } else {
+                airstrikeCooldownEnd = 0;
+                localStorage.removeItem('_airstrikeCooldown');
+            }
+        }
+    } catch(e) {}
+}
+
+function startCooldownTimer() {
+    const timerEl = document.getElementById('airstrikeCooldown');
+    if (!timerEl) return;
+    timerEl.style.display = 'block';
+    
+    const interval = setInterval(() => {
+        const now = Date.now();
+        const remaining = Math.max(0, airstrikeCooldownEnd - now);
+        
+        if (remaining <= 0) {
+            clearInterval(interval);
+            timerEl.style.display = 'none';
+            airstrikeCooldownEnd = 0;
+            localStorage.removeItem('_airstrikeCooldown');
+            alert('⚡ Airstrike is ready to use again!');
+        } else {
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            timerEl.textContent = `Cooldown: ${minutes}m ${seconds}s`;
+        }
+    }, 1000);
+}
+
+function openAirstrikePanel() {
+    const now = Date.now();
+    if (now < airstrikeCooldownEnd) {
+        const remaining = Math.ceil((airstrikeCooldownEnd - now) / 1000);
+        alert(`⏱️ Airstrike is on cooldown! ${Math.floor(remaining / 60)}m ${remaining % 60}s remaining`);
+        return;
+    }
+    
+    document.getElementById('airstrikePanel').style.display = 'block';
+    document.getElementById('airstrikeTarget').value = '';
+    selectedAdType = null;
+    document.querySelectorAll('.ad-type-btn').forEach(btn => btn.classList.remove('selected'));
+    document.getElementById('fireAirstrike').disabled = true;
+}
+
+function closeAirstrikePanel() {
+    document.getElementById('airstrikePanel').style.display = 'none';
+}
+
+function updateFireButton() {
+    const target = document.getElementById('airstrikeTarget').value.trim();
+    const canFire = target && selectedAdType;
+    document.getElementById('fireAirstrike').disabled = !canFire;
+}
+        function showForcedAd(adType, attacker) {
+    const overlay = document.getElementById('adOverlay');
+    const skipBtn = document.getElementById('skipAdBtn');
+    const adTitle = document.getElementById('adTitle');
+    const adText = document.getElementById('adText');
+    const countdown = document.getElementById('adCountdown');
+    const gameFrame = document.getElementById('gameFrame');
+    
+    const adMessages = {
+        'support': { title: '💛 Support the Creator!', text: 'Thanks for playing! Your support means everything.' },
+        'donate': { title: '🔔 Don\'t Forget to Donate Money!', text: 'Stay updated with new games and features.' },
+        'share': { title: '⭐ Enjoying the Game?', text: 'Share it with your friends and spread the fun!' },
+        'keep': { title: '🎮 Keep Playing!', text: 'Every minute you play helps support development.' },
+        'coins': { title: '🤑 Tip: Every 30 seconds you play you get 100 coins!', text: 'Keep gaming to earn more!' },
+        'gems': { title: '💎 Trick: Click on prestige to earn GEMS!', text: 'Buy useful upgrades and elite games!' },
+        'video1': { type: 'video', videoUrl: 'media/ad.mp4', duration: 15 },
+        'video2': { type: 'video', videoUrl: 'media/ad2.mp4', duration: 15 },
+        'video3': { type: 'video', videoUrl: 'media/ad3.mp4', duration: 15 }
+    };
+    
+    const ad = adMessages[adType] || adMessages['support'];
+    
+    overlay.classList.add('show');
+    skipBtn.style.display = 'none';
+    gameFrame.style.pointerEvents = 'none';
+    
+    // Show who airstriked them
+    const attackerNotice = document.createElement('div');
+    attackerNotice.id = 'attackerNotice';
+    attackerNotice.style.cssText = `
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ff4444;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 16px;
+        z-index: 1000;
+    `;
+    attackerNotice.textContent = `💣 AIRSTRIKED BY ${attacker}!`;
+    overlay.querySelector('.ad-content').appendChild(attackerNotice);
+    
+    if (ad.type === 'video') {
+        adTitle.style.display = 'none';
+        adText.style.display = 'none';
+        document.getElementById('adTimer').style.display = 'none';
+        
+        const videoContainer = document.createElement('div');
+        videoContainer.id = 'videoAdContainer';
+        videoContainer.innerHTML = `
+            <video id="adVideo" autoplay style="width: 100%; max-width: 800px; border-radius: 12px;">
+                <source src="${ad.videoUrl}" type="video/mp4">
+            </video>
+            <div id="videoTimer" style="margin-top: 20px; font-size: 18px; color: #ff4444; font-weight: bold;">Ad will close automatically...</div>
+        `;
+        overlay.querySelector('.ad-content').appendChild(videoContainer);
+        
+        // Make video unskippable - wait for video to end
+        const video = document.getElementById('adVideo');
+        video.addEventListener('ended', () => {
+            const attackerEl = document.getElementById('attackerNotice');
+            if (attackerEl) attackerEl.remove();
+            videoContainer.remove();
+            overlay.classList.remove('show');
+            gameFrame.style.pointerEvents = 'auto';
+            adTitle.style.display = 'block';
+            adText.style.display = 'block';
+            document.getElementById('adTimer').style.display = 'block';
+        });
+        
+        // Prevent skipping by clicking
+        video.addEventListener('click', (e) => e.preventDefault());
+        
+    } else {
+        adTitle.style.display = 'block';
+        adText.style.display = 'block';
+        document.getElementById('adTimer').style.display = 'block';
+        
+        adTitle.textContent = ad.title;
+        adText.textContent = ad.text;
+        
+        let timeLeft = 15; // 15 seconds for non-video ads
+        countdown.textContent = timeLeft;
+        
+        const adInterval = setInterval(() => {
+            timeLeft--;
+            countdown.textContent = timeLeft;
+            
+            if (timeLeft <= 0) {
+                clearInterval(adInterval);
+                const attackerEl = document.getElementById('attackerNotice');
+                if (attackerEl) attackerEl.remove();
+                overlay.classList.remove('show');
+                gameFrame.style.pointerEvents = 'auto';
+            }
+        }, 1000);
+        
+        window.currentAdInterval = adInterval;
+    }
+}
+
+// Event listeners for airstrike panel
+document.addEventListener('DOMContentLoaded', () => {
+    // Ad type selection
+    document.querySelectorAll('.ad-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.ad-type-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedAdType = btn.dataset.ad;
+            updateFireButton();
+        });
+    });
+
+    // Target input
+    document.getElementById('airstrikeTarget')?.addEventListener('input', updateFireButton);
+
+    // Fire button
+    document.getElementById('fireAirstrike')?.addEventListener('click', () => {
+        const target = document.getElementById('airstrikeTarget').value.trim();
+        
+        if (!target || !selectedAdType) return;
+        
+        if (target === userProfile.username) {
+            alert('❌ Cannot airstrike yourself!');
+            return;
+        }
+        
+        if (!relay || !relay.connected) {
+            alert('❌ Not connected to server');
+            return;
+        }
+        
+        if (confirm(`🚀 Launch airstrike on ${target}?`)) {
+            relay.send({
+                type: 'airstrike',
+                targetUsername: target,
+                adType: selectedAdType
+            });
+            
+            closeAirstrikePanel();
+        }
+    });
+
+    // Cancel button
+    document.getElementById('cancelAirstrike')?.addEventListener('click', closeAirstrikePanel);
+    
+    // Airstrike button
+    document.getElementById('airstrikeBtn')?.addEventListener('click', openAirstrikePanel);
+    
+    // Load cooldown on page load
+    loadAirstrikeCooldown();
+});
 function updateConnectionStatus(connected) {
     const status = document.getElementById('connectionStatus');
     if (connected) {
