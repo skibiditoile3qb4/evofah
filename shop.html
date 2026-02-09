@@ -169,6 +169,13 @@
             <div class="price">25,000 Coins</div>
             <button id="buyNameChange">Purchase</button>
         </div>
+        
+         <div class="shop-item" id="airstrikeItem" style="border: 2px solid #ff4444;">
+            <h2>💣 Airstrike</h2>
+            <p>Launch a forced ad on any online player!</p>
+            <div class="price" style="color: #ff4444;">1,000,000,000 Coins</div>
+            <button id="buyAirstrike" style="background: #ff4444; border-color: #cc3333;">Purchase</button>
+        </div>
     </div>
 
     <!-- COSMETICS SECTION -->
@@ -571,6 +578,9 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
             if (userProfile.visualizerEnabled) {
                 markAsOwned('buyVisualizer', document.getElementById('visualizerItem'));
             }
+            if (userProfile.hasAirstrike) {
+                markAsOwned('buyAirstrike', document.getElementById('airstrikeItem'));
+            }
 
             // Note: Custom Name Change can be purchased multiple times, so we don't mark it as owned
 
@@ -684,6 +694,25 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
                 }
             } else {
                 alert('❌ Not enough coins! You need 25,000 coins.');
+            }
+        });
+                document.getElementById('buyAirstrike').addEventListener('click', () => {
+            if (userProfile.hasAirstrike) {
+                alert('❌ You already own this!');
+                return;
+            }
+            if (coins >= 1000000000) {
+                if (confirm('Purchase Airstrike for 1,000,000,000 coins?\n\n💣 FEATURES:\n• Force any online player to watch an ad\n• Works even if they bought ad removal\n• Video ads are UNSKIPPABLE\n• Text ads last 15 seconds (unskippable)\n• 10-minute cooldown\n• Choose which ad to show')) {
+                    coins -= 1000000000;
+                    setCoins(coins);
+                    userProfile.hasAirstrike = true;
+                    saveUserProfile(userProfile);
+                    alert('✅ Success! Airstrike unlocked!\n\nOpen the airstrike panel from the main page to use it.');
+                    document.getElementById('coinAmount').textContent = coins;
+                    markAsOwned('buyAirstrike', document.getElementById('airstrikeItem'));
+                }
+            } else {
+                alert('❌ Not enough coins! You need 1,000,000,000 coins.');
             }
         });
 
