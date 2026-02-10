@@ -3377,6 +3377,14 @@ function loadGame(game) {
         alert('⚠️ Games only available on ChromeOS');
         return;
     }
+    const settingsModal = document.getElementById('settingsModal');
+    if (settingsModal) {
+        settingsModal.classList.remove('show');
+    }
+    const settingsToggleBtn = document.getElementById('settingsToggleBtn');
+    if (settingsToggleBtn) {
+        settingsToggleBtn.style.display = 'none';
+    }
     document.getElementById('mainView').style.display = 'none';
     document.getElementById('gameView').style.display = 'block';
        if (game === 'sprunki-1999') {
@@ -3751,6 +3759,10 @@ function backToMain() {
     document.getElementById('mainView').style.display = 'flex';
     const gameView = document.getElementById('gameView');
     gameView.style.display = 'none';
+    const settingsToggleBtn = document.getElementById('settingsToggleBtn');
+    if (settingsToggleBtn) {
+        settingsToggleBtn.style.display = '';
+    }
     const frame = document.getElementById('gameFrame');
     frame.classList.remove('mobile-game');
     frame.src = '';
