@@ -15,6 +15,7 @@ this.handlers = {
   connected: [],
   disconnected: [],
   chat_message: [],
+  voice_note: [],
   player_joined: [],
   player_left: [],
   joined: [],
