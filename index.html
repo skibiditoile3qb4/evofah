@@ -664,6 +664,28 @@
 #chatInput:focus {
     border-color: #555;
 }
+.chat-compose-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+#voiceNoteBtn {
+    flex-shrink: 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: #fff;
+    cursor: pointer;
+}
+#voiceNoteBtn.recording {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+.voice-note-player {
+    margin-top: 8px;
+    width: 100%;
+}
 #chatToggleBtn {
     position: fixed;
     bottom: 20px;
@@ -1522,7 +1544,10 @@
             <button class="donate-btn" onclick="sendGlobalDonation()">Send</button>
         </div>
     </div>
-    <input type="text" id="chatInput" placeholder="Type a message..." maxlength="200">
+    <div class="chat-compose-row">
+        <input type="text" id="chatInput" placeholder="Type a message..." maxlength="200">
+        <button id="voiceNoteBtn" type="button" title="Hold to record voice note">🎙️</button>
+    </div>
 </div>
 </div>
 
@@ -4184,6 +4209,10 @@ let chatOpen = false;
 let unreadMessages = 0;
 let onlineCount = 0;
 let currentChatRoom = 'global_chat';
+let mediaRecorder = null;
+let voiceChunks = [];
+let voiceRecordingTimeout = null;
+let isRecordingVoice = false;
 
 async function initChat() {
     if (!window._chromeOSValid) {
@@ -4532,6 +4561,15 @@ function switchChatRoom(room) {
                 document.getElementById('chatToggleBtn').classList.add('has-unread');
             }
         });
+
+        relay.on('voice_note', (data) => {
+            displayChatMessage(data.message, true);
+
+            if (!chatOpen) {
+                unreadMessages++;
+                document.getElementById('chatToggleBtn').classList.add('has-unread');
+            }
+        });
         
         relay.on('player_joined', (data) => {
     addSystemMessage(`${data.player.username} joined the chat`);
@@ -4872,13 +4910,18 @@ function displayChatMessage(message, shouldScroll = true) {
     const statusHtml = `<span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>`;
     ;
     
+    const voiceNoteHtml = message.voiceNote
+        ? `<audio class="voice-note-player" controls preload="none" src="data:${message.voiceMimeType || 'audio/webm'};base64,${message.voiceNote}"></audio>`
+        : '';
+
     msgDiv.innerHTML = `
         <div>
             <span class="chat-username">${escapeHtml(message.username)}</span>
             ${statusHtml}
             ${nametagHtml}
         </div>
-        <span class="chat-text">${escapeHtml(message.message)}</span>
+        <span class="chat-text">${escapeHtml(message.message || '')}</span>
+        ${voiceNoteHtml}
     `;
     
     messagesContainer.appendChild(msgDiv);
@@ -4943,9 +4986,99 @@ function sendChatMessage() {
         input.value = '';
     }
 }
+
+async function toggleVoiceRecording() {
+    const muteStatus = checkMuteStatus();
+    if (muteStatus.muted) {
+        alert(`🔇 You are muted for ${muteStatus.hoursRemaining} more hours by ${muteStatus.mutedBy}`);
+        return;
+    }
+
+    const button = document.getElementById('voiceNoteBtn');
+    if (!button) return;
+
+    if (isRecordingVoice && mediaRecorder) {
+        mediaRecorder.stop();
+        return;
+    }
+
+    if (!relay || !relay.connected) {
+        addSystemMessage('Connect to chat before sending voice notes.');
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        voiceChunks = [];
+        isRecordingVoice = true;
+        button.classList.add('recording');
+        button.textContent = '⏹️';
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data && event.data.size > 0) {
+                voiceChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = async () => {
+            isRecordingVoice = false;
+            button.classList.remove('recording');
+            button.textContent = '🎙️';
+            clearTimeout(voiceRecordingTimeout);
+
+            stream.getTracks().forEach(track => track.stop());
+
+            const voiceBlob = new Blob(voiceChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+            if (voiceBlob.size === 0) {
+                return;
+            }
+
+            if (voiceBlob.size > 2 * 1024 * 1024) {
+                addSystemMessage('Voice note too large. Keep it shorter.');
+                return;
+            }
+
+            const base64 = await blobToBase64(voiceBlob);
+            relay.send({
+                type: 'voice_note',
+                room: currentChatRoom,
+                status: userProfile.settings?.hiddenMode && canUseHiddenMode(userProfile.status) ? 'player' : userProfile.status,
+                nametag: userProfile.nametag.equipped,
+                voiceNote: base64,
+                voiceMimeType: mediaRecorder.mimeType || 'audio/webm',
+                message: '🎤 Voice note'
+            });
+        };
+
+        mediaRecorder.start();
+        voiceRecordingTimeout = setTimeout(() => {
+            if (isRecordingVoice && mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+        }, 30000);
+    } catch (error) {
+        console.error('Voice note recording failed:', error);
+        addSystemMessage('Microphone unavailable. Voice note not sent.');
+    }
+}
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const dataUrl = reader.result || '';
+            const base64 = dataUrl.split(',')[1] || '';
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
 // Event listeners
 document.getElementById('chatToggleBtn').addEventListener('click', toggleChat);
 document.getElementById('closeChat').addEventListener('click', toggleChat);
+document.getElementById('voiceNoteBtn').addEventListener('click', toggleVoiceRecording);
 
 document.getElementById('chatInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
