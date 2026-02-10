@@ -691,6 +691,98 @@
 #chatToggleBtn.has-unread {
     animation: bounceChat 0.5s ease infinite;
 }
+#settingsToggleBtn {
+    position: fixed;
+    bottom: 90px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0.65;
+}
+#settingsToggleBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+    opacity: 1;
+}
+#settingsModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+}
+#settingsModal.show {
+    display: flex;
+}
+.settings-modal-content {
+    width: min(520px, 92vw);
+    background: #111;
+    border: 2px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.settings-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+}
+#settingsCloseBtn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+}
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid #222;
+}
+.settings-row:last-child {
+    border-bottom: none;
+}
+.settings-row label {
+    font-size: 14px;
+    color: #e5e7eb;
+}
+.settings-input {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: #fff;
+    font-size: 13px;
+    width: 120px;
+    text-align: center;
+}
+.settings-helper {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 6px;
+}
 @keyframes bounceChat {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
@@ -1373,6 +1465,33 @@
         <iframe id="gameFrame"></iframe>
     </div>
 <button id="chatToggleBtn">💬</button>
+<button id="settingsToggleBtn">⚙️</button>
+
+<div id="settingsModal">
+    <div class="settings-modal-content">
+        <div class="settings-header">
+            <h3>Settings</h3>
+            <button id="settingsCloseBtn">✕</button>
+        </div>
+        <div class="settings-row">
+            <label for="acceptDonationsToggle">Accept donations</label>
+            <input type="checkbox" id="acceptDonationsToggle">
+        </div>
+        <div class="settings-row">
+            <label for="visualizerKeyInput">Visualizer menu key</label>
+            <input type="text" id="visualizerKeyInput" class="settings-input" readonly>
+        </div>
+        <div class="settings-row">
+            <label for="panicKeyInput">Panic key (opens google.com)</label>
+            <input type="text" id="panicKeyInput" class="settings-input" readonly>
+        </div>
+        <div class="settings-row" id="hiddenModeRow">
+            <label for="hiddenModeToggle">Hidden mode (SR ADMIN+)</label>
+            <input type="checkbox" id="hiddenModeToggle">
+        </div>
+        <div class="settings-helper">Click a key field, then press the key you want to use.</div>
+    </div>
+</div>
 
 <div id="chatContainer">
    <div id="chatHeader">
@@ -1733,6 +1852,22 @@ function getUserProfile() {
             if (!Array.isArray(profile.ownedCosmetics.effects)) profile.ownedCosmetics.effects = ['none'];
             if (!Array.isArray(profile.ownedCosmetics.swords)) profile.ownedCosmetics.swords = ['none'];
 
+            if (!profile.settings) {
+                profile.settings = {};
+            }
+            if (typeof profile.settings.acceptDonations === 'undefined') {
+                profile.settings.acceptDonations = true;
+            }
+            if (!profile.settings.visualizerKey) {
+                profile.settings.visualizerKey = ']';
+            }
+            if (!profile.settings.panicKey) {
+                profile.settings.panicKey = 'p';
+            }
+            if (typeof profile.settings.hiddenMode === 'undefined') {
+                profile.settings.hiddenMode = false;
+            }
+
             saveUserProfile(profile);
             return profile;
         }
@@ -1762,7 +1897,13 @@ function getUserProfile() {
             equipped: 'none',
             unlocked: ['none']
         },
-        totalDonated: 0
+        totalDonated: 0,
+        settings: {
+            acceptDonations: true,
+            visualizerKey: ']',
+            panicKey: 'p',
+            hiddenMode: false
+        }
     };
 
     saveUserProfile(newProfile);
@@ -2100,6 +2241,32 @@ document.addEventListener('keydown', (e) => {
         }
 
         let userProfile = getUserProfile();
+
+const hiddenModeRanks = ['owner', 'sr.admin'];
+
+function canUseHiddenMode(status) {
+    return hiddenModeRanks.includes(status);
+}
+
+function normalizeKey(key) {
+    if (!key) return '';
+    return key.length === 1 ? key.toLowerCase() : key;
+}
+
+function formatKeyLabel(key) {
+    if (!key) return '';
+    if (key === ' ') return 'Space';
+    return key.length === 1 ? key.toUpperCase() : key;
+}
+
+function applyHiddenModeGuard() {
+    if (userProfile.settings?.hiddenMode && !canUseHiddenMode(userProfile.status)) {
+        userProfile.settings.hiddenMode = false;
+        saveUserProfile(userProfile);
+    }
+}
+
+applyHiddenModeGuard();
 
 let playerSphereRenderer = null;
 
@@ -4368,6 +4535,11 @@ relay.on('player_left', (data) => {
         
         relay.on('donation', (data) => {
     if (data.targetUsername === userProfile.username) {
+        const acceptDonations = userProfile.settings?.acceptDonations !== false;
+        if (!acceptDonations) {
+            addSystemMessage(`🚫 Donation from ${data.from} blocked (accept donations off).`);
+            return;
+        }
         // Receive the donation
         if (data.donationType === 'coins') {
             coins += data.amount;
@@ -4669,7 +4841,11 @@ function displayChatMessage(message, shouldScroll = true) {
     const msgDiv = document.createElement('div');
     msgDiv.className = 'chat-message';
     
-    const statusClass = message.status || 'player';
+    const isSelfMessage = message.username === userProfile.username;
+    let statusClass = message.status || 'player';
+    if (isSelfMessage && userProfile.settings?.hiddenMode && canUseHiddenMode(userProfile.status)) {
+        statusClass = 'player';
+    }
     
     // Debug log to see what we're receiving
     console.log('Chat message received:', message);
@@ -4742,10 +4918,14 @@ function sendChatMessage() {
     const message = input.value.trim();
     
     if (message && relay && relay.connected) {
+        const statusForChat = userProfile.settings?.hiddenMode && canUseHiddenMode(userProfile.status)
+            ? 'player'
+            : userProfile.status;
         relay.send({
             type: 'chat',
             message: message,
             nametag: userProfile.nametag.equipped,
+            status: statusForChat,
             room: currentChatRoom 
         });
         input.value = '';
@@ -4758,6 +4938,105 @@ document.getElementById('closeChat').addEventListener('click', toggleChat);
 document.getElementById('chatInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         sendChatMessage();
+    }
+});
+
+const settingsModal = document.getElementById('settingsModal');
+const settingsToggleBtn = document.getElementById('settingsToggleBtn');
+const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+const acceptDonationsToggle = document.getElementById('acceptDonationsToggle');
+const visualizerKeyInput = document.getElementById('visualizerKeyInput');
+const panicKeyInput = document.getElementById('panicKeyInput');
+const hiddenModeToggle = document.getElementById('hiddenModeToggle');
+const hiddenModeRow = document.getElementById('hiddenModeRow');
+
+function applySettingsToUI() {
+    if (!userProfile.settings) {
+        userProfile.settings = {};
+    }
+
+    acceptDonationsToggle.checked = userProfile.settings.acceptDonations !== false;
+    visualizerKeyInput.value = formatKeyLabel(userProfile.settings.visualizerKey || ']');
+    panicKeyInput.value = formatKeyLabel(userProfile.settings.panicKey || 'p');
+
+    if (canUseHiddenMode(userProfile.status)) {
+        hiddenModeRow.style.display = 'flex';
+        hiddenModeToggle.checked = !!userProfile.settings.hiddenMode;
+    } else {
+        hiddenModeRow.style.display = 'none';
+        if (userProfile.settings.hiddenMode) {
+            userProfile.settings.hiddenMode = false;
+            saveUserProfile(userProfile);
+        }
+    }
+}
+
+function openSettingsModal() {
+    applySettingsToUI();
+    settingsModal.classList.add('show');
+}
+
+function closeSettingsModal() {
+    settingsModal.classList.remove('show');
+}
+
+settingsToggleBtn.addEventListener('click', openSettingsModal);
+settingsCloseBtn.addEventListener('click', closeSettingsModal);
+settingsModal.addEventListener('click', (event) => {
+    if (event.target === settingsModal) {
+        closeSettingsModal();
+    }
+});
+
+acceptDonationsToggle.addEventListener('change', () => {
+    userProfile.settings.acceptDonations = acceptDonationsToggle.checked;
+    saveUserProfile(userProfile);
+});
+
+hiddenModeToggle.addEventListener('change', () => {
+    if (!canUseHiddenMode(userProfile.status)) {
+        hiddenModeToggle.checked = false;
+        return;
+    }
+    userProfile.settings.hiddenMode = hiddenModeToggle.checked;
+    saveUserProfile(userProfile);
+});
+
+function bindKeyInput(inputEl, settingKey) {
+    inputEl.addEventListener('keydown', (event) => {
+        event.preventDefault();
+        const blockedKeys = ['Shift', 'Control', 'Alt', 'Meta'];
+        if (blockedKeys.includes(event.key)) {
+            return;
+        }
+        userProfile.settings[settingKey] = event.key;
+        inputEl.value = formatKeyLabel(event.key);
+        saveUserProfile(userProfile);
+
+        if (settingKey === 'visualizerKey' && window.setVisualizerOpenKey) {
+            window.setVisualizerOpenKey(event.key);
+        }
+    });
+}
+
+bindKeyInput(visualizerKeyInput, 'visualizerKey');
+bindKeyInput(panicKeyInput, 'panicKey');
+
+function shouldIgnoreGlobalKey(event) {
+    const target = event.target;
+    if (!target) return false;
+    const tagName = target.tagName;
+    if (tagName === 'INPUT' || tagName === 'TEXTAREA' || target.isContentEditable) {
+        return true;
+    }
+    return false;
+}
+
+document.addEventListener('keydown', (event) => {
+    if (shouldIgnoreGlobalKey(event)) return;
+    const panicKey = userProfile.settings?.panicKey || 'p';
+    if (normalizeKey(event.key) === normalizeKey(panicKey)) {
+        window.location.href = 'https://google.com/';
     }
 });
 

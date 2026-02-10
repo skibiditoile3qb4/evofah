@@ -800,7 +800,27 @@ mouseVisualizer.style.display = state.mouse.visible ? "block" : "none";
     document.body.appendChild(infoButton);
 
     const infoTooltip = document.createElement("div");
-    infoTooltip.innerHTML = `<b>Press ] to open settings</b>`;
+    const getStoredProfile = () => {
+        try {
+            return JSON.parse(localStorage.getItem('userProfile') || '{}');
+        } catch (e) {
+            return {};
+        }
+    };
+    const normalizeKey = (key) => {
+        if (!key) return '';
+        return key.length === 1 ? key.toLowerCase() : key;
+    };
+    const formatKeyLabel = (key) => {
+        if (!key) return '';
+        if (key === ' ') return 'Space';
+        return key.length === 1 ? key.toUpperCase() : key;
+    };
+    let visualizerToggleKey = (getStoredProfile().settings && getStoredProfile().settings.visualizerKey) || ']';
+    const updateTooltip = () => {
+        infoTooltip.innerHTML = `<b>Press ${formatKeyLabel(visualizerToggleKey)} to open settings</b>`;
+    };
+    updateTooltip();
     infoTooltip.style.position = "fixed";
     infoTooltip.style.top = "60px";
     infoTooltip.style.right = "20px";
@@ -822,8 +842,13 @@ mouseVisualizer.style.display = state.mouse.visible ? "block" : "none";
         infoTooltip.style.display = "none";
     });
 
+    window.setVisualizerOpenKey = (key) => {
+        visualizerToggleKey = key || ']';
+        updateTooltip();
+    };
+
 document.addEventListener("keydown", e => {
-    if (e.key === "]") {
+    if (normalizeKey(e.key) === normalizeKey(visualizerToggleKey)) {
         mainMenu.style.display =
             mainMenu.style.display === "none" ? "block" : "none";
     }
