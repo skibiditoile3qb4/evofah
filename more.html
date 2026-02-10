@@ -501,13 +501,23 @@ function getRebirthRequirements(tier) {
                 </div>
             `;
             
+            const keepEverything = isAdminUp(userProfile.status);
             // Impact lists
-            document.getElementById('loseList').innerHTML = `
+            document.getElementById('loseList').innerHTML = keepEverything ? `
+                • Nothing (admin+ keeps everything)
+            ` : `
                 • All coins (${coins.toLocaleString()})<br>
                 • All cosmetics (${totalCosmetics} items)<br>
                 • Equipped items reset
             `;
-            document.getElementById('keepList').innerHTML = `
+            document.getElementById('keepList').innerHTML = keepEverything ? `
+                • Username (${userProfile.username})<br>
+                • Status (${userProfile.status})<br>
+                • Unlocked games (${userProfile.unlockedGames.length})<br>
+                • All gems (${userProfile.gems})<br>
+                • Coins (${coins.toLocaleString()})<br>
+                • Cosmetics (${totalCosmetics} items)
+            ` : `
                 • Username (${userProfile.username})<br>
                 • Status (${userProfile.status})<br>
                 • Unlocked games (${userProfile.unlockedGames.length})<br>
@@ -523,40 +533,51 @@ function getRebirthRequirements(tier) {
             btn.textContent = status.allMet ? 'REBIRTH NOW' : 'REQUIREMENTS NOT MET';
         }
 
+        function isAdminUp(status) {
+            return ['admin', 'sr.admin', 'owner'].includes(status);
+        }
+
         // Perform rebirth
         document.getElementById('rebirthBtn').addEventListener('click', () => {
             if (!checkRebirthRequirements().allMet) return;
             
             const nextTier = userProfile.rebirthData.tier + 1;
             const req = getRebirthRequirements(nextTier);
+            const keepEverything = isAdminUp(userProfile.status);
             
-            if (!confirm(`Are you sure you want to rebirth to Tier ${nextTier}?\n\nYou will lose all coins and cosmetics, but gain ${req.gems} gems!`)) return;
+            const lossMessage = keepEverything
+                ? `As admin+, you keep everything and still gain ${req.gems} gems!`
+                : `You will lose all coins and cosmetics, but gain ${req.gems} gems!`;
+            
+            if (!confirm(`Are you sure you want to rebirth to Tier ${nextTier}?\n\n${lossMessage}`)) return;
             
             // Show animation
             showRebirthAnimation(nextTier, req.gems);
             
             // Wait for animation, then apply rebirth
 setTimeout(() => {
-    // Reset coins with Rebirth Power bonus
-    const rebirthPowerLevel = userProfile.gemUpgrades?.rebirth_boost || 0;
-    const startingCoins = 50 + (rebirthPowerLevel * 50);
-    coins = startingCoins;
-    setCoins(coins);
-                // Reset cosmetics
-                userProfile.ownedCosmetics = {
-                    colors: ['default'],
-                    hats: ['none'],
-                    faces: ['none'],
-                    effects: ['none'],
-                    swords: ['none']
-                };
-                userProfile.equippedCosmetics = {
-                    color: 'default',
-                    hat: 'none',
-                    face: 'none',
-                    effect: 'none',
-                    sword: 'none'
-                };
+    if (!keepEverything) {
+        // Reset coins with Rebirth Power bonus
+        const rebirthPowerLevel = userProfile.gemUpgrades?.rebirth_boost || 0;
+        const startingCoins = 50 + (rebirthPowerLevel * 50);
+        coins = startingCoins;
+        setCoins(coins);
+        // Reset cosmetics
+        userProfile.ownedCosmetics = {
+            colors: ['default'],
+            hats: ['none'],
+            faces: ['none'],
+            effects: ['none'],
+            swords: ['none']
+        };
+        userProfile.equippedCosmetics = {
+            color: 'default',
+            hat: 'none',
+            face: 'none',
+            effect: 'none',
+            sword: 'none'
+        };
+    }
                 
                 // Add gems
                 userProfile.gems += req.gems;

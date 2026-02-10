@@ -567,6 +567,19 @@ function damageBuilding(buildingId, damage) {
     const destroyed = building.health <= 0;
     
     if (destroyed) {
+        const buildCosts = {
+            wood_wall: { wood: 5 },
+            stone_wall: { stone: 8 },
+            wood_floor: { wood: 3 }
+        };
+        const cost = buildCosts[building.type];
+        if (cost) {
+            for (const [resource, amount] of Object.entries(cost)) {
+                const refund = Math.ceil(amount / 2);
+                inventory[resource] = (inventory[resource] || 0) + refund;
+            }
+            updateInventoryUI();
+        }
         buildings.delete(buildingId);
     }
     
