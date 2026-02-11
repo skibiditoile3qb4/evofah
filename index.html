@@ -1892,7 +1892,7 @@ function getUserProfile() {
                 profile.settings.visualizerKey = ']';
             }
             if (!profile.settings.panicKey) {
-                profile.settings.panicKey = 'p';
+                profile.settings.panicKey = '[';
             }
             if (typeof profile.settings.hiddenMode === 'undefined') {
                 profile.settings.hiddenMode = false;
@@ -1931,7 +1931,7 @@ function getUserProfile() {
         settings: {
             acceptDonations: true,
             visualizerKey: ']',
-            panicKey: 'p',
+            panicKey: '[',
             hiddenMode: false
         }
     };
@@ -5138,7 +5138,7 @@ function applySettingsToUI() {
 
     acceptDonationsToggle.checked = userProfile.settings.acceptDonations !== false;
     visualizerKeyInput.value = formatKeyLabel(userProfile.settings.visualizerKey || ']');
-    panicKeyInput.value = formatKeyLabel(userProfile.settings.panicKey || 'p');
+    panicKeyInput.value = formatKeyLabel(userProfile.settings.panicKey || '[');
 
     if (canUseHiddenMode(userProfile.status)) {
         hiddenModeRow.style.display = 'flex';
@@ -5215,7 +5215,7 @@ function shouldIgnoreGlobalKey(event) {
 
 document.addEventListener('keydown', (event) => {
     if (shouldIgnoreGlobalKey(event)) return;
-    const panicKey = userProfile.settings?.panicKey || 'p';
+    const panicKey = userProfile.settings?.panicKey || '[';
     if (normalizeKey(event.key) === normalizeKey(panicKey)) {
         window.location.href = 'https://google.com/';
     }
