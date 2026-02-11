@@ -4001,6 +4001,15 @@ if (difference > 0) {
         
         setCoins(coins);
         updateCoinDisplay();
+
+        // Send the authoritative coin total back to the requesting game frame
+        // so local in-game balances stay in sync with multipliers/refunds.
+        if (event.source && typeof event.source.postMessage === 'function') {
+            event.source.postMessage({
+                type: 'coinsData',
+                coins: coins
+            }, '*');
+        }
     }
 });
 
