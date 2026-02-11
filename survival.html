@@ -215,12 +215,23 @@
             <span>🪨 Stone:</span>
             <span id="stoneCount">10</span>
         </div>
+        <div class="inv-item">
+            <span>🪵 Sticks:</span>
+            <span id="stickCount">0</span>
+        </div>
+        <div class="inv-item">
+            <span>🧰 Crafting Tables:</span>
+            <span id="craftingTableCount">0</span>
+        </div>
+        <div style="margin-top: 8px;">
+            <button class="btn" onclick="craftCraftingTable()" style="padding:6px 10px;font-size:12px;">Craft Table (4 wood)</button>
+        </div>
         <div style="margin-top: 10px; font-size: 11px; color: #888;">
-            1-4: Select tool/block<br>
+            1-5: Select tool/block<br>
             WASD: Move<br>
             Click: Use tool<br>
             Q: Drop item<br>
-            E: Pickup item
+            E: Pickup / use crafting table
         </div>
     </div>
 
@@ -243,6 +254,26 @@
             <div class="slot-icon">🟫</div>
             <div class="slot-label">4</div>
             <div class="slot-cost">3 wood</div>
+        </div>
+        <div class="hotbar-slot" data-slot="4" onclick="selectSlot(4)">
+            <div class="slot-icon">🧰</div>
+            <div class="slot-label">5</div>
+            <div class="slot-cost">4 wood</div>
+        </div>
+    </div>
+
+    <div id="craftingModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1200;align-items:center;justify-content:center;">
+        <div style="width:360px;background:#111;border:2px solid #444;border-radius:10px;padding:16px;">
+            <div style="font-weight:bold;margin-bottom:12px;text-align:center;">Crafting Table</div>
+            <div id="craftingGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:10px;line-height:1.5;">
+                Click slot to cycle: empty → wood → stone → stick.<br>
+                Recipes: sticks, swords, axes, spears.
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button class="btn btn-cancel" onclick="closeCraftingTable()">Close</button>
+                <button class="btn" onclick="craftFromTable()">Craft</button>
+            </div>
         </div>
     </div>
 

@@ -22,10 +22,21 @@ let hasLoadedFromDB = false;
 // Player state
 let keys = {};
 let health = 100;
-let inventory = { wood: 0, stone: 0 };
+let inventory = { wood: 0, stone: 0, stick: 0, crafting_table: 0, wood_sword: 0, stone_sword: 0, stone_axe: 0, wood_spear: 0, stone_spear: 0 };
 let meterCharge = 0;
 let isCharging = false;
 let chargeInterval = null;
+let craftingGrid = Array(9).fill('empty');
+let currentWeapon = 'axe';
+
+const WEAPON_STATS = {
+    axe: { icon: '🪓', chargeTime: 2000, maxDamage: 25, range: ATTACK_RANGE },
+    wood_sword: { icon: '🗡️', chargeTime: 900, maxDamage: 18, range: ATTACK_RANGE },
+    stone_sword: { icon: '⚔️', chargeTime: 1100, maxDamage: 28, range: ATTACK_RANGE },
+    stone_axe: { icon: '⛏️', chargeTime: 2000, maxDamage: 35, range: ATTACK_RANGE },
+    wood_spear: { icon: '🪵', chargeTime: 550, maxDamage: 10, range: ATTACK_RANGE * 2 },
+    stone_spear: { icon: '🔱', chargeTime: 600, maxDamage: 16, range: ATTACK_RANGE * 2 }
+};
 
 // Camera
 let cameraX = 0, cameraY = 0;
@@ -88,13 +99,15 @@ function setupControls() {
     document.addEventListener('keydown', (e) => {
         keys[e.key.toLowerCase()] = true;
         
-        if (e.key >= '1' && e.key <= '4') {
+        if (e.key >= '1' && e.key <= '5') {
             selectSlot(parseInt(e.key) - 1);
         }
         
         // E key to pickup nearby drops
         if (e.key.toLowerCase() === 'e') {
-            tryPickupNearbyDrop();
+            if (!tryOpenNearbyCraftingTable()) {
+                tryPickupNearbyDrop();
+            }
         }
         
         // Q key to drop items
@@ -124,6 +137,9 @@ function selectSlot(slot) {
 }
 
 window.selectSlot = selectSlot;
+window.craftCraftingTable = craftCraftingTable;
+window.craftFromTable = craftFromTable;
+window.closeCraftingTable = closeCraftingTable;
 
 async function connectToServer() {
     try {
@@ -167,12 +183,12 @@ async function connectToServer() {
             }
             
             if (data.savedInventory) {
-                inventory = data.savedInventory;
+                inventory = normalizeInventory(data.savedInventory);
                 hasLoadedFromDB = true;
                 console.log('Loaded saved inventory:', inventory);
             } else {
                 // Only give starting materials if no saved data exists
-                inventory = { wood: 20, stone: 10 };
+                inventory = normalizeInventory({ wood: 20, stone: 10 });
             }
             
             if (data.savedHealth !== null) {
@@ -368,7 +384,8 @@ function gameLoop() {
 function startCharging() {
     chargeInterval = setInterval(() => {
         if (selectedSlot === 0 && meterCharge < 100) {
-            meterCharge += (100 / (SWING_CHARGE_TIME / 50));
+            const weaponChargeTime = WEAPON_STATS[currentWeapon]?.chargeTime || SWING_CHARGE_TIME;
+            meterCharge += (100 / (weaponChargeTime / 50));
             if (meterCharge > 100) meterCharge = 100;
             document.getElementById('meterFill').style.width = meterCharge + '%';
         }
@@ -380,7 +397,7 @@ function handleClick(e) {
     const mouseWorldX = e.clientX - rect.left + cameraX;
     const mouseWorldY = e.clientY - rect.top + cameraY;
     
-    if (selectedSlot >= 1 && selectedSlot <= 3) {
+    if (selectedSlot >= 1 && selectedSlot <= 4) {
         placeBuild(mouseWorldX, mouseWorldY);
         return;
     }
@@ -391,13 +408,14 @@ function handleClick(e) {
             Math.pow(mouseWorldY - myPlayerData.y, 2)
         );
         
-        if (distance > ATTACK_RANGE) {
+        const weapon = WEAPON_STATS[currentWeapon] || WEAPON_STATS.axe;
+        if (distance > weapon.range) {
             meterCharge = 0;
             document.getElementById('meterFill').style.width = '0%';
             return;
         }
         
-        const damage = Math.floor((meterCharge / 100) * 25);
+        const damage = Math.max(1, Math.floor((meterCharge / 100) * weapon.maxDamage));
         
         // Check for resource nodes first
         for (const resource of resourceNodes.values()) {
@@ -435,7 +453,7 @@ function handleClick(e) {
 }
 
 function handleMouseMove(e) {
-    if (selectedSlot >= 1 && selectedSlot <= 3) {
+    if (selectedSlot >= 1 && selectedSlot <= 4) {
         const rect = canvas.getBoundingClientRect();
         const mouseWorldX = e.clientX - rect.left + cameraX;
         const mouseWorldY = e.clientY - rect.top + cameraY;
@@ -469,13 +487,14 @@ function canPlaceBuild(x, y) {
     }
     
     // Check resources
-    const buildTypes = ['axe', 'wood_wall', 'stone_wall', 'wood_floor'];
+    const buildTypes = ['axe', 'wood_wall', 'stone_wall', 'wood_floor', 'crafting_table'];
     const buildType = buildTypes[selectedSlot];
     
     const costs = {
         wood_wall: { wood: 5 },
         stone_wall: { stone: 8 },
-        wood_floor: { wood: 3 }
+        wood_floor: { wood: 3 },
+        crafting_table: { crafting_table: 1 }
     };
     
     const cost = costs[buildType];
@@ -519,13 +538,14 @@ function placeBuild(worldX, worldY) {
     const x = buildPreview.x;
     const y = buildPreview.y;
     
-    const buildTypes = ['axe', 'wood_wall', 'stone_wall', 'wood_floor'];
+    const buildTypes = ['axe', 'wood_wall', 'stone_wall', 'wood_floor', 'crafting_table'];
     const buildType = buildTypes[selectedSlot];
     
     const costs = {
         wood_wall: { wood: 5 },
         stone_wall: { stone: 8 },
-        wood_floor: { wood: 3 }
+        wood_floor: { wood: 3 },
+        crafting_table: { crafting_table: 1 }
     };
     
     const cost = costs[buildType];
@@ -716,7 +736,7 @@ function handleDeath() {
     }
     
     // Clear inventory immediately
-    inventory = { wood: 0, stone: 0 };
+    inventory = normalizeInventory({ wood: 0, stone: 0, stick: 0, crafting_table: 0 });
     updateInventoryUI();
     
     // Teleport to spawn IMMEDIATELY (before showing death screen)
@@ -808,6 +828,9 @@ function dropItem() {
     } else if (selectedSlot === 3) {
         // Wood floor slot = drop wood
         resourceToDrop = 'wood';
+    } else if (selectedSlot === 4) {
+        // Crafting table slot = drop crafting tables
+        resourceToDrop = 'crafting_table';
     }
     
     // Check if you have any of that resource
@@ -820,7 +843,7 @@ function dropItem() {
     updateInventoryUI();
     
     // Create drop at player position with ONLY the item being dropped
-    const dropInventory = { wood: 0, stone: 0 };
+    const dropInventory = { wood: 0, stone: 0, stick: 0, crafting_table: 0 };
     dropInventory[resourceToDrop] = 1;
     
     if (relay && relay.connected) {
@@ -1054,6 +1077,16 @@ function render() {
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 1;
             ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+        } else if (building.type === 'crafting_table') {
+            ctx.fillStyle = '#854d0e';
+            ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = '#292524';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🧰', screenX + TILE_SIZE / 2, screenY + TILE_SIZE / 2);
         }
         
         // Only show health bar if damaged
@@ -1173,6 +1206,9 @@ function checkCollision(x1, y1, size1, x2, y2, size2) {
 function updateInventoryUI() {
     document.getElementById('woodCount').textContent = inventory.wood || 0;
     document.getElementById('stoneCount').textContent = inventory.stone || 0;
+    document.getElementById('stickCount').textContent = inventory.stick || 0;
+    document.getElementById('craftingTableCount').textContent = inventory.crafting_table || 0;
+    syncWeaponFromInventory();
 }
 
 function updatePlayerList() {
@@ -1196,3 +1232,139 @@ function updatePlayerList() {
 }
 
 init();
+
+function normalizeInventory(raw = {}) {
+    return {
+        wood: raw.wood || 0,
+        stone: raw.stone || 0,
+        stick: raw.stick || 0,
+        crafting_table: raw.crafting_table || 0,
+        wood_sword: raw.wood_sword || 0,
+        stone_sword: raw.stone_sword || 0,
+        stone_axe: raw.stone_axe || 0,
+        wood_spear: raw.wood_spear || 0,
+        stone_spear: raw.stone_spear || 0
+    };
+}
+
+function craftCraftingTable() {
+    if ((inventory.wood || 0) < 4) return;
+    inventory.wood -= 4;
+    inventory.crafting_table = (inventory.crafting_table || 0) + 1;
+    updateInventoryUI();
+}
+
+function tryOpenNearbyCraftingTable() {
+    for (const building of buildings.values()) {
+        if (building.type !== 'crafting_table') continue;
+        const distance = Math.sqrt(Math.pow(building.x + TILE_SIZE / 2 - myPlayerData.x, 2) + Math.pow(building.y + TILE_SIZE / 2 - myPlayerData.y, 2));
+        if (distance <= BUILD_RANGE) {
+            openCraftingTable();
+            return true;
+        }
+    }
+    return false;
+}
+
+function openCraftingTable() {
+    const modal = document.getElementById('craftingModal');
+    const gridEl = document.getElementById('craftingGrid');
+    gridEl.innerHTML = '';
+    const cycleOrder = ['empty', 'wood', 'stone', 'stick'];
+
+    craftingGrid.forEach((item, idx) => {
+        const cell = document.createElement('button');
+        cell.className = 'btn btn-cancel';
+        cell.style.cssText = 'height:60px;padding:0;font-size:20px;display:flex;align-items:center;justify-content:center;';
+        const label = () => ({ empty: '·', wood: '🪵', stone: '🪨', stick: '🪵|' }[craftingGrid[idx]] || '·');
+        cell.textContent = label();
+        cell.addEventListener('click', () => {
+            const i = cycleOrder.indexOf(craftingGrid[idx]);
+            craftingGrid[idx] = cycleOrder[(i + 1) % cycleOrder.length];
+            cell.textContent = label();
+        });
+        gridEl.appendChild(cell);
+    });
+
+    modal.style.display = 'flex';
+}
+
+function closeCraftingTable() {
+    document.getElementById('craftingModal').style.display = 'none';
+}
+
+function craftFromTable() {
+    const recipe = detectRecipe(craftingGrid);
+    if (!recipe) return;
+
+    const needed = recipe.input;
+    for (const [k, amount] of Object.entries(needed)) {
+        if ((inventory[k] || 0) < amount) return;
+    }
+    for (const [k, amount] of Object.entries(needed)) {
+        inventory[k] -= amount;
+    }
+    for (const [k, amount] of Object.entries(recipe.output)) {
+        inventory[k] = (inventory[k] || 0) + amount;
+    }
+
+    craftingGrid = Array(9).fill('empty');
+    updateInventoryUI();
+    openCraftingTable();
+}
+
+function detectRecipe(grid) {
+    const key = normalizeGridPattern(grid);
+    const recipes = {
+        'w/w': { output: { stick: 4 }, input: { wood: 2 } },
+        'w/w/t': { output: { wood_sword: 1 }, input: { wood: 2, stick: 1 } },
+        's/s/t': { output: { stone_sword: 1 }, input: { stone: 2, stick: 1 } },
+        'ss/st/ t': { output: { stone_axe: 1 }, input: { stone: 3, stick: 2 } },
+        'ss/ts/t ': { output: { stone_axe: 1 }, input: { stone: 3, stick: 2 } },
+        'w/t/t': { output: { wood_spear: 1 }, input: { wood: 1, stick: 2 } },
+        's/t/t': { output: { stone_spear: 1 }, input: { stone: 1, stick: 2 } }
+    };
+
+    return recipes[key] || null;
+}
+
+function normalizeGridPattern(grid) {
+    const map = { empty: ' ', wood: 'w', stone: 's', stick: 't' };
+    const rows = [0, 1, 2].map(r => [0, 1, 2].map(c => map[grid[r * 3 + c]] || ' ').join(''));
+    let minR = 3;
+    let minC = 3;
+    let maxR = -1;
+    let maxC = -1;
+    for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+            if (rows[r][c] !== ' ') {
+                minR = Math.min(minR, r);
+                minC = Math.min(minC, c);
+                maxR = Math.max(maxR, r);
+                maxC = Math.max(maxC, c);
+            }
+        }
+    }
+    if (maxR < 0) return '';
+    const out = [];
+    for (let r = minR; r <= maxR; r++) {
+        let row = '';
+        for (let c = minC; c <= maxC; c++) row += rows[r][c];
+        out.push(row);
+    }
+    return out.join('/');
+}
+
+function syncWeaponFromInventory() {
+    if (inventory.stone_spear > 0) currentWeapon = 'stone_spear';
+    else if (inventory.wood_spear > 0) currentWeapon = 'wood_spear';
+    else if (inventory.stone_axe > 0) currentWeapon = 'stone_axe';
+    else if (inventory.stone_sword > 0) currentWeapon = 'stone_sword';
+    else if (inventory.wood_sword > 0) currentWeapon = 'wood_sword';
+    else currentWeapon = 'axe';
+
+    const weaponIconEl = document.querySelector('.hotbar-slot[data-slot="0"] .slot-icon');
+    if (weaponIconEl) {
+        weaponIconEl.textContent = WEAPON_STATS[currentWeapon]?.icon || '🪓';
+    }
+}
