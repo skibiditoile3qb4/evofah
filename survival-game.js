@@ -22,7 +22,7 @@ let hasLoadedFromDB = false;
 // Player state
 let keys = {};
 let health = 100;
-let inventory = { wood: 0, stone: 0, stick: 0, crafting_table: 0, wood_sword: 0, stone_sword: 0, stone_axe: 0, wood_spear: 0, stone_spear: 0 };
+let inventory = { wood: 0, stone: 0, stick: 0, crafting_table: 0, wood_sword: 0, stone_sword: 0, wood_axe: 0, stone_axe: 0, wood_spear: 0, stone_spear: 0 };
 let meterCharge = 0;
 let isCharging = false;
 let chargeInterval = null;
@@ -33,8 +33,9 @@ const WEAPON_STATS = {
     axe: { icon: '🪓', chargeTime: 2000, maxDamage: 25, range: ATTACK_RANGE },
     wood_sword: { icon: '🗡️', chargeTime: 900, maxDamage: 18, range: ATTACK_RANGE },
     stone_sword: { icon: '⚔️', chargeTime: 1100, maxDamage: 28, range: ATTACK_RANGE },
+    wood_axe: { icon: '🪓', chargeTime: 2000, maxDamage: 25, range: ATTACK_RANGE },
     stone_axe: { icon: '⛏️', chargeTime: 2000, maxDamage: 35, range: ATTACK_RANGE },
-    wood_spear: { icon: '🪵', chargeTime: 550, maxDamage: 10, range: ATTACK_RANGE * 2 },
+    wood_spear: { icon: '🔱', chargeTime: 550, maxDamage: 10, range: ATTACK_RANGE * 2 },
     stone_spear: { icon: '🔱', chargeTime: 600, maxDamage: 16, range: ATTACK_RANGE * 2 }
 };
 
@@ -1241,6 +1242,7 @@ function normalizeInventory(raw = {}) {
         crafting_table: raw.crafting_table || 0,
         wood_sword: raw.wood_sword || 0,
         stone_sword: raw.stone_sword || 0,
+        wood_axe: raw.wood_axe || 0,
         stone_axe: raw.stone_axe || 0,
         wood_spear: raw.wood_spear || 0,
         stone_spear: raw.stone_spear || 0
@@ -1319,6 +1321,8 @@ function detectRecipe(grid) {
         'w/w': { output: { stick: 4 }, input: { wood: 2 } },
         'w/w/t': { output: { wood_sword: 1 }, input: { wood: 2, stick: 1 } },
         's/s/t': { output: { stone_sword: 1 }, input: { stone: 2, stick: 1 } },
+        'ww/wt/ t': { output: { wood_axe: 1 }, input: { wood: 3, stick: 2 } },
+        'ww/tw/t ': { output: { wood_axe: 1 }, input: { wood: 3, stick: 2 } },
         'ss/st/ t': { output: { stone_axe: 1 }, input: { stone: 3, stick: 2 } },
         'ss/ts/t ': { output: { stone_axe: 1 }, input: { stone: 3, stick: 2 } },
         'w/t/t': { output: { wood_spear: 1 }, input: { wood: 1, stick: 2 } },
@@ -1359,6 +1363,7 @@ function syncWeaponFromInventory() {
     if (inventory.stone_spear > 0) currentWeapon = 'stone_spear';
     else if (inventory.wood_spear > 0) currentWeapon = 'wood_spear';
     else if (inventory.stone_axe > 0) currentWeapon = 'stone_axe';
+    else if (inventory.wood_axe > 0) currentWeapon = 'wood_axe';
     else if (inventory.stone_sword > 0) currentWeapon = 'stone_sword';
     else if (inventory.wood_sword > 0) currentWeapon = 'wood_sword';
     else currentWeapon = 'axe';
