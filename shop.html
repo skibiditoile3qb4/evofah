@@ -511,7 +511,12 @@
             try {
                 const stored = localStorage.getItem(_0x2b4a(_0x9c3d));
                 if (stored) {
-                    return parseInt(_0x2b4a(stored));
+                    const decoded = _0x2b4a(stored);
+                    const parsed = Number(decoded);
+
+                    if (Number.isFinite(parsed)) {
+                        return parsed;
+                    }
                 }
             } catch(e) {}
             return 10;
