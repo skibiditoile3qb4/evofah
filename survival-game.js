@@ -1306,8 +1306,17 @@ function craftFromTable() {
     for (const [k, amount] of Object.entries(needed)) {
         inventory[k] -= amount;
     }
+
+    let craftedWeapon = null;
     for (const [k, amount] of Object.entries(recipe.output)) {
         inventory[k] = (inventory[k] || 0) + amount;
+        if (k in WEAPON_STATS && k !== 'axe') {
+            craftedWeapon = k;
+        }
+    }
+
+    if (craftedWeapon) {
+        currentWeapon = craftedWeapon;
     }
 
     craftingGrid = Array(9).fill('empty');
@@ -1360,13 +1369,18 @@ function normalizeGridPattern(grid) {
 }
 
 function syncWeaponFromInventory() {
-    if (inventory.stone_spear > 0) currentWeapon = 'stone_spear';
-    else if (inventory.wood_spear > 0) currentWeapon = 'wood_spear';
-    else if (inventory.stone_axe > 0) currentWeapon = 'stone_axe';
-    else if (inventory.wood_axe > 0) currentWeapon = 'wood_axe';
-    else if (inventory.stone_sword > 0) currentWeapon = 'stone_sword';
-    else if (inventory.wood_sword > 0) currentWeapon = 'wood_sword';
-    else currentWeapon = 'axe';
+    // Preserve the currently selected crafted weapon if the player still has it.
+    // This avoids always forcing "best" priority and lets newly crafted weapons (e.g. wood spear)
+    // become active immediately even when a stronger weapon is present.
+    if (!(currentWeapon in WEAPON_STATS) || currentWeapon === 'axe' || (inventory[currentWeapon] || 0) <= 0) {
+        if (inventory.stone_spear > 0) currentWeapon = 'stone_spear';
+        else if (inventory.wood_spear > 0) currentWeapon = 'wood_spear';
+        else if (inventory.stone_axe > 0) currentWeapon = 'stone_axe';
+        else if (inventory.wood_axe > 0) currentWeapon = 'wood_axe';
+        else if (inventory.stone_sword > 0) currentWeapon = 'stone_sword';
+        else if (inventory.wood_sword > 0) currentWeapon = 'wood_sword';
+        else currentWeapon = 'axe';
+    }
 
     const weaponIconEl = document.querySelector('.hotbar-slot[data-slot="0"] .slot-icon');
     if (weaponIconEl) {
