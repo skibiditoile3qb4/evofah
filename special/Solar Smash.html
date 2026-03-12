@@ -13,6 +13,39 @@
 
   <title>YT Game Wrapper WebGL Template</title>
   <link rel="stylesheet" href="TemplateData/style.css" nonce="we8ZPMAc10sjbMeA8f_pRw">
+  <script>
+    (function () {
+      const originalPostMessage = window.postMessage.bind(window);
+      window.postMessage = function (message, targetOrigin, transfer) {
+        const safeOrigin = targetOrigin === '' ? '*' : targetOrigin;
+        return originalPostMessage(message, safeOrigin, transfer);
+      };
+
+      if (!window.ytgame) {
+        const noop = () => {};
+        const resolved = () => Promise.resolve();
+        window.ytgame = {
+          IN_PLAYABLES_ENV: false,
+          game: {
+            ready: resolved,
+            firstFrameReady: noop,
+            gameplayStart: noop,
+            gameplayStop: noop,
+            gameOver: noop
+          },
+          features: {
+            haptic: { trigger: noop },
+            interstitial: { canShow: async () => false, show: async () => ({}) },
+            rewarded: { canShow: async () => false, show: async () => ({}) }
+          },
+          health: {
+            logError: noop,
+            logWarning: noop
+          }
+        };
+      }
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/gh/bubbls/youtube-playables@main/ytgame.js" nonce="we8ZPMAc10sjbMeA8f_pRw">// Load YT Game API code</script>
 </head>
 
