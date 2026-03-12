@@ -3744,29 +3744,41 @@ function loadGame(game) {
 
     if (gameInfo.s === 'cdn') {
         const frame = document.getElementById('gameFrame');
-        const rawZoneUrl = gameInfo.url || '';
+        const zoneUrl = (gameInfo.url || '').replace('{HTML_URL}', HTML_URL);
 
-        if (rawZoneUrl.startsWith('http')) {
-            frame.src = rawZoneUrl;
-        } else {
-            const zoneUrl = rawZoneUrl.replace('{HTML_URL}', HTML_URL);
-            fetch(`${zoneUrl}?t=${Date.now()}`)
-                .then((response) => response.text())
-                .then((html) => {
-                    if (frame.contentDocument === null) {
-                        frame.src = 'about:blank';
-                    }
+        const launchFromHtml = (html, sourceUrl) => {
+            const baseUrl = sourceUrl.includes('/') ? sourceUrl.substring(0, sourceUrl.lastIndexOf('/') + 1) : sourceUrl;
+            let finalHtml = html;
 
+            if (/<head[^>]*>/i.test(finalHtml)) {
+                finalHtml = finalHtml.replace(/<head([^>]*)>/i, `<head$1><base href="${baseUrl}">`);
+            } else {
+                finalHtml = `<head><base href="${baseUrl}"></head>${finalHtml}`;
+            }
+
+            frame.src = 'about:blank';
+            frame.onload = () => {
+                try {
                     const doc = frame.contentDocument || frame.contentWindow.document;
                     doc.open();
-                    doc.write(html);
+                    doc.write(finalHtml);
                     doc.close();
-                })
-                .catch((error) => {
-                    alert(`Failed to load ${formatGameName(game)}: ${error.message}`);
-                    backToMain();
-                });
-        }
+                } catch (e) {
+                    frame.srcdoc = finalHtml;
+                }
+                frame.onload = null;
+            };
+        };
+
+        fetch(`${zoneUrl}?t=${Date.now()}`)
+            .then((response) => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.text();
+            })
+            .then((html) => launchFromHtml(html, zoneUrl))
+            .catch(() => {
+                frame.src = zoneUrl;
+            });
 
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';

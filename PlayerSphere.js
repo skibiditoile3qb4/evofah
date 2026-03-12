@@ -17,7 +17,7 @@ class PlayerSphere {
         this.animationFrame = null;
         this.shouldAnimate = false;
         
-        // Preload wing image
+        // Preload wing imagenice
         this.wingImage = new Image();
         this.wingImage.src = 'media/darkwing.png';
         this.wingImageLoaded = false;
