@@ -3746,27 +3746,28 @@ function loadGame(game) {
         const frame = document.getElementById('gameFrame');
         const zoneUrl = (gameInfo.url || '').replace('{HTML_URL}', HTML_URL);
 
-        const ensureFrameDocument = () => new Promise((resolve) => {
-            if (frame.contentDocument) {
-                resolve(frame.contentDocument);
-                return;
+        const launchFromHtml = (html, sourceUrl) => {
+            const baseUrl = sourceUrl.includes('/') ? sourceUrl.substring(0, sourceUrl.lastIndexOf('/') + 1) : sourceUrl;
+            let finalHtml = html;
+
+            if (/<head[^>]*>/i.test(finalHtml)) {
+                finalHtml = finalHtml.replace(/<head([^>]*)>/i, `<head$1><base href="${baseUrl}">`);
+            } else {
+                finalHtml = `<head><base href="${baseUrl}"></head>${finalHtml}`;
             }
 
-            frame.onload = () => {
-                frame.onload = null;
-                resolve(frame.contentDocument || frame.contentWindow.document);
-            };
             frame.src = 'about:blank';
-        });
-
-        const injectBaseIfMissing = (html, url) => {
-            if (/<base\s/i.test(html)) return html;
-            const lastSlash = url.lastIndexOf('/');
-            const baseHref = lastSlash === -1 ? url : `${url.slice(0, lastSlash + 1)}`;
-            if (/<head[^>]*>/i.test(html)) {
-                return html.replace(/<head([^>]*)>/i, `<head$1><base href="${baseHref}">`);
-            }
-            return `<head><base href="${baseHref}"></head>${html}`;
+            frame.onload = () => {
+                try {
+                    const doc = frame.contentDocument || frame.contentWindow.document;
+                    doc.open();
+                    doc.write(finalHtml);
+                    doc.close();
+                } catch (e) {
+                    frame.srcdoc = finalHtml;
+                }
+                frame.onload = null;
+            };
         };
 
         fetch(`${zoneUrl}?t=${Date.now()}`)
@@ -3774,12 +3775,7 @@ function loadGame(game) {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.text();
             })
-            .then((html) => Promise.all([ensureFrameDocument(), Promise.resolve(injectBaseIfMissing(html, zoneUrl))]))
-            .then(([doc, html]) => {
-                doc.open();
-                doc.write(html);
-                doc.close();
-            })
+            .then((html) => launchFromHtml(html, zoneUrl))
             .catch(() => {
                 frame.src = zoneUrl;
             });
