@@ -971,6 +971,20 @@
     from { box-shadow: 0 0 5px rgba(30, 144, 255, 0.5); }
     to { box-shadow: 0 0 15px rgba(135, 206, 235, 0.8); }
 }
+
+.chat-nametag-badge.og {
+    background: linear-gradient(135deg, #2c1b0f 0%, #5c3a1e 45%, #d4af37 100%);
+    color: #fff8dc;
+    border: 1px solid rgba(255, 215, 0, 0.7);
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.35);
+    animation: ogGlow 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes ogGlow {
+    from { box-shadow: 0 0 6px rgba(212, 175, 55, 0.25); }
+    to { box-shadow: 0 0 16px rgba(255, 215, 0, 0.6); }
+}
         /* CELESTIAL - Starry cosmic effect */
 .chat-nametag-badge.celestial {
     background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
@@ -2155,7 +2169,13 @@ async function checkSweatNametag() {
     const totalRebirths = userProfile.rebirthData?.totalRebirths || 0;
     const playedSprunki1999 = localStorage.getItem('_played_sprunki-1999') === '1';
     const totalHours = totalActiveTime / 3600;
+    const isOgWindow = now.getFullYear() === 2026 && now.getMonth() === 2 && (now.getDate() === 23 || now.getDate() === 24);
 
+    if (isOgWindow && !userProfile.nametag.unlocked.includes('og')) {
+        userProfile.nametag.unlocked.push('og');
+        saveUserProfile(userProfile);
+        alert('🏆 Nametag Unlocked: OG');
+    }
 
     if (totalRebirths >= 30 && 
         coins >= 1000000000000 && 
