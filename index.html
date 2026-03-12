@@ -1766,8 +1766,36 @@ document.getElementById('passwordInput').addEventListener('keypress', (e) => {
         let isAdmin = false;
         const gamesList = {"2048":{s:"jason"},"people-playground":{s:"custom"},"ovo-dimensions":{s:"custom"},"gladihoppers":{s:"custom"},"pokemon-sapphire":{s:"custom"},"pokemon-ruby":{s:"custom"},"skibidi-toilet-arena":{s:"custom"},"pokemon-emerald":{s:"custom"},"solar-smash":{s:"custom"},"ultrakill":{s:"custom"},"slenderman":{s:"custom"},"getting-over-it":{s:"custom"},"gorilla-tag":{s:"custom"},"omori":{s:"custom"},"pizza-tower":{s:"custom"},"cuphead":{s:"custom"},"bloons-td-4":{s:"custom"},"terraria":{s:"custom"},"fnaw":{s:"custom"},"eagler-2":{s:"custom"},"hollow-knight":{s:"custom"},"the-man-from-the-window":{s:"custom"},"undertale":{s:"custom"},"bendy-and-the-ink-machine":{s:"custom"},"buckshot-roulette":{s:"custom"},"kindergarten":{s:"custom"},"raft":{s:"custom"},"4th-and-goal-2022":{s:"jason"},"8-ball-pool":{s:"jason"},"a-small-world-cup":{s:"jason"},"among-us":{s:"jason"},"apple-shooter":{s:"jason"},"aquapark.io":{s:"jason"},"arcade-car-driving":{s:"jason"},"archery":{s:"jason"},"awesome-tanks-2":{s:"jason"},"awesome-tanks-2s":{s:"jason"},"axis-football":{s:"jason"},"backyard-baseball":{s:"jason"},"backyard-football":{s:"jason"},"bad-ice-cream-2":{s:"jason"},"bad-ice-cream-3":{s:"jason"},"bad-ice-cream":{s:"jason"},"baldi-s-basics":{s:"jason"},"stunt-multiplayer":{s:"custom"},"baseball-9":{s:"jason"},"fluid-sim":{s:"custom"},"pvz":{s:"custom"},"baseball-bros":{s:"jason"},"basket-champs":{s:"jason"},"basket-random":{s:"jason"},"basketball-legends":{s:"jason"},"basketball-stars":{s:"jason"},"big-shot-boxing":{s:"jason"},"bit-life":{s:"jason"},"blackjack":{s:"jason"},"block-blast":{s:"jason"},"block-breaker":{s:"jason"},"bottle-flip":{s:"jason"},"boxing-random":{s:"jason"},"bubble-shooter":{s:"jason"},"car-game-simulator":{s:"jason"},"car-parking":{s:"jason"},"car-traffic-racing":{s:"jason"},"cheese-chompers-3d":{s:"jason"},"chess":{s:"jason"},"classic-uno":{s:"jason"},"clash-royale":{s:"jason"},"cluster-rush":{s:"jason"},"color-tunnel":{s:"jason"},"cookie-clicker":{s:"jason"},"coreball":{s:"jason"},"crazy-cattle-3d":{s:"jason"},"crossy-road":{s:"jason"},"dig-to-china":{s:"jason"},"dino-game":{s:"jason"},"dinosaur-game":{s:"jason"},"doodle-baseball":{s:"jason"},"doodle-cricket":{s:"jason"},"doodle-jump-christmas":{s:"jason"},"doodle-jump":{s:"jason"},"dragon-ball-z":{s:"jason"},"dragon-simulator-3d":{s:"jason"},"dreadhead-parkour":{s:"jason"},"drift-boss":{s:"jason"},"drift-hunters":{s:"jason"},"drive-mad":{s:"jason"},"eaglercraft-1.8":{s:"jason"},"eaglercraft":{s:"jason"},"easy-chess":{s:"jason"},"eggy-car":{s:"jason"},"escape-road":{s:"jason"},"fireboy-and-watergirl":{s:"jason"},"five-nights-at-freddy":{s:"jason"},"flappy-bird":{s:"jason"},"flappy-dunk":{s:"jason"},"flying-gorilla":{s:"jason"},"fnaf-2":{s:"jason"},"football-us":{s:"jason"},"friday-night-funkin":{s:"jason"},"fruit-merge":{s:"jason"},"funny-shooter-2":{s:"jason"},"g-switch":{s:"jason"},"geometry-dash-lite":{s:"jason"},"getaway-shootout":{s:"jason"},"granny-2":{s:"jason"},"happy-wheels":{s:"jason"},"hexanaut.io":{s:"jason"},"highway-rider-extreme":{s:"jason"},"highway-traffic":{s:"jason"},"hill-climb-racing":{s:"jason"},"house-of-hazards":{s:"jason"},"idle-breakout":{s:"jason"},"idle-dice":{s:"jason"},"jelly-truck":{s:"jason"},"level-devil":{s:"jason"},"little-alchemy-2":{s:"jason"},"little-alchemy":{s:"jason"},"madalin-stunt-cars-2":{s:"jason"},"make-it-meme":{s:"jason"},"minesweeper":{s:"jason"},"monkey-mart":{s:"jason"},"moto-x3m-4-winter":{s:"jason"},"moto-x3m-5-pool-party":{s:"jason"},"moto-x3m-6-spooky-land":{s:"jason"},"moto-x3m":{s:"jason"},"murder":{s:"jason"},"need-for-speed-dirft-car":{s:"jason"},"ovo-2":{s:"jason"},"ovo":{s:"jason"},"papa-s-burgeria":{s:"jason"},"papa-s-pancakeria":{s:"jason"},"papa-s-scooperia":{s:"jason"},"papas-freezeria":{s:"jason"},"papas-pizzeria":{s:"jason"},"paper-io":{s:"jason"},"paper.io-2":{s:"jason"},"paper.io":{s:"jason"},"parking-fury":{s:"jason"},"penalty-kick-online":{s:"jason"},"penalty-kick":{s:"jason"},"ping-pong-chaos":{s:"jason"},"pixel-shooter":{s:"jason"},"pizza-tower":{s:"jason"},"polytrack":{s:"jason"},"poodle-jump":{s:"jason"},"poop-clicker":{s:"jason"},"raft-wars":{s:"jason"},"ragdoll-archers":{s:"jason"},"ragdoll-hit":{s:"jason"},"real-flight":{s:"jason"},"retro-bowl":{s:"jason"},"rocket-soccer-derby":{s:"jason"},"rooftop-sniper":{s:"jason"},"rooftop-snipers":{s:"jason"},"run-3":{s:"jason"},"sbrunga":{s:"jason"},"scifi-flight-simulator":{s:"jason"},"short-life":{s:"jason"},"slice-master":{s:"jason"},"slope-2":{s:"jason"},"slope-3":{s:"jason"},"slope-ball":{s:"jason"},"slope-multiplayer":{s:"jason"},"slope-run":{s:"jason"},"slope":{s:"jason"},"smash-karts":{s:"jason"},"snake.io":{s:"jason"},"sniper-rifle-shooting":{s:"jason"},"snow-rider3d":{s:"jason"},"snowball.io":{s:"jason"},"soccer-bros":{s:"jason"},"soccer-legends":{s:"jason"},"space-waves":{s:"jason"},"spacebar-clicker":{s:"jason"},"speed-stars":{s:"jason"},"sprinter":{s:"jason"},"sprunki-1999":{s:"jason"},"sprunki-2004":{s:"jason"},"sprunki-cendi":{s:"jason"},"sprunki-corruption":{s:"jason"},"sprunki-italian-brainrot":{s:"jason"},"sprunki-ketchup":{s:"jason"},"sprunki-phase-21":{s:"jason"},"sprunki-swap-retextured":{s:"jason"},"sprunki-the-trevor-mod":{s:"jason"},"sprunki-warm":{s:"jason"},"squidgame3d":{s:"jason"},"stick-fighter":{s:"custom"},"stickman-archero-fight":{s:"jason"},"stickman-hook":{s:"jason"},"strite-football-game":{s:"jason"},"subway-surfers":{s:"jason"},"survival-race":{s:"jason"},"swingo":{s:"jason"},"tag":{s:"jason"},"tall-man-run":{s:"jason"},"tank-trouble":{s:"jason"},"tanuki-sunset":{s:"jason"},"tap-road":{s:"jason"},"tap-tap-shots":{s:"jason"},"temple-run-2":{s:"jason"},"10-minutes-till-dawn":{s:"jason"},"tic-tac-toe":{s:"jason"},"time-shooter-2":{s:"jason"},"time-shooter-3":{s:"jason"},"tiny-fishing":{s:"jason"},"toca-boca":{s:"jason"},"tomb-of-the-mask":{s:"jason"},"tomb-of-the-masks":{s:"jason"},"traffic-jam-3d":{s:"jason"},"traffic-rush":{s:"jason"},"tunnel-rush":{s:"jason"},"unicycle-hero":{s:"jason"},"vex-3":{s:"jason"},"vex4":{s:"jason"},"vex5":{s:"jason"},"vex6":{s:"jason"},"whack-your-neighbor":{s:"jason"},"wheelie-bike":{s:"jason"},"wordle-unlimited":{s:"jason"},"wordle":{s:"jason"},"world-war-2":{s:"jason"},"worlds-hardest-game":{s:"jason"},"wrestle-bros":{s:"jason"},"11-11":{s:"lna"},"12-minibattles":{s:"lna"},"1v1.lol":{s:"custom"},"2048-multitask":{s:"lna"},"3d-car-simulator":{s:"lna"},"3d-moto-simulator-2":{s:"lna"},"4x4-drive-offroad":{s:"lna"},"a-dance-of-fire-and-ice":{s:"lna"},"adventure-drivers":{s:"lna"},"age-of-war":{s:"lna"},"air-hockey-championship-deluxe":{s:"lna"},"amazing-sudoku":{s:"lna"},"ape-sling":{s:"lna"},"aqua-thrills":{s:"lna"},"archery-world-tour":{s:"lna"},"arithmetica":{s:"lna"},"athletics-hero":{s:"lna"},"awesome-tanks":{s:"lna"},"b-cubed":{s:"lna"},"basket-and-ball":{s:"lna"},"basket-bros":{s:"lna"},"basket-swooshes":{s:"lna"},"basketball-line":{s:"lna"},"battle-wheels":{s:"lna"},"bearsus":{s:"lna"},"big-tall-small":{s:"lna"},"bike-trials-offroad-1":{s:"lna"},"bike-trials-winter-1":{s:"lna"},"bike-trials-winter-2":{s:"lna"},"bitlife":{s:"lna"},"block-the-pig":{s:"lna"},"blocky-cars":{s:"lna"},"blocky-trials":{s:"lna"},"bloons-tower-defense-1":{s:"lna"},"bloxorz":{s:"lna"},"blumgi-ball":{s:"lna"},"blumgi-castle":{s:"lna"},"blumgi-rocket":{s:"lna"},"blumgi-slime":{s:"lna"},"bob-the-robber-4":{s:"lna"},"bomb-it-7":{s:"lna"},"bowling-stars":{s:"lna"},"boxing-physics-2":{s:"lna"},"brain-for-monster-truck":{s:"lna"},"brain-test-2-tricky-stories":{s:"lna"},"brain-test-3-tricky-quests":{s:"lna"},"brain-test-tricky-puzzles":{s:"lna"},"breaking-the-bank":{s:"lna"},"bubble-trouble-3":{s:"lna"},"bubble-trouble":{s:"lna"},"bullet-force":{s:"lna"},"bumper-cars-soccer":{s:"lna"},"bunny-hop":{s:"lna"},"burger-bounty":{s:"lna"},"burnin-rubber-5-xs":{s:"lna"},"burnin-rubber-crash-n-burn":{s:"lna"},"burnout-drift-seaport-max":{s:"lna"},"burrito-bison":{s:"lna"},"candy-jump":{s:"lna"},"cannon-strike":{s:"lna"},"car-climb-racing":{s:"lna"},"car-rush":{s:"lna"},"cars-thief-tank-edition":{s:"lna"},"cars-thief":{s:"lna"},"cat-gunner-super-zombie-shoot":{s:"lna"},"cat-trap":{s:"lna"},"cats":{s:"lna"},"chicken-merge":{s:"lna"},"chrome-dino":{s:"lna"},"city-bike-stunt-2":{s:"lna"},"city-car-driving-stunt-master":{s:"lna"},"city-rider":{s:"lna"},"coffee-shop":{s:"lna"},"color-switch":{s:"lna"},"color-tunnel-2":{s:"lna"},"crazy-cars":{s:"lna"},"crazy-tunnel-3d":{s:"lna"},"cricket-world-cup":{s:"lna"},"cubes-king":{s:"lna"},"cubito-mayhem":{s:"lna"},"curve-ball-3d":{s:"lna"},"cyber-cars-punk-racing":{s:"lna"},"death-chase":{s:"lna"},"death-run-3d":{s:"lna"},"deepest-sword":{s:"lna"},"deer-simulator":{s:"lna"},"demolition-derby-crash-racing":{s:"lna"},"detective-loupe-puzzle":{s:"lna"},"dog-simulator-3d":{s:"lna"},"doge-miner":{s:"lna"},"doodle-champion-island":{s:"lna"},"draw-the-hill":{s:"lna"},"drunken-duel":{s:"lna"},"duck-life-2-world-champion":{s:"lna"},"duck-life-3-evolution":{s:"lna"},"duck-life-4":{s:"lna"},"duck-life":{s:"lna"},"dunkbrush":{s:"lna"},"dunkers":{s:"lna"},"eagler":{s:"lna"},"earn-to-die":{s:"lna"},"elastic-man":{s:"lna"},"electron-dash":{s:"lna"},"eliza-mall-mania":{s:"lna"},"energy":{s:"lna"},"escaping-the-prison":{s:"lna"},"eugenes-life":{s:"lna"},"evo-city-driving":{s:"lna"},"extreme-car-driving-simulator":{s:"lna"},"extreme-car-parking":{s:"lna"},"factory-balls-forever":{s:"lna"},"fairy-dressup":{s:"lna"},"fancy-pants-2":{s:"lna"},"fancy-pants-3":{s:"lna"},"fancy-pants":{s:"lna"},"five-nights-at-freddys-2":{s:"lna"},"five-nights-at-freddys-3":{s:"lna"},"five-nights-at-freddys":{s:"lna"},"flappy-bird-origin":{s:"lna"},"fleeing-the-complex":{s:"lna"},"flying-car-simulator":{s:"lna"},"foot-chinko":{s:"lna"},"football-legends":{s:"lna"},"football-masters":{s:"lna"},"fortz":{s:"lna"},"free-kick-shooter":{s:"lna"},"free-the-key":{s:"lna"},"furious-racing-3d":{s:"lna"},"g-switch-3":{s:"lna"},"geometry-dash":{s:"custom"},"go-kart-go-ultra":{s:"lna"},"gobble":{s:"lna"},"gold-digger-frvr":{s:"lna"},"golf-champions":{s:"lna"},"golfinity":{s:"lna"},"google-feud":{s:"lna"},"google-snake":{s:"lna"},"grand-prix-hero":{s:"lna"},"gravity-soccer":{s:"lna"},"grindcraft-remastered":{s:"lna"},"grindcraft":{s:"lna"},"gun-mayhem-2":{s:"lna"},"gun-mayhem-3":{s:"lna"},"gun-mayhem":{s:"lna"},"gunspin":{s:"lna"},"hammer-2-reloaded":{s:"lna"},"happy-room":{s:"lna"},"head-soccer-2023":{s:"lna"},"heads-arena-soccer-all-stars":{s:"lna"},"heart-star-html5":{s:"lna"},"hextris":{s:"lna"},"highway-racer-3d":{s:"lna"},"horse-shoeing":{s:"lna"},"horse-simulator-3d":{s:"lna"},"hover-racer-drive":{s:"lna"},"hover-racer":{s:"lna"},"icy-purple-head-3":{s:"lna"},"idle-ants":{s:"lna"},"idle-digging-tycoon":{s:"lna"},"idle-lumber-inc":{s:"lna"},"idle-miner":{s:"lna"},"idle-mining-empire":{s:"lna"},"idle-startup-tycoon":{s:"lna"},"impossible-monster-truck-race":{s:"lna"},"impossible-tic-tac-toe":{s:"lna"},"infinity-loop":{s:"lna"},"iron-snout":{s:"lna"},"jet-boy":{s:"lna"},"jetpack-joyride":{s:"lna"},"jollyworld":{s:"lna"},"jumping-shell":{s:"lna"},"kart-race-3d":{s:"lna"},"kawaii-dressup":{s:"lna"},"kix-dream-soccer":{s:"lna"},"leader-strike":{s:"lna"},"lemonade-stand":{s:"lna"},"life-the-game":{s:"lna"},"linebacker-alley-2":{s:"lna"},"ludo-multiplayer":{s:"lna"},"mad-day":{s:"lna"},"mad-truck-challenge-special":{s:"lna"},"madalin-stunt-cars-3":{s:"lna"},"marble-dash":{s:"lna"},"masked-forces":{s:"lna"},"master-chess":{s:"lna"},"maze-path-of-light":{s:"lna"},"maze-planet-3d":{s:"lna"},"merge-cakes":{s:"lna"},"merge-cyber-racers":{s:"lna"},"merge-harvest":{s:"lna"},"merge-round-racers":{s:"lna"},"minecraft-1.5.2":{s:"lna"},"minecraft-1.8.8":{s:"lna"},"minecraft-builder":{s:"lna"},"minibattles":{s:"lna"},"mob-city":{s:"lna"},"monster-tracks":{s:"lna"},"monsters-wheels-special":{s:"lna"},"mosaic-puzzle-art":{s:"lna"},"moto-maniac-2":{s:"lna"},"moto-maniac":{s:"lna"},"moto-road-rash-3d":{s:"lna"},"moto-trial-racing-2":{s:"lna"},"moto-x3m-2":{s:"lna"},"moto-x3m-pool-party":{s:"lna"},"moto-x3m-spooky-land":{s:"lna"},"moto-x3m-winter":{s:"lna"},"my-pony-my-little-race":{s:"lna"},"n-gon":{s:"lna"},"neon-war":{s:"lna"},"noob-drive":{s:"lna"},"offroader-v5":{s:"lna"},"onion-boy":{s:"lna"},"online-sudoku":{s:"lna"},"orbital-survival":{s:"lna"},"panda-bubble-shooter":{s:"lna"},"panda-simulator-3d":{s:"lna"},"paper-fighter-3d":{s:"lna"},"paper-io-2":{s:"lna"},"parking-fury-2":{s:"lna"},"parking-fury-3d-bounty-hunter":{s:"lna"},"parking-fury-3d-night-thief":{s:"lna"},"parkour-block-3d":{s:"lna"},"penalty-shooters-2":{s:"lna"},"perfect-peel":{s:"lna"},"ping-pong-html5":{s:"lna"},"pixel-gun-survival":{s:"lna"},"pixwars-2":{s:"lna"},"plactions":{s:"lna"},"pool-club":{s:"lna"},"poor-bunny":{s:"lna"},"pop-it-master":{s:"lna"},"power-badminton":{s:"lna"},"pre-civilization-bronze-age":{s:"lna"},"precision-client":{s:"lna"},"puppet-master":{s:"lna"},"rabbit-samurai":{s:"lna"},"raft-wars-2":{s:"lna"},"raft-wars-multiplayer":{s:"lna"},"rally-champion":{s:"lna"},"real-cars-in-city":{s:"lna"},"real-city-driving-2":{s:"lna"},"real-simulator-monster-truck":{s:"lna"},"recoil":{s:"lna"},"red-ball-4":{s:"lna"},"riddle-school":{s:"lna"},"rio-rex":{s:"lna"},"rocket-pult":{s:"lna"},"rolling-sky":{s:"lna"},"rolly-vortex":{s:"lna"},"roly-poly-monsters":{s:"lna"},"rooftop-snipers-2":{s:"lna"},"rowdy-city-wrestling":{s:"lna"},"rowdy-wrestling":{s:"lna"},"run-3-editor":{s:"lna"},"running-fred":{s:"lna"},"rusher-crusher":{s:"lna"},"sausage-flip":{s:"lna"},"school-bus-demolition-derby":{s:"lna"},"scrap-metal":{s:"lna"},"shoot-stickman":{s:"lna"},"short-ride":{s:"lna"},"shortcut-race":{s:"lna"},"sketchbook-04":{s:"lna"},"skiing-fred":{s:"lna"},"slime-road":{s:"lna"},"slope-2-multiplayer":{s:"lna"},"slope-city":{s:"lna"},"slope-tunnel":{s:"lna"},"sniper-gun-shooting":{s:"lna"},"snow-rider-3d":{s:"lna"},"soccar":{s:"lna"},"soccer-random":{s:"lna"},"soccer-skills-champions-league":{s:"lna"},"soccer-skills-euro-cup":{s:"lna"},"soccer-skills-world-cup":{s:"lna"},"solitaire":{s:"lna"},"speed-boat-extreme-racing":{s:"lna"},"squish-run":{s:"lna"},"stack-ball":{s:"lna"},"stack-bump-3d":{s:"lna"},"stack":{s:"lna"},"stacktris":{s:"lna"},"stair-race-3d":{s:"lna"},"stealing-the-diamond":{s:"lna"},"stick-defenders":{s:"lna"},"stick-merge":{s:"lna"},"stickman-army-team-battle":{s:"lna"},"stickman-army-the-resistance":{s:"lna"},"stickman-bike-pr":{s:"lna"},"stickman-bike":{s:"lna"},"stickman-boxing-ko-champion":{s:"lna"},"stickman-bridge-constructor":{s:"lna"},"stickman-climb-2":{s:"lna"},"stickman-fighter-epic-battle-2":{s:"lna"},"stickman-fighter-mega-brawl":{s:"lna"},"stickman-golf":{s:"lna"},"stickman-ragdoll-crash-fun":{s:"lna"},"stickman-school-run":{s:"lna"},"stock-car-hero":{s:"lna"},"street-ball-jam":{s:"lna"},"striker-dummies":{s:"lna"},"stunt-car-challenge-3":{s:"lna"},"stupid-zombies":{s:"lna"},"subway-runner":{s:"lna"},"subway-surfers-beijing":{s:"lna"},"subway-surfers-houston":{s:"lna"},"subway-surfers-monaco":{s:"lna"},"subway-surfers-newyork":{s:"lna"},"sudoku":{s:"lna"},"super-bike-the-champion":{s:"lna"},"super-hexbee-merger":{s:"lna"},"super-hot":{s:"lna"},"super-liquid-soccer":{s:"lna"},"super-mario-64":{s:"lna"},"super-mario-bros":{s:"lna"},"super-racing-gt-drag-pro":{s:"lna"},"super-santa-kicker":{s:"lna"},"super-star-car":{s:"lna"},"super-tunnel-rush":{s:"lna"},"superbattle-2":{s:"lna"},"superbike-hero":{s:"lna"},"survivor-in-rainbow-monster":{s:"lna"},"swatforce-vs-terrorists":{s:"lna"},"tag-2":{s:"lna"},"tank-trouble-2":{s:"lna"},"temple-of-boom":{s:"lna"},"tennis-masters":{s:"lna"},"terris":{s:"lna"},"tetris-flash":{s:"lna"},"the-impossible-quiz":{s:"lna"},"the-little-giant":{s:"lna"},"the-spear-stickman":{s:"lna"},"there-is-no-game":{s:"lna"},"three-goblets":{s:"lna"},"thumb-fighter-christmas":{s:"lna"},"thumb-fighter":{s:"lna"},"tictactoe":{s:"lna"},"tiger-simulator-3d":{s:"lna"},"tinytownracing":{s:"lna"},"tomb-of-the-mask-color":{s:"lna"},"toon-off":{s:"lna"},"top-speed-3d":{s:"lna"},"top-speed-racing-3d":{s:"lna"},"tower-of-destiny":{s:"lna"},"traffic-mania":{s:"lna"},"traffic-rider":{s:"lna"},"tricks":{s:"lna"},"truck-traffic":{s:"lna"},"tube-jumpers":{s:"lna"},"turbo-moto-racer":{s:"lna"},"two-ball-3d-dark":{s:"lna"},"two-neon-boxes":{s:"lna"},"ultimate-car-driving":{s:"lna"},"ultimate-sudoku":{s:"lna"},"vex-4":{s:"lna"},"vex-5":{s:"lna"},"vex-6":{s:"lna"},"vex-7":{s:"lna"},"volley-random":{s:"lna"},"volleyball-challenge":{s:"lna"},"water-color-sort":{s:"lna"},"we-become-what-we-behold":{s:"lna"},"where-is-my-cat":{s:"lna"},"who-is":{s:"lna"},"wizard-mike":{s:"lna"},"wood-blocks-3d":{s:"lna"},"word-city-crossed":{s:"lna"},"word-city-uncrossed":{s:"lna"},"worlds-hardest-game-2":{s:"lna"},"worlds-hardest-game-3":{s:"lna"},"wrassling":{s:"lna"},"zombie-derby-pixel-survival":{s:"lna"}};
 const games = Object.keys(gamesList);
-        const lockedGames = [];
-const gemLockedGames = {};
+        const lockedGames = ['stick-fighter', '10-minutes-till-dawn', 'slope-2-multiplayer', 'poker', 'escape-road', 'baldi-s-basics', 'plinko', 'super-mario-64', 'minecraft-1.8.8', 'slope-multiplayer', 'eaglercraft-1.8', 'bullet-force', 'Eagler'];
+const gemLockedGames = {
+    'fnaw': 5,
+    'hollow-knight': 50,
+    'undertale': 20,
+    'eagler-2': 10,
+    'bendy-and-the-ink-machine': 15,
+    'buckshot-roulette': 25,
+    'kindergarten': 10,
+    'raft': 30,
+    'terraria': 30,
+    'geometry-dash': 5,
+    'bloons-td-4': 10,
+    'gorilla-tag': 20,
+    'cuphead': 67,
+    'pizza-tower': 15,
+    'omori': 20,
+    'the-man-from-the-window': 1,
+    "getting-over-it": 20,
+    "people-playground": 20,
+    "slenderman": 10,
+    "solar-smash": 10,
+    "ultrakill": 5,
+    "pokemon-emerald":15,
+    "skibidi-toilet-arena":41,
+    "pokemon-sapphire":10,
+    "pokemon-ruby":10,
+    "ovo-dimensions":20,
+    "gladihoppers":10
+};
         const _0x4a2b = (s) => btoa(s).split('').reverse().join('');
         const _0x2b4a = (s) => atob(s.split('').reverse().join(''));
         const _0x9c3d = 'X2NvaW5EYXRh';
@@ -3399,32 +3427,32 @@ function loadGame(game) {
         checkNametags(); 
     }
     if (game === 'fnaw') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/custom/fnaw';
+        document.getElementById('gameFrame').src = 'https://manscod.github.io/other/fnaw';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
      if (game === 'getting-over-it') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Getting Over It with Bennett Foddy.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Getting Over It with Bennett Foddy.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'slenderman') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Slender_ The 8 Pages.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Slender_ The 8 Pages.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'solar-smash') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Solar Smash.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Solar Smash.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }  
     
      if (game === 'ultrakill') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/ULTRAKILL.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/ULTRAKILL.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
@@ -3466,13 +3494,13 @@ function loadGame(game) {
         return;
     }
     if (game === 'people-playground') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/People Playground.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/People Playground.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'fluid-sim') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/custom/fluid-sim';
+        document.getElementById('gameFrame').src = 'https://paveldogreat.github.io/WebGL-Fluid-Simulation/';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
@@ -3497,21 +3525,21 @@ function loadGame(game) {
     }
 
      if (game === 'stunt-multiplayer') {
-        document.getElementById('gameFrame').src = 'https://html5.gamedistribution.com/6552bf3254b441c1baf6b4727006bd28/?utm_source=evofah.onrender.com&utm_medium=stunt-multiplayer-arena&utm_campaign=block-and-redirect';
+        document.getElementById('gameFrame').src = 'https://html5.gamedistribution.com/6552bf3254b441c1baf6b4727006bd28/?utm_source=skibiditoile3qb3.github.io&utm_medium=stunt-multiplayer-arena&utm_campaign=block-and-redirect';
         gameIsPlaying = true;
          document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
    
      if (game === 'terraria') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Terraria.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Terraria.html';
         gameIsPlaying = true;
          document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
 
      if (game === '1v1.lol') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/1v1.LoL.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/1v1.LoL.html';
         gameIsPlaying = true;
          document.getElementById('saveLoadBtn').style.display = 'none';
         return;
@@ -3523,31 +3551,31 @@ function loadGame(game) {
         return;
     }
     if (game === 'cuphead') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Cuphead.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Cuphead.html';
         gameIsPlaying = true
             document.getElementById('saveLoadBtn').style.display = 'none';;
         return;
     }
     if (game === 'omori') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/OMORI.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/OMORI.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'bloons-td-4') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Bloons TD 4.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Bloons TD 4.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
      if (game === 'gorilla-tag') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Gorilla Tag.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Gorilla Tag.html';
         gameIsPlaying = true;
          document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'geometry-dash') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Geometry Dash Lite (REMAKE).html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Geometry Dash Lite (REMAKE).html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
@@ -3561,31 +3589,31 @@ function loadGame(game) {
     }
     
     if (game === 'bendy-and-the-ink-machine') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Bendy and the Ink Machine.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Bendy and the Ink Machine.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'buckshot-roulette') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Buckshot Roulette.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Buckshot Roulette.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'kindergarten') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Kindergarten.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Kindergarten.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'raft') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Raft.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/Raft.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
     if (game === 'the-man-from-the-window') {
-        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/The Man In The Window.html';
+        document.getElementById('gameFrame').src = 'https://skibiditoile3qb3.github.io/evofah/special/The Man In The Window.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
@@ -3648,7 +3676,7 @@ function loadGame(game) {
     document.getElementById('saveLoadBtn').style.display = 'none';
     return;
     }else if (game === 'stick-fighter') {
-     document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/custom/stick-fighter';
+     document.getElementById('gameFrame').src = 'https://gswitch3.github.io/g6/stick-fighter/';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
     return; }
@@ -3660,19 +3688,138 @@ function loadGame(game) {
         return;
     }
     
-    if (['jason', 'lna', 'custom'].includes(gameInfo.s)) {
-        const gameUrl = `https://evofah.onrender.com/special/custom/${encodeURIComponent(game)}`;
-        document.getElementById('gameFrame').src = gameUrl;
+    if (gameInfo.s === 'jason') {
+        document.getElementById('gameFrame').src = `https://jasongamesdev.github.io/${game}`;
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         if (userProfile.visualizerEnabled) {
             document.body.style.setProperty('--visualizer-active', '1');
         }
+    } else if (gameInfo.s === 'lna') {
+        const cachedDir = gameUrlCache[game];
+        if (cachedDir === 'simple') {
+            document.getElementById('gameFrame').src = `https://lnahtml.github.io/a/${game}`;
+            gameIsPlaying = true;
+            document.getElementById('saveLoadBtn').style.display = 'none';
+            if (userProfile.visualizerEnabled) {
+                document.body.style.setProperty('--visualizer-active', '1');
+            }
+            return;
+        } else if (cachedDir !== undefined) {
+            document.getElementById('gameFrame').src = `https://lnahtml.github.io/a${cachedDir}/${game}`;
+            gameIsPlaying = true;
+            document.getElementById('saveLoadBtn').style.display = 'none';
+            if (userProfile.visualizerEnabled) {
+                document.body.style.setProperty('--visualizer-active', '1');
+            }
+            return;
+        }
+        
+        tryLoadingGame(game, 0);
+        gameIsPlaying = true;
+        document.getElementById('saveLoadBtn').style.display = 'none';
+        if (userProfile.visualizerEnabled) {
+            document.body.style.setProperty('--visualizer-active', '1');
+        }
+    }
+}
+
+let gameUrlCache = {};
+
+try {
+    const cached = localStorage.getItem('_gameUrlCache');
+    if (cached) {
+        gameUrlCache = JSON.parse(cached);
+    }
+} catch(e) {}
+
+function saveUrlCache() {
+    try {
+        localStorage.setItem('_gameUrlCache', JSON.stringify(gameUrlCache));
+    } catch(e) {}
+}
+
+async function tryLoadingGame(game, startAttempt = 0) {
+    const baseUrl = 'https://lnahtml.github.io/';
+    const frame = document.getElementById('gameFrame');
+    
+    frame.srcdoc = `
+        <style>
+            body { 
+                margin: 0; 
+                background: #0a0a0a; 
+                color: #fff; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                height: 100vh; 
+                font-family: Arial;
+            }
+            .spinner {
+                border: 3px solid #333;
+                border-top: 3px solid #d69e2e;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin-bottom: 20px;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <div>Loading ${formatGameName(game)}...</div>
+        </div>
+    `;
+    
+    const simpleUrl = `${baseUrl}a/${game}`;
+    const simpleValid = await testGameUrl(simpleUrl);
+    
+    if (simpleValid) {
+        frame.removeAttribute('srcdoc');
+        gameUrlCache[game] = 'simple';
+        saveUrlCache();
+        frame.src = simpleUrl;
+        console.log(`✅ Found ${game} at /a/`);
         return;
     }
-
-    alert(`Game "${formatGameName(game)}" source "${gameInfo.s}" is not supported.`);
+    
+    for (let i = startAttempt; i <= 9; i++) {
+        const testUrl = `${baseUrl}a${i}/${game}`;
+        const isValid = await testGameUrl(testUrl);
+        
+        if (isValid) {
+            frame.removeAttribute('srcdoc');
+            gameUrlCache[game] = i;
+            saveUrlCache();
+            frame.src = testUrl;
+            console.log(`✅ Found ${game} at a${i}`);
+            return;
+        }
+    }
+    
+    frame.removeAttribute('srcdoc');
+    alert(`Could not find ${formatGameName(game)}. It may have been removed.`);
     backToMain();
+}
+
+async function testGameUrl(url) {
+    try {
+        const response = await fetch(url);
+        const text = await response.text();
+        
+        if (text.includes("There isn't a GitHub Pages site here") || 
+            text.includes("404") && text.includes("GitHub Pages")) {
+            return false;
+        }
+        
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 function backToMain() {
     document.getElementById('mainView').style.display = 'flex';
