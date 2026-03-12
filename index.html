@@ -3746,39 +3746,19 @@ function loadGame(game) {
         const frame = document.getElementById('gameFrame');
         const zoneUrl = (gameInfo.url || '').replace('{HTML_URL}', HTML_URL);
 
-        const launchFromHtml = (html, sourceUrl) => {
-            const baseUrl = sourceUrl.includes('/') ? sourceUrl.substring(0, sourceUrl.lastIndexOf('/') + 1) : sourceUrl;
-            let finalHtml = html;
-
-            if (/<head[^>]*>/i.test(finalHtml)) {
-                finalHtml = finalHtml.replace(/<head([^>]*)>/i, `<head$1><base href="${baseUrl}">`);
-            } else {
-                finalHtml = `<head><base href="${baseUrl}"></head>${finalHtml}`;
-            }
-
-            frame.src = 'about:blank';
-            frame.onload = () => {
-                try {
-                    const doc = frame.contentDocument || frame.contentWindow.document;
-                    doc.open();
-                    doc.write(finalHtml);
-                    doc.close();
-                } catch (e) {
-                    frame.srcdoc = finalHtml;
-                }
-                frame.onload = null;
-            };
-        };
-
-        fetch(`${zoneUrl}?t=${Date.now()}`)
-            .then((response) => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.text();
-            })
-            .then((html) => launchFromHtml(html, zoneUrl))
-            .catch(() => {
-                frame.src = zoneUrl;
-            });
+        if (zoneUrl.startsWith('http')) {
+            frame.src = zoneUrl;
+        } else {
+            fetch(`${zoneUrl}?t=${Date.now()}`)
+                .then((response) => response.text())
+                .then((html) => {
+                    frame.srcdoc = html;
+                })
+                .catch((error) => {
+                    alert(`Failed to load ${formatGameName(game)}: ${error.message}`);
+                    backToMain();
+                });
+        }
 
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
