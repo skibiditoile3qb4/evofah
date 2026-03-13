@@ -147,7 +147,7 @@
 <div class="shop-item" id="championRankItem" style="border: 2px solid #ff6a00;">
     <h2>🏆 Champion Rank</h2>
     <p>Everything Mystical has, plus a blazing Champion effect, CHAMPION nametag, and 2x MORE passive coin profit than Mystical. Auto-renews daily for 100 gems.</p>
-    <div class="price" style="color: #ff8a00;">100 💎 / day</div>
+    <div class="price" style="color: #ff8a00;">20 💎 / day</div>
     <button id="buyChampionRank">Purchase</button>
 </div>
     </div>
@@ -836,7 +836,7 @@ document.getElementById('buyChampionRank').addEventListener('click', () => {
         return;
     }
 
-    const gemCost = 100;
+    const gemCost = 20;
     if ((userProfile.gems || 0) < gemCost) {
         alert(`❌ Not enough gems! You need ${gemCost} gems.`);
         return;
@@ -850,7 +850,7 @@ document.getElementById('buyChampionRank').addEventListener('click', () => {
 • Exclusive Champion aura effect
 • CHAMPION nametag
 
-⚠️ Auto-renews daily for 100 gems. If you can't pay one day, it expires.`)) {
+⚠️ Auto-renews daily for 20 gems. If you can't pay one day, it expires.`)) {
         return;
     }
 
