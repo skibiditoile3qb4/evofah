@@ -1956,7 +1956,8 @@ const gemLockedGames = {
     "pokemon-sapphire":10,
     "pokemon-ruby":10,
     "ovo-dimensions":20,
-    "gladihoppers":10
+    "gladihoppers":10,
+    "epstein": 5
 };
         const _0x4a2b = (s) => btoa(s).split('').reverse().join('');
         const _0x2b4a = (s) => atob(s.split('').reverse().join(''));
@@ -3717,7 +3718,13 @@ function loadGame(game) {
         return;
     }
      if (game === 'gladihoppers') {
-        document.getElementById('gameFrame').src = 'https://d3rtzzzsiu7gdr.cloudfront.net/files/gladihoppers/game.html';
+        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Gladihoppers.html';
+        gameIsPlaying = true;
+        document.getElementById('saveLoadBtn').style.display = 'none';
+        return;
+    }
+    if (game === 'epstein') {
+        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Five Nights at Epstein's.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
@@ -3752,7 +3759,7 @@ function loadGame(game) {
         return;
     }
         if (game === 'hollow-knight') {
-        document.getElementById('gameFrame').src = 'https://d3rtzzzsiu7gdr.cloudfront.net/files/hollow-knight/index.html';
+        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Hollow Knight.html';
         gameIsPlaying = true;
             document.getElementById('saveLoadBtn').style.display = 'none';
         return;
