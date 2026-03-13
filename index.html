@@ -3814,12 +3814,30 @@ function loadGame(game) {
         return;
     }
 
-    if (game === 'undertale') {
-        document.getElementById('gameFrame').src = 'https://d3rtzzzsiu7gdr.cloudfront.net/files/utale/index.html';
-        gameIsPlaying = true;
-        document.getElementById('saveLoadBtn').style.display = 'none';
-        return;
-    }
+   if (game === 'undertale') {
+    const frame = document.getElementById('gameFrame');
+    fetch('https://www.autistici.org/burnedprojects/UNDERTALE/?t=' + Date.now())
+        .then(response => response.text())
+        .then(html => {
+            const baseUrl = 'https://www.autistici.org/burnedprojects/UNDERTALE/';
+            let finalHtml = html;
+            if (/<head[^>]*>/i.test(finalHtml)) {
+                finalHtml = finalHtml.replace(/<head([^>]*)>/i, `<head$1><base href="${baseUrl}">`);
+            } else {
+                finalHtml = `<head><base href="${baseUrl}"></head>${finalHtml}`;
+            }
+            frame.contentDocument.open();
+            frame.contentDocument.write(finalHtml);
+            frame.contentDocument.close();
+        })
+        .catch(() => {
+            // Fallback: try direct src
+            frame.src = 'https://www.autistici.org/burnedprojects/UNDERTALE/';
+        });
+    gameIsPlaying = true;
+    document.getElementById('saveLoadBtn').style.display = 'none';
+    return;
+}
 
     if (game === 'bendy-and-the-ink-machine') {
         document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Bendy and the Ink Machine.html';
