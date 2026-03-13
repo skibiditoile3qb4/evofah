@@ -888,12 +888,7 @@ document.getElementById('buyChampionRank').addEventListener('click', () => {
     }
 
     saveUserProfile(userProfile);
-    alert('✅ Success! You are now CHAMPION rank!
-
-🔥 Champion Aura equipped
-💰 Massive passive coin gains enabled
-🛡️ Mystical loss protection included
-💎 100 gems/day auto-renew started');
+    alert('✅ Success! You are now CHAMPION rank! 🔥 Champion Aura equipped💰 Massive passive coin gains enabled 🛡️ Mystical loss protection included 💎 100 gems/day auto-renew started');
     document.getElementById('gemAmount').textContent = userProfile.gems;
     markAsOwned('buyChampionRank', document.getElementById('championRankItem'));
     markAsOwned('buyMysticalRank', document.getElementById('mysticalRankItem'));
