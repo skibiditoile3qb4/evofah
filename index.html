@@ -1216,36 +1216,112 @@
     50% { opacity: 0.5; }
 }
 .chat-nametag-badge.god {
-    background:
-        linear-gradient(135deg, rgba(255, 215, 0, 0.22), rgba(255, 255, 255, 0.06)),
-        linear-gradient(90deg, #ffd700 0%, #ffcf4d 35%, #ff7dd3 70%, #a985ff 100%);
-    color: #fff7d1;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.8) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(255, 215, 0, 0.8) 0%, transparent 50%),
+        linear-gradient(180deg, 
+            #fff 0%,
+            #ffd700 10%,
+            #ff69b4 20%,
+            #9370db 30%,
+            #4169e1 40%,
+            #9370db 50%,
+            #ff69b4 60%,
+            #ffd700 70%,
+            #fff 80%,
+            #ffd700 90%,
+            #fff 100%
+        );
+    background-size: 200% 200%, 200% 200%, 100% 1000%;
+    background-position: 0% 50%, 100% 50%, 0% 0%;
+    color: #000;
     font-weight: 900;
-    letter-spacing: 1.1px;
-    border: 1px solid rgba(255, 215, 0, 0.75);
-    border-radius: 4px;
-    text-shadow: 0 0 6px rgba(255, 215, 0, 0.55), 0 0 10px rgba(169, 133, 255, 0.35);
-    box-shadow:
-        0 0 12px rgba(255, 215, 0, 0.4),
-        inset 0 0 8px rgba(255, 255, 255, 0.16);
+    letter-spacing: 2.5px;
+    border-radius: 4px; /* Matches other nametags */
+    text-shadow: 
+        0 0 8px rgba(255, 255, 255, 1),
+        0 0 16px rgba(255, 215, 0, 0.8),
+        0 0 24px rgba(255, 105, 180, 0.6),
+        1px 1px 2px #000;
+    box-shadow: 
+        0 0 20px rgba(255, 215, 0, 1),
+        0 0 40px rgba(255, 255, 255, 0.8),
+        0 0 60px rgba(255, 105, 180, 0.6),
+        inset 0 0 20px rgba(255, 255, 255, 0.4);
+    border: 2px solid #ffd700;
+    animation: godThrone 4s ease-in-out infinite, godFloat 3s ease-in-out infinite;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .chat-nametag-badge.god::before {
+    content: '👑';
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    animation: godCrown 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px #ffd700);
+}
+
+.chat-nametag-badge.god::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, transparent 15%, rgba(255, 255, 255, 0.35) 50%, transparent 85%);
-    transform: translateX(-110%);
-    animation: godSheen 3.2s ease-in-out infinite;
+    inset: -8px;
+    background: radial-gradient(
+        ellipse at 50% 50%,
+        rgba(255, 215, 0, 0.6) 0%,
+        rgba(255, 255, 255, 0.4) 20%,
+        rgba(255, 105, 180, 0.3) 40%,
+        rgba(147, 112, 219, 0.2) 60%,
+        transparent 100%
+    );
+    border-radius: 7px; /* Matches nametag shape */
+    z-index: -1;
+    filter: blur(12px);
+    animation: godThroneAura 2.5s ease-in-out infinite;
 }
 
-@keyframes godSheen {
-    0%, 45% { transform: translateX(-110%); }
-    65%, 100% { transform: translateX(120%); }
+@keyframes godThrone {
+    0%, 100% { 
+        background-position: 0% 50%, 100% 50%, 0% 0%;
+    }
+    50% { 
+        background-position: 100% 50%, 0% 50%, 0% 100%;
+    }
 }
 
+@keyframes godFloat {
+    0%, 100% { 
+        transform: translateY(0) scale(1);
+    }
+    50% { 
+        transform: translateY(-5px) scale(1.05);
+    }
+}
+
+@keyframes godCrown {
+    0%, 100% { 
+        transform: translateX(-50%) translateY(0) rotate(-10deg);
+        opacity: 0.8;
+    }
+    50% { 
+        transform: translateX(-50%) translateY(-5px) rotate(10deg);
+        opacity: 1;
+    }
+}
+
+@keyframes godThroneAura {
+    0%, 100% { 
+        opacity: 0.6;
+        transform: scale(1) rotate(0deg);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.4) rotate(90deg);
+    }
+}
 .chat-nametag-badge.staff {
     background: linear-gradient(135deg, #00d4ff 0%, #3478ff 45%, #9b5cff 100%);
     color: #eef7ff;
@@ -1285,7 +1361,7 @@
     50% { filter: saturate(1.25) brightness(1.12); }
 }
 
-.chat-nametag-badge.staff {
+.chat-status-badge.staff {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     color: #e0f0ff;
     font-weight: 700;
@@ -1295,76 +1371,34 @@
         0 0 8px rgba(30, 120, 220, 0.5),
         0 0 16px rgba(30, 80, 180, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    position: relative;
-    overflow: hidden;
-    animation: staffPulse 2.5s ease-in-out infinite;
+    animation: staffBadgePulse 2.5s ease-in-out infinite;
 }
 
-.chat-nametag-badge.staff::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(105deg, transparent 25%, rgba(150, 220, 255, 0.25) 50%, transparent 75%);
-    transform: translateX(-130%);
-    animation: staffSheen 3.5s ease-in-out infinite;
-}
-
-.chat-nametag-badge.staff::after {
-    display: none;
-}
-
-@keyframes staffPulse {
+@keyframes staffBadgePulse {
     0%, 100% {
-        box-shadow: 0 0 8px rgba(30, 120, 220, 0.5), 0 0 16px rgba(30, 80, 180, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        box-shadow: 0 0 8px rgba(30, 120, 220, 0.5), 0 0 16px rgba(30, 80, 180, 0.3);
     }
     50% {
-        box-shadow: 0 0 14px rgba(60, 160, 255, 0.7), 0 0 28px rgba(30, 100, 220, 0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+        box-shadow: 0 0 14px rgba(60, 160, 255, 0.7), 0 0 28px rgba(30, 100, 220, 0.45);
     }
 }
-
-@keyframes staffSheen {
-    0%, 50%  { transform: translateX(-130%); }
-    70%, 100% { transform: translateX(140%); }
-}
-.chat-nametag-badge.champion {
+.chat-status-badge.champion {
     background: linear-gradient(135deg, #ff8c00 0%, #ff2d2d 40%, #ff00cc 75%, #9400ff 100%);
     background-size: 300% 300%;
     color: #fff;
     font-weight: 900;
-    letter-spacing: 0.5px;
-    border: 1.5px solid rgba(255, 255, 255, 0.6);
-    text-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 100, 0, 0.6);
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
     box-shadow:
-        0 0 10px rgba(255, 80, 0, 0.6),
-        0 0 20px rgba(200, 0, 200, 0.3),
-        inset 0 0 8px rgba(255, 255, 255, 0.15);
-    position: relative;
-    overflow: hidden;
-    animation: championCycle 3s linear infinite;
+        0 0 10px rgba(255, 80, 0, 0.55),
+        0 0 20px rgba(200, 0, 200, 0.25);
+    animation: championBadgeCycle 3s linear infinite;
 }
 
-.chat-nametag-badge.champion::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
-    transform: translateX(-120%);
-    animation: championWipe 2.4s ease-in-out infinite;
-}
-
-.chat-nametag-badge.champion::after {
-    display: none;
-}
-
-@keyframes championCycle {
+@keyframes championBadgeCycle {
     0%   { background-position: 0% 50%; }
     50%  { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
-}
-
-@keyframes championWipe {
-    0%, 40%  { transform: translateX(-120%); }
-    60%, 100% { transform: translateX(130%); }
 }
         #airstrikePanel {
     position: fixed;
