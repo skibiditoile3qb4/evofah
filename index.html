@@ -426,6 +426,11 @@
     font-weight: bold;
     text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
 }
+#userStatus.champion {
+    color: #ff8a00;
+    font-weight: bold;
+    text-shadow: 0 0 12px rgba(255, 138, 0, 0.7), 0 0 20px rgba(255, 60, 0, 0.35);
+}
 #userDisplay:hover > div {
     background: #252525 !important;
     border-color: #555 !important;
@@ -622,6 +627,11 @@
 .chat-status-badge.mystical {
     background: linear-gradient(135deg, #008c99 0%, #00d9ff 100%);
     color: #fff;
+}
+.chat-status-badge.champion {
+    background: linear-gradient(135deg, #ff8a00 0%, #ff3c00 50%, #ffd000 100%);
+    color: #1a1200;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.35);
 }
 .chat-status-badge.player {
     background: #333;
@@ -1206,111 +1216,73 @@
     50% { opacity: 0.5; }
 }
 .chat-nametag-badge.god {
-    background: 
-        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.8) 0%, transparent 50%),
-        radial-gradient(circle at 80% 50%, rgba(255, 215, 0, 0.8) 0%, transparent 50%),
-        linear-gradient(180deg, 
-            #fff 0%,
-            #ffd700 10%,
-            #ff69b4 20%,
-            #9370db 30%,
-            #4169e1 40%,
-            #9370db 50%,
-            #ff69b4 60%,
-            #ffd700 70%,
-            #fff 80%,
-            #ffd700 90%,
-            #fff 100%
-        );
-    background-size: 200% 200%, 200% 200%, 100% 1000%;
-    background-position: 0% 50%, 100% 50%, 0% 0%;
-    color: #000;
+    background:
+        linear-gradient(135deg, rgba(255, 215, 0, 0.22), rgba(255, 255, 255, 0.06)),
+        linear-gradient(90deg, #ffd700 0%, #ffcf4d 35%, #ff7dd3 70%, #a985ff 100%);
+    color: #fff7d1;
     font-weight: 900;
-    letter-spacing: 2.5px;
-    border-radius: 4px; /* Matches other nametags */
-    text-shadow: 
-        0 0 8px rgba(255, 255, 255, 1),
-        0 0 16px rgba(255, 215, 0, 0.8),
-        0 0 24px rgba(255, 105, 180, 0.6),
-        1px 1px 2px #000;
-    box-shadow: 
-        0 0 20px rgba(255, 215, 0, 1),
-        0 0 40px rgba(255, 255, 255, 0.8),
-        0 0 60px rgba(255, 105, 180, 0.6),
-        inset 0 0 20px rgba(255, 255, 255, 0.4);
-    border: 2px solid #ffd700;
-    animation: godThrone 4s ease-in-out infinite, godFloat 3s ease-in-out infinite;
+    letter-spacing: 1.1px;
+    border: 1px solid rgba(255, 215, 0, 0.75);
+    border-radius: 4px;
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.55), 0 0 10px rgba(169, 133, 255, 0.35);
+    box-shadow:
+        0 0 12px rgba(255, 215, 0, 0.4),
+        inset 0 0 8px rgba(255, 255, 255, 0.16);
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .chat-nametag-badge.god::before {
-    content: '👑';
-    position: absolute;
-    top: -25px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 24px;
-    animation: godCrown 2s ease-in-out infinite;
-    filter: drop-shadow(0 0 10px #ffd700);
-}
-
-.chat-nametag-badge.god::after {
     content: '';
     position: absolute;
-    inset: -8px;
-    background: radial-gradient(
-        ellipse at 50% 50%,
-        rgba(255, 215, 0, 0.6) 0%,
-        rgba(255, 255, 255, 0.4) 20%,
-        rgba(255, 105, 180, 0.3) 40%,
-        rgba(147, 112, 219, 0.2) 60%,
-        transparent 100%
-    );
-    border-radius: 7px; /* Matches nametag shape */
-    z-index: -1;
-    filter: blur(12px);
-    animation: godThroneAura 2.5s ease-in-out infinite;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 15%, rgba(255, 255, 255, 0.35) 50%, transparent 85%);
+    transform: translateX(-110%);
+    animation: godSheen 3.2s ease-in-out infinite;
 }
 
-@keyframes godThrone {
-    0%, 100% { 
-        background-position: 0% 50%, 100% 50%, 0% 0%;
-    }
-    50% { 
-        background-position: 100% 50%, 0% 50%, 0% 100%;
-    }
+@keyframes godSheen {
+    0%, 45% { transform: translateX(-110%); }
+    65%, 100% { transform: translateX(120%); }
 }
 
-@keyframes godFloat {
-    0%, 100% { 
-        transform: translateY(0) scale(1);
-    }
-    50% { 
-        transform: translateY(-5px) scale(1.05);
-    }
+.chat-nametag-badge.staff {
+    background: linear-gradient(135deg, #00d4ff 0%, #3478ff 45%, #9b5cff 100%);
+    color: #eef7ff;
+    border: 1px solid rgba(190, 235, 255, 0.85);
+    box-shadow: 0 0 10px rgba(52, 120, 255, 0.45), inset 0 0 8px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 6px rgba(173, 230, 255, 0.7);
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes godCrown {
-    0%, 100% { 
-        transform: translateX(-50%) translateY(0) rotate(-10deg);
-        opacity: 0.8;
-    }
-    50% { 
-        transform: translateX(-50%) translateY(-5px) rotate(10deg);
-        opacity: 1;
-    }
+.chat-nametag-badge.staff::after {
+    content: '';
+    position: absolute;
+    inset: -50% -30%;
+    background: conic-gradient(from 90deg, transparent, rgba(255, 255, 255, 0.22), transparent 40%);
+    animation: staffSpin 4s linear infinite;
 }
 
-@keyframes godThroneAura {
-    0%, 100% { 
-        opacity: 0.6;
-        transform: scale(1) rotate(0deg);
-    }
-    50% { 
-        opacity: 1;
-        transform: scale(1.4) rotate(90deg);
-    }
+@keyframes staffSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.chat-nametag-badge.champion {
+    background:
+        radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.35), transparent 35%),
+        linear-gradient(130deg, #ff5600 0%, #ff0048 35%, #7a00ff 70%, #00c6ff 100%);
+    color: #fff;
+    border: 1px solid rgba(255, 163, 120, 0.9);
+    text-shadow: 0 0 8px rgba(255, 102, 0, 0.7), 0 0 12px rgba(122, 0, 255, 0.35);
+    box-shadow: 0 0 14px rgba(255, 86, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.16);
+    animation: championFlicker 2.2s ease-in-out infinite;
+}
+
+@keyframes championFlicker {
+    0%, 100% { filter: saturate(1); }
+    50% { filter: saturate(1.25) brightness(1.12); }
 }
         #airstrikePanel {
     position: fixed;
@@ -1916,6 +1888,7 @@ function getUserProfile() {
             }
             if (!profile.nametag.equipped) profile.nametag.equipped = 'none';
             if (!Array.isArray(profile.nametag.unlocked)) profile.nametag.unlocked = ['none'];
+            if (typeof profile.championRenewal === 'undefined') profile.championRenewal = null;
             if (!profile.gladiatorCosmetics) {
     profile.gladiatorCosmetics = {
         icon: '⚔️',
@@ -2001,6 +1974,7 @@ function getUserProfile() {
             equipped: 'none',
             unlocked: ['none']
         },
+        championRenewal: null,
         totalDonated: 0,
         settings: {
             acceptDonations: true,
@@ -2320,12 +2294,37 @@ if (isWeekend && !userProfile.nametag.unlocked.includes('freebird')) {
         saveUserProfile(userProfile);
         alert('🔥 Nametag Unlocked: TITAN');
     }
+
+    const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
+    const isStaff = staffRanks.includes(userProfile.status);
+
+    if (isStaff && !userProfile.nametag.unlocked.includes('staff')) {
+        userProfile.nametag.unlocked.push('staff');
+        saveUserProfile(userProfile);
+        alert('🛡️ Nametag Unlocked: STAFF');
+    } else if (!isStaff && userProfile.nametag.unlocked.includes('staff')) {
+        userProfile.nametag.unlocked = userProfile.nametag.unlocked.filter(tag => tag !== 'staff');
+        if (userProfile.nametag.equipped === 'staff') userProfile.nametag.equipped = 'none';
+        saveUserProfile(userProfile);
+    }
+
+    if (userProfile.status === 'champion' && !userProfile.nametag.unlocked.includes('champion')) {
+        userProfile.nametag.unlocked.push('champion');
+        saveUserProfile(userProfile);
+        alert('🏅 Nametag Unlocked: CHAMPION');
+    } else if (userProfile.status !== 'champion' && userProfile.nametag.unlocked.includes('champion')) {
+        userProfile.nametag.unlocked = userProfile.nametag.unlocked.filter(tag => tag !== 'champion');
+        if (userProfile.nametag.equipped === 'champion') userProfile.nametag.equipped = 'none';
+        saveUserProfile(userProfile);
+    }
+
   checkSweatNametag();         
 }
         
 
 
 setInterval(checkNametags, 5000);
+setInterval(processChampionRenewal, 60000);
 
         let konamiCode = [];
 const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
@@ -2351,6 +2350,7 @@ document.addEventListener('keydown', (e) => {
         }
 
         let userProfile = getUserProfile();
+        processChampionRenewal();
 
 const hiddenModeRanks = ['owner', 'sr.admin'];
 
@@ -2412,7 +2412,7 @@ function updateUserDisplay() {
 
 function updateSphereAnimation() {
     const cosmetics = userProfile.equippedCosmetics || {};
-     const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura'];
+     const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura', 'champion-aura'];
     if (animatedEffects.includes(cosmetics.effect)) {
         if (playerSphereRenderer && !playerSphereRenderer.shouldAnimate) {
             playerSphereRenderer.startAnimation(cosmetics);
@@ -2711,7 +2711,7 @@ function checkLossProtectionReset() {
 }
 
 function applyLossProtection(lossAmount) {
-    if (userProfile.status !== 'mystical') return 0;
+    if (!['mystical', 'champion'].includes(userProfile.status)) return 0;
     
     checkLossProtectionReset();
     const protectionData = getLossProtectionData();
@@ -2754,6 +2754,45 @@ function showLossProtectionNotification(refund) {
         notification.remove();
     }, 3000);
 }
+function processChampionRenewal() {
+    if (userProfile.status !== 'champion') return;
+
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const renewalData = userProfile.championRenewal || { nextChargeAt: now + dayMs };
+
+    if (!renewalData.nextChargeAt) {
+        renewalData.nextChargeAt = now + dayMs;
+    }
+
+    if (now < renewalData.nextChargeAt) {
+        userProfile.championRenewal = renewalData;
+        return;
+    }
+
+    if ((userProfile.gems || 0) >= 100) {
+        userProfile.gems -= 100;
+        renewalData.nextChargeAt += dayMs;
+        while (renewalData.nextChargeAt <= now) {
+            renewalData.nextChargeAt += dayMs;
+        }
+        userProfile.championRenewal = renewalData;
+        saveUserProfile(userProfile);
+        alert('🔥 Champion rank renewed for 100 gems. Keep dominating!');
+    } else {
+        userProfile.status = 'mystical';
+        userProfile.championRenewal = null;
+        if (userProfile.nametag?.unlocked?.includes('champion')) {
+            userProfile.nametag.unlocked = userProfile.nametag.unlocked.filter(tag => tag !== 'champion');
+        }
+        if (userProfile.nametag?.equipped === 'champion') {
+            userProfile.nametag.equipped = 'none';
+        }
+        saveUserProfile(userProfile);
+        alert('⚠️ Champion rank expired (100 gems required). You have been moved back to Mystical.');
+    }
+}
+
         function getCoins() {
             try {
                 const stored = localStorage.getItem(_0x2b4a(_0x9c3d));
@@ -3187,6 +3226,7 @@ activityCheckInterval = setInterval(() => {
             if (gamePlayTime % interval === 0) {
                 let coinReward = 100;
                 if (userProfile.status === 'mystical') coinReward = 300;
+                if (userProfile.status === 'champion') coinReward = 900;
                 coins += coinReward;
                 setCoins(coins);
                 updateCoinDisplay();
