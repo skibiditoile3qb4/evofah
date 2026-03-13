@@ -80,6 +80,7 @@
         .status.rare { color: #3b82f6; }
         .status.legendary { color: #ffd700; }
         .status.mystical { color: #008c99; text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+        .status.champion { color: #ff8a00; text-shadow: 0 0 12px rgba(255, 138, 0, 0.7); }
         .coins-display {
             font-size: 20px;
             color: #d69e2e;
@@ -451,7 +452,7 @@ function isPotionActive() {
 
 // Animate black hole effect
 function updateBigSphereAnimation() {
-    const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura'];
+    const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura', 'champion-aura'];
     if (animatedEffects.includes(userProfile.equippedCosmetics.effect)) {
                 if (bigSphereRenderer && !bigSphereRenderer.shouldAnimate) {
                     bigSphereRenderer.startAnimation(userProfile.equippedCosmetics);
@@ -550,7 +551,8 @@ function loadProfileData() {
                 { id: 'blackhole', name: 'Black Holes', icon: '🌑' },
                 { id: 'wings', name: 'Black Wings', icon: '🖤' },
                 { id: 'mystical-aura', name: 'Mystical Aura', icon: '✨' },
-                { id: 'golden-aura', name: 'Golden Aura', icon: '✨' }
+                { id: 'golden-aura', name: 'Golden Aura', icon: '✨' },
+                { id: 'champion-aura', name: 'Champion Aura', icon: '🔥' }
             ],
 
             swords: [
@@ -709,6 +711,8 @@ cosmetics.swords.forEach(item => {
         { id: 'prismatic', name: 'PRISMATIC', description: 'Earn 1,000,000,000 total coins, play at 12:00 am or pm, and 12 hours of playtime.' },
         { id: 'titan', name: 'TITAN', description: 'Beat the hard bot AND reach 2000 ELO in Gladiators' },
         { id: 'sweat', name: 'SWEAT', description: 'Sweaty top 3' },
+        { id: 'staff', name: 'STAFF', description: 'Staff-only tag. Requires owner/sr.admin/admin/moderator rank.' },
+        { id: 'champion', name: 'CHAMPION', description: 'Champion rank exclusive nametag.' },
         { id: 'god', name: 'GOD', description: '👑 30 Rebirths • 1T Coins • 2B Donated • 2000 ELO 👑' }
     ];
 

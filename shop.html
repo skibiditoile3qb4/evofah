@@ -143,6 +143,13 @@
     <div class="price" style="color: #d69e2e;">50 💎</div>
     <button id="buyMysticalRank">Purchase</button>
 </div>
+
+<div class="shop-item" id="championRankItem" style="border: 2px solid #ff6a00;">
+    <h2>🏆 Champion Rank</h2>
+    <p>Everything Mystical has, plus a blazing Champion effect, CHAMPION nametag, and 2x MORE passive coin profit than Mystical. Auto-renews daily for 100 gems.</p>
+    <div class="price" style="color: #ff8a00;">100 💎 / day</div>
+    <button id="buyChampionRank">Purchase</button>
+</div>
     </div>
 
     <!-- UTILITIES SECTION -->
@@ -590,14 +597,17 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
             // Note: Custom Name Change can be purchased multiple times, so we don't mark it as owned
 
             // Check ranks
-            if (userProfile.status === 'rare' || userProfile.status === 'legendary' || userProfile.status === 'mystical') {
+            if (['rare', 'legendary', 'mystical', 'champion'].includes(userProfile.status)) {
                 markAsOwned('buyRareRank', document.getElementById('rareRankItem'));
             }
-            if (userProfile.status === 'legendary' || userProfile.status === 'mystical') {
+            if (['legendary', 'mystical', 'champion'].includes(userProfile.status)) {
                 markAsOwned('buyLegendaryRank', document.getElementById('legendaryRankItem'));
             }
-            if (userProfile.status === 'mystical') {
+            if (['mystical', 'champion'].includes(userProfile.status)) {
                 markAsOwned('buyMysticalRank', document.getElementById('mysticalRankItem'));
+            }
+            if (userProfile.status === 'champion') {
+                markAsOwned('buyChampionRank', document.getElementById('championRankItem'));
             }
 
             // Check cosmetics
@@ -723,7 +733,7 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
 
         // Rare Rank Purchase
         document.getElementById('buyRareRank').addEventListener('click', () => {
-            if (userProfile.status === 'rare' || userProfile.status === 'legendary' || userProfile.status === 'mystical') {
+            if (['rare', 'legendary', 'mystical', 'champion'].includes(userProfile.status)) {
                 alert('❌ You already have this rank or a higher rank!');
                 return;
             }
@@ -745,7 +755,7 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
 
         // Legendary Rank Purchase
         document.getElementById('buyLegendaryRank').addEventListener('click', () => {
-            if (userProfile.status === 'legendary' || userProfile.status === 'mystical') {
+            if (['legendary', 'mystical', 'champion'].includes(userProfile.status)) {
                 alert('❌ You already have this rank or a higher rank!');
                 return;
             }
@@ -769,8 +779,8 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
 
         // Mystical Rank Purchase
 document.getElementById('buyMysticalRank').addEventListener('click', () => {
-    if (userProfile.status === 'mystical') {
-        alert('❌ You already have this rank!');
+    if (['mystical', 'champion'].includes(userProfile.status)) {
+        alert('❌ You already have this rank or a higher rank!');
         return;
     }
     
@@ -817,6 +827,78 @@ document.getElementById('buyMysticalRank').addEventListener('click', () => {
     } else {
         alert(`❌ Not enough gems! You need ${gemCost} gems.`);
     }
+});
+
+// Champion Rank Purchase (daily renewable)
+document.getElementById('buyChampionRank').addEventListener('click', () => {
+    if (userProfile.status === 'champion') {
+        alert('❌ You already have Champion rank!');
+        return;
+    }
+
+    const gemCost = 100;
+    if ((userProfile.gems || 0) < gemCost) {
+        alert(`❌ Not enough gems! You need ${gemCost} gems.`);
+        return;
+    }
+
+    if (!confirm(`Purchase Champion rank for ${gemCost} gems?
+
+🏆 BENEFITS:
+• All Mystical perks (loss protection + premium perks)
+• 2x MORE passive coin gain than Mystical
+• Exclusive Champion aura effect
+• CHAMPION nametag
+
+⚠️ Auto-renews daily for 100 gems. If you can't pay one day, it expires.`)) {
+        return;
+    }
+
+    userProfile.gems -= gemCost;
+    userProfile.status = 'champion';
+    userProfile.championRenewal = { nextChargeAt: Date.now() + (24 * 60 * 60 * 1000) };
+
+    if (!userProfile.ownedCosmetics) {
+        userProfile.ownedCosmetics = {
+            colors: ['default'],
+            hats: ['none'],
+            faces: ['none'],
+            effects: ['none'],
+            swords: ['none']
+        };
+    }
+
+    if (!userProfile.ownedCosmetics.effects.includes('mystical-aura')) {
+        userProfile.ownedCosmetics.effects.push('mystical-aura');
+    }
+    if (!userProfile.ownedCosmetics.effects.includes('champion-aura')) {
+        userProfile.ownedCosmetics.effects.push('champion-aura');
+    }
+
+    if (!userProfile.equippedCosmetics) {
+        userProfile.equippedCosmetics = {
+            color: 'default',
+            hat: 'none',
+            face: 'none',
+            effect: 'champion-aura',
+            sword: 'none'
+        };
+    } else {
+        userProfile.equippedCosmetics.effect = 'champion-aura';
+    }
+
+    saveUserProfile(userProfile);
+    alert(`✅ Success! You are now CHAMPION rank!
+
+🔥 Champion Aura equipped
+💰 Massive passive coin gains enabled
+🛡️ Mystical loss protection included
+💎 100 gems/day auto-renew started`);
+    document.getElementById('gemAmount').textContent = userProfile.gems;
+    markAsOwned('buyChampionRank', document.getElementById('championRankItem'));
+    markAsOwned('buyMysticalRank', document.getElementById('mysticalRankItem'));
+    markAsOwned('buyRareRank', document.getElementById('rareRankItem'));
+    markAsOwned('buyLegendaryRank', document.getElementById('legendaryRankItem'));
 });
 
         // Helper function to buy cosmetic

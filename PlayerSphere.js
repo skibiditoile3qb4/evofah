@@ -33,7 +33,7 @@ draw(cosmetics = {}) {
     const { color = 'default', hat = 'none', face = 'none', effect = 'none', sword = 'none' } = cosmetics;
         
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    if (effect === 'blackhole' || effect === 'wings' || effect === 'mystical-aura' || effect === 'golden-aura') {
+    if (effect === 'blackhole' || effect === 'wings' || effect === 'mystical-aura' || effect === 'golden-aura' || effect === 'champion-aura') {
         this.drawEffect(effect);
     }
     
@@ -335,6 +335,38 @@ switch(color) {
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.fillText('💰', 0, 0);
+                this.ctx.restore();
+            }
+
+        } else if (effect === 'champion-aura') {
+            const time = Date.now() / 1000;
+            const pulseSize = this.radius * (1.65 + Math.sin(time * 3.5) * 0.14);
+            const gradient = this.ctx.createRadialGradient(
+                this.centerX, this.centerY, this.radius * 0.7,
+                this.centerX, this.centerY, pulseSize
+            );
+            gradient.addColorStop(0, 'rgba(255, 110, 0, 0.45)');
+            gradient.addColorStop(0.45, 'rgba(122, 0, 255, 0.25)');
+            gradient.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = gradient;
+            this.ctx.beginPath();
+            this.ctx.arc(this.centerX, this.centerY, pulseSize, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            for (let i = 0; i < 10; i++) {
+                const angle = (time * 2.2) + (i * Math.PI / 5);
+                const distance = this.radius * 1.55;
+                const x = this.centerX + Math.cos(angle) * distance;
+                const y = this.centerY + Math.sin(angle) * distance;
+
+                this.ctx.save();
+                this.ctx.translate(x, y);
+                this.ctx.rotate(time * 3);
+                this.ctx.fillStyle = i % 2 === 0 ? '#ff9d00' : '#8a4dff';
+                this.ctx.font = `${this.radius * 0.24}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('✦', 0, 0);
                 this.ctx.restore();
             }
 
