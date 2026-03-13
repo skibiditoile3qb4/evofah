@@ -3225,52 +3225,44 @@ function deobfuscateSeedAdmin(obfuscated) {
             `;
 
 notification.innerHTML = `
-<div style="font-size: 48px; margin-bottom: 20px;">🔒</div>
+
+<div style="font-size: 48px; margin-bottom: 20px;">🌴</div>
 
 <div style="font-size: 32px; font-weight: bold; color: #d69e2e; margin-bottom: 15px;">
-    DB UPDATE
+
+    SPRING BREAK UPDATE
+
 </div>
 
 <div style="font-size: 14px; color: #ccc; line-height: 1.6; max-width: 600px; margin: 0 auto 20px;">
-    <strong>IMPORTANT NOTICE:</strong><br><br>
 
-    Do <strong>NOT</strong> email my school email. Use:
-    <strong style="color:#f6ad55;">joeksterma4@gmail.com</strong><br><br>
+    <strong>STATUS UPDATE:</strong><br><br>
 
-    Due to leaked dev codes, security has been tightened.
-    <strong>Cheating will result in permanent bans.</strong><br><br>
+    Many challenges were faced recently, but we managed to resolve them by appealing to GitHub to restore this repository.<br><br>
 
-    <hr style="border: 1px solid #333; margin: 20px 0;">
+    <strong style="color:#68d391;">GOOD NEWS:</strong> The project has been successfully restored and is now running on a <strong>new host</strong>.<br><br>
 
-    <strong style="color:#68d391;">NEW:</strong> <strong>MongoDB Data Storage Implemented</strong><br><br>
+    <strong style="color:#f56565;">NOTE:</strong> Some games may currently be blocked depending on network filters.<br><br>
 
-    A database has been added in case this website gets blocked.<br><br>
+    If you would like to request a game, email:<br>
+    <strong style="color:#f6ad55;">jokesterman4@gmail.com</strong><br><br>
 
-    Use the <strong>Save</strong> button in the bottom-left corner of the screen to store your data.
-    If the site is blocked, I will switch to a new URL and you can load your data using the same button.<br><br>
+    Thank you for your patience and support. This message was CHATGPT generated(I aint writing all of that)
 
-    <strong style="color:#f56565;">IMPORTANT:</strong> Make sure to copy down your <strong>ID</strong> somewhere safe.<br><br>
-
-    Chat may be slightly slower due to database storage.<br><br>
-
-    Play fair. Thank you.
 </div>
 
+<button id="closeNotification" style="
+    padding: 12px 32px;
+    background: #d69e2e;
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+">I Understand</button>
 
-
-
-    <button id="closeNotification" style="
-        padding: 12px 32px;
-        background: #d69e2e;
-        border: none;
-        border-radius: 8px;
-        color: #000;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 16px;
-    ">I Understand</button>
 `;
-
 document.body.appendChild(notification);
 
 document.getElementById('closeNotification').addEventListener('click', () => {
