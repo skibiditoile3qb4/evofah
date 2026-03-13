@@ -1286,78 +1286,85 @@
 }
 
 .chat-nametag-badge.staff {
-    background:
-        linear-gradient(135deg, #091826 0%, #10365a 45%, #1b6bb8 100%);
-    color: #dff4ff;
-    border: 1px solid rgba(132, 210, 255, 0.9);
-    text-shadow: 0 0 8px rgba(115, 203, 255, 0.75);
-    box-shadow: 0 0 10px rgba(25, 130, 220, 0.5), inset 0 0 10px rgba(180, 230, 255, 0.12);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #e0f0ff;
+    font-weight: 700;
+    border: 1.5px solid rgba(100, 180, 255, 0.7);
+    text-shadow: 0 0 8px rgba(100, 200, 255, 0.9);
+    box-shadow:
+        0 0 8px rgba(30, 120, 220, 0.5),
+        0 0 16px rgba(30, 80, 180, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
+    animation: staffPulse 2.5s ease-in-out infinite;
 }
 
 .chat-nametag-badge.staff::before {
-    content: '◆';
-    position: absolute;
-    left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #7ed4ff;
-    font-size: 9px;
-    animation: staffBeacon 1.8s ease-in-out infinite;
-}
-
-.chat-nametag-badge.staff::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(100deg, transparent 18%, rgba(170, 235, 255, 0.35) 45%, transparent 72%);
-    transform: translateX(-120%);
-    animation: staffSweep 3s ease-in-out infinite;
+    background: linear-gradient(105deg, transparent 25%, rgba(150, 220, 255, 0.25) 50%, transparent 75%);
+    transform: translateX(-130%);
+    animation: staffSheen 3.5s ease-in-out infinite;
 }
 
-@keyframes staffBeacon {
-    0%, 100% { opacity: 0.45; text-shadow: 0 0 3px rgba(126, 212, 255, 0.35); }
-    50% { opacity: 1; text-shadow: 0 0 10px rgba(126, 212, 255, 0.95); }
+.chat-nametag-badge.staff::after {
+    display: none;
 }
 
-@keyframes staffSweep {
-    0%, 45% { transform: translateX(-120%); }
-    65%, 100% { transform: translateX(130%); }
+@keyframes staffPulse {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(30, 120, 220, 0.5), 0 0 16px rgba(30, 80, 180, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    50% {
+        box-shadow: 0 0 14px rgba(60, 160, 255, 0.7), 0 0 28px rgba(30, 100, 220, 0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
 }
 
+@keyframes staffSheen {
+    0%, 50%  { transform: translateX(-130%); }
+    70%, 100% { transform: translateX(140%); }
+}
 .chat-nametag-badge.champion {
-    background:
-        radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.28), transparent 40%),
-        linear-gradient(130deg, #2a0020 0%, #6d003e 25%, #e03400 58%, #ffbb00 100%);
-    color: #fff4da;
-    border: 1px solid rgba(255, 178, 72, 0.95);
-    text-shadow: 0 0 8px rgba(255, 120, 20, 0.9), 0 0 14px rgba(255, 40, 0, 0.4);
-    box-shadow: 0 0 14px rgba(255, 95, 10, 0.55), inset 0 0 12px rgba(255, 220, 150, 0.14);
+    background: linear-gradient(135deg, #ff8c00 0%, #ff2d2d 40%, #ff00cc 75%, #9400ff 100%);
+    background-size: 300% 300%;
+    color: #fff;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 100, 0, 0.6);
+    box-shadow:
+        0 0 10px rgba(255, 80, 0, 0.6),
+        0 0 20px rgba(200, 0, 200, 0.3),
+        inset 0 0 8px rgba(255, 255, 255, 0.15);
     position: relative;
     overflow: hidden;
-    animation: championHeat 2.2s ease-in-out infinite;
+    animation: championCycle 3s linear infinite;
 }
 
 .chat-nametag-badge.champion::before {
-    content: '✦';
+    content: '';
     position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #ffd36a;
-    font-size: 10px;
-    animation: championSpark 1.2s ease-in-out infinite;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+    transform: translateX(-120%);
+    animation: championWipe 2.4s ease-in-out infinite;
 }
 
-@keyframes championHeat {
-    0%, 100% { filter: saturate(1) brightness(1); }
-    50% { filter: saturate(1.28) brightness(1.12); }
+.chat-nametag-badge.champion::after {
+    display: none;
 }
 
-@keyframes championSpark {
-    0%, 100% { opacity: 0.45; transform: translateY(-50%) scale(0.85); }
-    50% { opacity: 1; transform: translateY(-50%) scale(1.15); }
+@keyframes championCycle {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes championWipe {
+    0%, 40%  { transform: translateX(-120%); }
+    60%, 100% { transform: translateX(130%); }
 }
         #airstrikePanel {
     position: fixed;
