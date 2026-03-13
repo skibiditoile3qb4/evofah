@@ -3932,18 +3932,26 @@ function loadGame(game) {
                 finalHtml = `<head><base href="${baseUrl}"></head>${finalHtml}`;
             }
 
-            frame.src = 'about:blank';
-            frame.onload = () => {
-                try {
-                    const doc = frame.contentDocument || frame.contentWindow.document;
-                    doc.open();
-                    doc.write(finalHtml);
-                    doc.close();
-                } catch (e) {
-                    frame.srcdoc = finalHtml;
-                }
-                frame.onload = null;
-            };
+if (gameInfo && gameInfo.s === 'cdn') {
+    const zoneUrl = (gameInfo.url || '').replace('{HTML_URL}', HTML_URL);
+    const frame = document.getElementById('gameFrame');
+
+    fetch(zoneUrl + '?t=' + Date.now())
+        .then(response => response.text())
+        .then(html => {
+            frame.contentDocument.open();
+            frame.contentDocument.write(html);
+            frame.contentDocument.close();
+        })
+        .catch(error => {
+            alert('Failed to load ' + formatGameName(game));
+            backToMain();
+        });
+
+    gameIsPlaying = true;
+    document.getElementById('saveLoadBtn').style.display = 'none';
+    return;
+}
         };
 
         fetch(`${zoneUrl}?t=${Date.now()}`)
