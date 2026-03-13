@@ -2846,14 +2846,14 @@ function processChampionRenewal() {
     }
 
     if ((userProfile.gems || 0) >= 100) {
-        userProfile.gems -= 100;
+        userProfile.gems -= 20;
         renewalData.nextChargeAt += dayMs;
         while (renewalData.nextChargeAt <= now) {
             renewalData.nextChargeAt += dayMs;
         }
         userProfile.championRenewal = renewalData;
         saveUserProfile(userProfile);
-        alert('🔥 Champion rank renewed for 100 gems. Keep dominating!');
+        alert('🔥 Champion rank renewed for 20 gems. Keep p2w');
     } else {
         userProfile.status = 'mystical';
         userProfile.championRenewal = null;
@@ -2864,7 +2864,7 @@ function processChampionRenewal() {
             userProfile.nametag.equipped = 'none';
         }
         saveUserProfile(userProfile);
-        alert('⚠️ Champion rank expired (100 gems required). You have been moved back to Mystical.');
+        alert('⚠️ Champion rank expired (20 gems required). You have been moved back to Mystical.');
     }
 }
 
