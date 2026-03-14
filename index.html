@@ -5536,6 +5536,105 @@ function closeSavePanel() {
   document.getElementById('saveLoadPanel').style.display = 'none';
 }
 
+const IMPORTANT_LOCALSTORAGE_KEYS = new Set([
+  'userProfile',
+  'good',
+  '_saveId',
+  '_saveIdShown'
+]);
+
+function getLocalStorageSizeBytes() {
+  let totalBytes = 0;
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    const value = localStorage.getItem(key) || '';
+
+    totalBytes += (key.length + value.length) * 2;
+  }
+
+  return totalBytes;
+}
+
+function clearNonEssentialLocalStorage() {
+  const keysToDelete = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!IMPORTANT_LOCALSTORAGE_KEYS.has(key)) {
+      keysToDelete.push(key);
+    }
+  }
+
+  keysToDelete.forEach((key) => localStorage.removeItem(key));
+  removeStorageWarning();
+  alert(`🧹 Cleared ${keysToDelete.length} local storage items. Important data was kept.`);
+}
+
+function removeStorageWarning() {
+  const existing = document.getElementById('storageWarningBanner');
+  if (existing) {
+    existing.remove();
+  }
+}
+
+function showStorageWarning() {
+  if (document.getElementById('storageWarningBanner')) {
+    return;
+  }
+
+  const banner = document.createElement('div');
+  banner.id = 'storageWarningBanner';
+  banner.style.cssText = `
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    max-width: 340px;
+    background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    z-index: 10001;
+    padding: 14px;
+    font-family: Arial, sans-serif;
+  `;
+
+  banner.innerHTML = `
+    <div style="font-weight: 700; margin-bottom: 8px;">⚠️ Storage almost full</div>
+    <div style="font-size: 13px; line-height: 1.4; margin-bottom: 10px;">Your browser storage is close to its limit. You can clear non-essential local data while keeping your profile and key login/save flags.</div>
+    <button id="clearStorageBtn" style="width: 100%; border: none; border-radius: 8px; background: #fff; color: #991b1b; padding: 10px; cursor: pointer; font-weight: 700;">Clear non-essential storage</button>
+  `;
+
+  document.body.appendChild(banner);
+  document.getElementById('clearStorageBtn').addEventListener('click', clearNonEssentialLocalStorage);
+}
+
+async function checkLocalStoragePressure() {
+  const localStorageBytes = getLocalStorageSizeBytes();
+  const fallbackQuota = 5 * 1024 * 1024;
+  let quotaBytes = fallbackQuota;
+
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      if (estimate && typeof estimate.quota === 'number' && estimate.quota > 0) {
+        quotaBytes = estimate.quota;
+      }
+    } catch (error) {
+      console.warn('Could not estimate browser storage quota:', error);
+    }
+  }
+
+  const usageRatio = localStorageBytes / quotaBytes;
+
+  if (usageRatio >= 0.85) {
+    showStorageWarning();
+  } else {
+    removeStorageWarning();
+  }
+}
+
 function copySaveId() {
   const saveId = getSaveId();
   navigator.clipboard.writeText(saveId).then(() => {
@@ -5631,6 +5730,9 @@ if (localStorage.getItem('good') === '1') {
     }
   }, 1000);
 }
+
+checkLocalStoragePressure();
+setInterval(checkLocalStoragePressure, 30000);
     </script>
     <script src="visualizer.js"></script>
 
