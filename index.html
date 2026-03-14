@@ -1868,6 +1868,8 @@ document.getElementById('passwordInput').addEventListener('keypress', (e) => {
         let isAdmin = false;
         const gamesList = {
     'people-playground': { s: 'custom' },
+    'soundboard': { s: 'custom' },
+    'schoolboy-runaway': { s: 'custom' },
     'ovo-dimensions': { s: 'custom' },
     'gladihoppers': { s: 'custom' },
     'pokemon-sapphire': { s: 'custom' },
@@ -1935,6 +1937,8 @@ async function loadCdnGames() {
         const lockedGames = ['poker', 'plinko'];
 const gemLockedGames = {
     'hollow-knight': 50,
+    'soundboard': 20,
+    'schoolboy-runaway': 1,
     'undertale': 20,
     'eagler-2': 10,
     'bendy-and-the-ink-machine': 15,
@@ -3680,6 +3684,18 @@ function loadGame(game) {
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
     }
+    if (game === 'schoolboy-runaway') {
+        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Schoolboy Runaway.html';
+        gameIsPlaying = true;
+        document.getElementById('saveLoadBtn').style.display = 'none';
+        return;
+    }
+    if (game === 'soundboard') {
+        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Soundboard.html';
+        gameIsPlaying = true;
+        document.getElementById('saveLoadBtn').style.display = 'none';
+        return;
+    }
 
      if (game === 'ultrakill') {
         document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/ULTRAKILL.html';
@@ -3780,7 +3796,7 @@ function loadGame(game) {
         return;
     }
     if (game === 'pizza-tower') {
-        document.getElementById('gameFrame').src = 'https://d3rtzzzsiu7gdr.cloudfront.net/files/pizzatower/index.html';
+        document.getElementById('gameFrame').src = 'https://evofah.onrender.com/special/Pizza Tower.html';
         gameIsPlaying = true;
         document.getElementById('saveLoadBtn').style.display = 'none';
         return;
