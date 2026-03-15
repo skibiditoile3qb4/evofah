@@ -117,6 +117,10 @@ class AdminPanel {
             this.relay.on('report_update_result', (data) => {
                 alert(data.success ? '✅ Report updated' : `❌ ${data.message || 'Failed to update report'}`);
             });
+
+            this.relay.on('persistent_ban_result', (data) => {
+                alert(data.success ? `✅ ${data.message}` : `❌ ${data.message || 'Failed to update persistent ban list'}`);
+            });
             
             // Listen for connection events
             this.relay.on('connected', () => {
@@ -172,6 +176,12 @@ class AdminPanel {
         if (permBanBtn) {
             permBanBtn.addEventListener('click', () => this.handlePermBan());
             console.log('✅ Perm ban button listener added');
+        }
+
+        const persistentBanBtn = document.getElementById('persistentBanBtn');
+        if (persistentBanBtn) {
+            persistentBanBtn.addEventListener('click', () => this.handlePersistentBan());
+            console.log('✅ Persistent ban button listener added');
         }
 
         // SR. ADMIN: Ban
@@ -293,6 +303,40 @@ if (loadReportsBtn) {
 
         document.getElementById('permBanUsername').value = '';
         document.getElementById('permBanDays').value = '';
+    }
+
+
+    handlePersistentBan() {
+        const username = document.getElementById('persistentBanUsername')?.value.trim();
+
+        if (!username) {
+            alert('Enter a username');
+            return;
+        }
+
+        if (this.userProfile.status !== 'owner') {
+            alert('Only owner can update persistent ban list.');
+            return;
+        }
+
+        if (!this.relay || !this.relay.connected) {
+            alert('Not connected to server!');
+            return;
+        }
+
+        if (!confirm(`Add ${username} to persistent DB ban list? This is permanent until manually removed.`)) {
+            return;
+        }
+
+        this.relay.send({
+            type: 'admin_action',
+            action: 'add_persistent_ban',
+            targetUsername: username,
+            adminUsername: this.userProfile.username,
+            adminRank: this.userProfile.status
+        });
+
+        document.getElementById('persistentBanUsername').value = '';
     }
  handleReset() {
         console.log('🔄 Reset button clicked');
