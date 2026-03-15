@@ -807,6 +807,7 @@ switch(color) {
     const limb = ctx2.createRadialGradient(cx,cy,r*0.78,cx,cy,r);
     limb.addColorStop(0,'transparent'); limb.addColorStop(1,'rgba(255,60,0,0.35)');
     ctx2.fillStyle=limb; ctx2.beginPath(); ctx2.arc(cx,cy,r,0,Math.PI*2); ctx2.fill();
+        }
         
     }
     
