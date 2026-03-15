@@ -33,7 +33,7 @@ draw(cosmetics = {}) {
     const { color = 'default', hat = 'none', face = 'none', effect = 'none', sword = 'none' } = cosmetics;
         
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    if (effect === 'blackhole' || effect === 'wings' || effect === 'mystical-aura' || effect === 'golden-aura' || effect === 'champion-aura' || effect === 'voidstorm-aura' || effect === 'neon-crown-aura') {
+    if (effect === 'blackhole' || effect === 'wings' || effect === 'mystical-aura' || effect === 'golden-aura' || effect === 'champion-aura' || effect === 'voidstorm-aura' || effect === 'neon-crown-aura' || effect === 'solar-flare-aura') {
         this.drawEffect(effect);
     }
     
@@ -610,7 +610,204 @@ switch(color) {
 
             } 
           
+    } else if (effect === 'solar-flare-aura') {
+    const t = Date.now() / 1000;
+    const cx = this.centerX, cy = this.centerY, r = this.radius;
+
+    // ── Init persistent state on first call ──
+    if (!this._solar) {
+        this._solar = {
+            particles: [],
+            loops: [],
+            flares: [],
+            flareTimer: 0,
+            lastTime: t
+        };
+        const s = this._solar;
+
+        class SolarParticle {
+            constructor() { this.reset(true, cx, cy, r); }
+            reset(init, cx, cy, r) {
+                this._cx = cx; this._cy = cy; this._r = r;
+                this.type = Math.random() < 0.55 ? 'granule' : 'ejecta';
+                if (this.type === 'granule') {
+                    const a = Math.random() * Math.PI * 2;
+                    const d = r * (0.75 + Math.random() * 0.3);
+                    this.x = cx + Math.cos(a) * d;
+                    this.y = cy + Math.sin(a) * d;
+                    this.vx = (Math.random() - 0.5) * 0.4;
+                    this.vy = (Math.random() - 0.5) * 0.4;
+                    this.life = init ? Math.random() : 0;
+                    this.maxLife = 0.8 + Math.random() * 1.2;
+                    this.size = 2 + Math.random() * 5;
+                } else {
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = 1.2 + Math.random() * 2.8;
+                    this.x = cx + Math.cos(this.angle) * r * 0.95;
+                    this.y = cy + Math.sin(this.angle) * r * 0.95;
+                    this.vx = Math.cos(this.angle) * this.speed + (Math.random()-0.5)*0.8;
+                    this.vy = Math.sin(this.angle) * this.speed + (Math.random()-0.5)*0.8;
+                    this.life = init ? Math.random() : 0;
+                    this.maxLife = 0.6 + Math.random() * 1.0;
+                    this.size = 1.5 + Math.random() * 3.5;
+                }
+            }
+            update(dt) {
+                this.x += this.vx; this.y += this.vy;
+                this.life += dt * 0.7;
+                if (this.type === 'ejecta') { this.vx *= 0.985; this.vy *= 0.985; }
+                if (this.life > this.maxLife) this.reset(false, this._cx, this._cy, this._r);
+            }
+            draw(ctx) {
+                const p = this.life / this.maxLife;
+                const alpha = p < 0.2 ? p/0.2 : p > 0.7 ? 1-(p-0.7)/0.3 : 1;
+                if (this.type === 'granule') {
+                    ctx.fillStyle = p < 0.5
+                        ? `rgba(255,${180+Math.floor(p*150)},50,${alpha*0.7})`
+                        : `rgba(255,${Math.floor(220*(1-p))},0,${alpha*0.5})`;
+                } else {
+                    ctx.fillStyle = `rgba(255,${Math.floor(200*(1-p*0.8))},20,${alpha*0.85})`;
+                }
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size*(1-p*0.5), 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        class CoronalLoop {
+            constructor() { this.reset(cx, cy, r); }
+            reset(cx, cy, r) {
+                this._cx = cx; this._cy = cy; this._r = r;
+                this.baseAngle = Math.random() * Math.PI * 2;
+                this.spread = 0.3 + Math.random() * 0.5;
+                this.height = r * (0.5 + Math.random() * 1.1);
+                this.life = Math.random() * 3;
+                this.maxLife = 2.5 + Math.random() * 3.0;
+                this.width = 1.5 + Math.random() * 3;
+                this.color = Math.random() < 0.5 ? 'orange' : 'white';
+            }
+            update(dt) {
+                this.life += dt * 0.35;
+                if (this.life > this.maxLife) this.reset(this._cx, this._cy, this._r);
+            }
+            draw(ctx) {
+                const p = this.life / this.maxLife;
+                const alpha = p < 0.15 ? p/0.15 : p > 0.75 ? 1-(p-0.75)/0.25 : 1;
+                const a1 = this.baseAngle - this.spread/2, a2 = this.baseAngle + this.spread/2;
+                const x1 = this._cx + Math.cos(a1)*this._r, y1 = this._cy + Math.sin(a1)*this._r;
+                const x2 = this._cx + Math.cos(a2)*this._r, y2 = this._cy + Math.sin(a2)*this._r;
+                const cpx = this._cx + Math.cos(this.baseAngle)*(this._r + this.height);
+                const cpy = this._cy + Math.sin(this.baseAngle)*(this._r + this.height);
+                ctx.save();
+                ctx.strokeStyle = this.color === 'orange'
+                    ? `rgba(255,140,0,${alpha*0.45})` : `rgba(255,220,120,${alpha*0.55})`;
+                ctx.shadowColor = this.color === 'orange' ? '#ff6600' : '#fffbe0';
+                ctx.shadowBlur = 18; ctx.lineWidth = this.width * 3.5; ctx.lineCap = 'round';
+                ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(cpx,cpy,x2,y2); ctx.stroke();
+                ctx.strokeStyle = this.color === 'orange'
+                    ? `rgba(255,230,100,${alpha*0.9})` : `rgba(255,255,255,${alpha*0.95})`;
+                ctx.shadowBlur = 8; ctx.lineWidth = this.width;
+                ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(cpx,cpy,x2,y2); ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        s.SolarParticle = SolarParticle;
+        s.CoronalLoop = CoronalLoop;
+        for (let i = 0; i < 80; i++) s.particles.push(new SolarParticle());
+        for (let i = 0; i < 6; i++) s.loops.push(new CoronalLoop());
     }
+
+    const s = this._solar;
+    const dt = Math.min(t - s.lastTime, 0.05);
+    s.lastTime = t;
+    const ctx2 = this.ctx;
+
+    // ── Corona glow layers ──
+    [[r*1.08,r*0.38,'rgba(255,180,40,0.22)'],[r,r*0.65,'rgba(255,120,0,0.15)'],
+     [r,r*1.1,'rgba(255,60,0,0.08)'],[r,r*1.8,'rgba(200,30,0,0.04)']
+    ].forEach(([inner,size,col]) => {
+        const g = ctx2.createRadialGradient(cx,cy,inner,cx,cy,inner+size);
+        g.addColorStop(0,col); g.addColorStop(1,'transparent');
+        ctx2.fillStyle=g; ctx2.beginPath(); ctx2.arc(cx,cy,inner+size,0,Math.PI*2); ctx2.fill();
+    });
+
+    // Corona streamers
+    for (let i = 0; i < 14; i++) {
+        const a = (i/14)*Math.PI*2 + t*0.04;
+        const bright = 0.12 + Math.sin(t*1.3+i*0.7)*0.07;
+        const len = r*(1.0+Math.sin(t*0.9+i*1.1)*0.3);
+        const g = ctx2.createLinearGradient(cx+Math.cos(a)*r,cy+Math.sin(a)*r,cx+Math.cos(a)*(r+len),cy+Math.sin(a)*(r+len));
+        g.addColorStop(0,`rgba(255,200,80,${bright})`); g.addColorStop(1,'transparent');
+        ctx2.strokeStyle=g; ctx2.lineWidth=1+Math.sin(t*2+i)*0.5;
+        ctx2.beginPath(); ctx2.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+        ctx2.lineTo(cx+Math.cos(a)*(r+len),cy+Math.sin(a)*(r+len)); ctx2.stroke();
+    }
+
+    // Coronal loops (behind sphere)
+    s.loops.forEach(l => { l.update(dt); l.draw(ctx2); });
+
+    // Ejecta particles (behind sphere)
+    s.particles.filter(p=>p.type==='ejecta').forEach(p=>{ p.update(dt); p.draw(ctx2); });
+
+    // ── Draw the sphere itself here via fallthrough — sphere draws after this block ──
+    // (The sphere is drawn by drawSphere() after drawEffect() returns)
+
+    // Surface granules (on top)
+    s.particles.filter(p=>p.type==='granule').forEach(p=>{ p.update(dt); p.draw(ctx2); });
+
+    // Flare eruptions
+    s.flareTimer -= dt;
+    if (s.flareTimer <= 0) {
+        const flare = {
+            angle: Math.random()*Math.PI*2,
+            life: 0,
+            maxLife: 0.9+Math.random()*0.8,
+            length: r*(0.8+Math.random()*1.4),
+            width: 8+Math.random()*18,
+            active: true
+        };
+        s.flares.push(flare);
+        if (Math.random()<0.3) s.flares.push({...flare, angle: flare.angle+0.3, life:0});
+        s.flareTimer = 1.2 + Math.random()*2.5;
+    }
+    for (let i = s.flares.length-1; i >= 0; i--) {
+        const f = s.flares[i];
+        f.life += dt * 1.1;
+        if (f.life > f.maxLife) { s.flares.splice(i,1); continue; }
+        const p = f.life/f.maxLife;
+        const scale = p < 0.3 ? p/0.3 : 1;
+        const alpha = p > 0.6 ? 1-(p-0.6)/0.4 : 1;
+        const len2 = f.length * scale;
+        const tipX = cx + Math.cos(f.angle)*(r+len2);
+        const tipY = cy + Math.sin(f.angle)*(r+len2);
+        const bx = cx+Math.cos(f.angle)*r*0.92, by = cy+Math.sin(f.angle)*r*0.92;
+        const perp = {x:-Math.sin(f.angle),y:Math.cos(f.angle)};
+        const cpx2 = cx+Math.cos(f.angle)*(r+len2*0.5)+perp.x*len2*0.15;
+        const cpy2 = cy+Math.sin(f.angle)*(r+len2*0.5)+perp.y*len2*0.15;
+        ctx2.save();
+        const fg = ctx2.createLinearGradient(bx,by,tipX,tipY);
+        fg.addColorStop(0,`rgba(255,200,0,${alpha*0.9})`);
+        fg.addColorStop(0.4,`rgba(255,120,0,${alpha*0.7})`);
+        fg.addColorStop(1,'rgba(255,40,0,0)');
+        ctx2.strokeStyle=fg; ctx2.lineWidth=f.width*(1-p*0.6); ctx2.lineCap='round';
+        ctx2.shadowColor='#ff8800'; ctx2.shadowBlur=30;
+        ctx2.beginPath(); ctx2.moveTo(bx,by); ctx2.quadraticCurveTo(cpx2,cpy2,tipX,tipY); ctx2.stroke();
+        const fg2 = ctx2.createLinearGradient(bx,by,tipX,tipY);
+        fg2.addColorStop(0,`rgba(255,255,255,${alpha})`);
+        fg2.addColorStop(0.5,`rgba(255,220,100,${alpha*0.8})`);
+        fg2.addColorStop(1,'rgba(255,100,0,0)');
+        ctx2.strokeStyle=fg2; ctx2.lineWidth=f.width*0.22;
+        ctx2.shadowColor='#ffffff'; ctx2.shadowBlur=15;
+        ctx2.beginPath(); ctx2.moveTo(bx,by); ctx2.quadraticCurveTo(cpx2,cpy2,tipX,tipY); ctx2.stroke();
+        ctx2.restore();
+    }
+
+    // Limb darkening ring
+    const limb = ctx2.createRadialGradient(cx,cy,r*0.78,cx,cy,r);
+    limb.addColorStop(0,'transparent'); limb.addColorStop(1,'rgba(255,60,0,0.35)');
+    ctx2.fillStyle=limb; ctx2.beginPath(); ctx2.arc(cx,cy,r,0,Math.PI*2); ctx2.fill();
+        
     }
     
     drawSword(sword) {
@@ -719,24 +916,27 @@ switch(color) {
         animate();
     }
     stopAnimation() {
-        this.shouldAnimate = false;
-        if (this.animationFrame) {
-            cancelAnimationFrame(this.animationFrame);
-            this.animationFrame = null;
-        }
+    this.shouldAnimate = false;
+    if (this.animationFrame) {
+        cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
     }
-    
+    delete this._solar; // add this
+}
+
+
     updateCosmetics(cosmetics) {
         this.cosmetics = cosmetics;
         this.draw(cosmetics);
     }
     
     destroy() {
-        this.stopAnimation();
-        if (this.canvas) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        }
+    this.stopAnimation();
+    if (this.canvas) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
+    delete this._solar; // add this
+}
 }
 
 // Export for use in other files
