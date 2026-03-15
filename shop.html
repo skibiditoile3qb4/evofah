@@ -333,6 +333,19 @@
             <div class="price" style="color: #ffd700;">150,000 Coins</div>
             <button id="buyGoldenAura" style="background: #ffd700; border-color: #daa520; color: #000;">Purchase</button>
         </div>
+        <div class="shop-item" style="border: 2px solid #22d3ee;">
+            <h2>🌀 Voidstorm Aura</h2>
+            <p>Chaotic cyan-violet vortex with orbiting shards and crackling energy.</p>
+            <div class="price" style="color: #22d3ee;">170,000 Coins</div>
+            <button id="buyVoidstorm" style="background: #22d3ee; border-color: #06b6d4; color: #000;">Purchase</button>
+        </div>
+
+        <div class="shop-item" style="border: 2px solid #f472b6;">
+            <h2>👑 Neon Crown Aura</h2>
+            <p>Radiant magenta/cyan halo with a floating neon crown over your sphere.</p>
+            <div class="price" style="color: #f472b6;">180,000 Coins</div>
+            <button id="buyNeonCrown" style="background: #f472b6; border-color: #ec4899; color: #000;">Purchase</button>
+        </div>
     </div>
 
     <!-- SWORDS SECTION -->
@@ -631,6 +644,8 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
     { type: 'effects', item: 'blackhole', btn: 'buyBlackhole' },
     { type: 'effects', item: 'wings', btn: 'buyWings' },
     { type: 'effects', item: 'golden-aura', btn: 'buyGoldenAura' },
+    { type: 'effects', item: 'voidstorm-aura', btn: 'buyVoidstorm' },
+    { type: 'effects', item: 'neon-crown-aura', btn: 'buyNeonCrown' },
     { type: 'swords', item: 'stick', btn: 'buyStickSword' },
     { type: 'swords', item: 'stone', btn: 'buyStoneSword' },
     { type: 'swords', item: 'lightning', btn: 'buyLightningBlade' },
@@ -970,6 +985,8 @@ document.getElementById('buyWings').addEventListener('click', () => {
     }
 });
         document.getElementById('buyGoldenAura').addEventListener('click', () => buyCosmetic('effects', 'golden-aura', 150000, 'buyGoldenAura'));
+        document.getElementById('buyVoidstorm').addEventListener('click', () => buyCosmetic('effects', 'voidstorm-aura', 170000, 'buyVoidstorm'));
+        document.getElementById('buyNeonCrown').addEventListener('click', () => buyCosmetic('effects', 'neon-crown-aura', 180000, 'buyNeonCrown'));
 
         // Swords
         document.getElementById('buyStickSword').addEventListener('click', () => buyCosmetic('swords', 'stick', 5000, 'buyStickSword'));

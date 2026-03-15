@@ -33,7 +33,7 @@ draw(cosmetics = {}) {
     const { color = 'default', hat = 'none', face = 'none', effect = 'none', sword = 'none' } = cosmetics;
         
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    if (effect === 'blackhole' || effect === 'wings' || effect === 'mystical-aura' || effect === 'golden-aura' || effect === 'champion-aura') {
+    if (effect === 'blackhole' || effect === 'wings' || effect === 'mystical-aura' || effect === 'golden-aura' || effect === 'champion-aura' || effect === 'voidstorm-aura' || effect === 'neon-crown-aura') {
         this.drawEffect(effect);
     }
     
@@ -369,6 +369,65 @@ switch(color) {
                 this.ctx.fillText('✦', 0, 0);
                 this.ctx.restore();
             }
+
+        } else if (effect === 'voidstorm-aura') {
+            const time = Date.now() / 1000;
+            const pulseSize = this.radius * (1.7 + Math.sin(time * 4) * 0.12);
+            const gradient = this.ctx.createRadialGradient(
+                this.centerX, this.centerY, this.radius * 0.65,
+                this.centerX, this.centerY, pulseSize
+            );
+            gradient.addColorStop(0, 'rgba(34, 211, 238, 0.35)');
+            gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.25)');
+            gradient.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = gradient;
+            this.ctx.beginPath();
+            this.ctx.arc(this.centerX, this.centerY, pulseSize, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            for (let i = 0; i < 12; i++) {
+                const angle = (time * 2.8) + (i * Math.PI / 6);
+                const distance = this.radius * (1.25 + Math.sin(time * 2 + i) * 0.15);
+                const x = this.centerX + Math.cos(angle) * distance;
+                const y = this.centerY + Math.sin(angle) * distance;
+                this.ctx.save();
+                this.ctx.translate(x, y);
+                this.ctx.rotate(angle + time * 2);
+                this.ctx.fillStyle = i % 2 === 0 ? '#22d3ee' : '#a855f7';
+                this.ctx.fillRect(-this.radius * 0.05, -this.radius * 0.05, this.radius * 0.1, this.radius * 0.1);
+                this.ctx.restore();
+            }
+
+        } else if (effect === 'neon-crown-aura') {
+            const time = Date.now() / 1000;
+            const haloRadius = this.radius * (1.55 + Math.sin(time * 3.2) * 0.08);
+            const halo = this.ctx.createRadialGradient(
+                this.centerX, this.centerY, this.radius * 0.9,
+                this.centerX, this.centerY, haloRadius
+            );
+            halo.addColorStop(0, 'rgba(244, 114, 182, 0.35)');
+            halo.addColorStop(0.55, 'rgba(34, 211, 238, 0.22)');
+            halo.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = halo;
+            this.ctx.beginPath();
+            this.ctx.arc(this.centerX, this.centerY, haloRadius, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Floating neon crown
+            const crownY = this.centerY - this.radius * 1.3 + Math.sin(time * 2.5) * this.radius * 0.05;
+            this.ctx.save();
+            this.ctx.lineWidth = this.radius * 0.07;
+            this.ctx.strokeStyle = '#22d3ee';
+            this.ctx.shadowColor = '#f472b6';
+            this.ctx.shadowBlur = this.radius * 0.4;
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.centerX - this.radius * 0.48, crownY + this.radius * 0.2);
+            this.ctx.lineTo(this.centerX - this.radius * 0.26, crownY - this.radius * 0.18);
+            this.ctx.lineTo(this.centerX, crownY + this.radius * 0.04);
+            this.ctx.lineTo(this.centerX + this.radius * 0.26, crownY - this.radius * 0.18);
+            this.ctx.lineTo(this.centerX + this.radius * 0.48, crownY + this.radius * 0.2);
+            this.ctx.stroke();
+            this.ctx.restore();
 
         } else if (effect === 'blackhole') {
             const time = Date.now() / 1000;

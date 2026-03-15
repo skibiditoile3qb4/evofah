@@ -452,7 +452,7 @@ function isPotionActive() {
 
 // Animate black hole effect
 function updateBigSphereAnimation() {
-    const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura', 'champion-aura'];
+    const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura', 'champion-aura', 'voidstorm-aura', 'neon-crown-aura'];
     if (animatedEffects.includes(userProfile.equippedCosmetics.effect)) {
                 if (bigSphereRenderer && !bigSphereRenderer.shouldAnimate) {
                     bigSphereRenderer.startAnimation(userProfile.equippedCosmetics);
@@ -552,7 +552,9 @@ function loadProfileData() {
                 { id: 'wings', name: 'Black Wings', icon: '🖤' },
                 { id: 'mystical-aura', name: 'Mystical Aura', icon: '✨' },
                 { id: 'golden-aura', name: 'Golden Aura', icon: '✨' },
-                { id: 'champion-aura', name: 'Champion Aura', icon: '🔥' }
+                { id: 'champion-aura', name: 'Champion Aura', icon: '🔥' },
+                { id: 'voidstorm-aura', name: 'Voidstorm Aura', icon: '🌀' },
+                { id: 'neon-crown-aura', name: 'Neon Crown Aura', icon: '👑' }
             ],
 
             swords: [

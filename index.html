@@ -2568,7 +2568,7 @@ function updateUserDisplay() {
 
 function updateSphereAnimation() {
     const cosmetics = userProfile.equippedCosmetics || {};
-     const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura', 'champion-aura'];
+     const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura', 'champion-aura', 'voidstorm-aura', 'neon-crown-aura'];
     if (animatedEffects.includes(cosmetics.effect)) {
         if (playerSphereRenderer && !playerSphereRenderer.shouldAnimate) {
             playerSphereRenderer.startAnimation(cosmetics);
@@ -3074,6 +3074,18 @@ function clearBanData() {
 
 function checkBanStatus() {
     try {
+        const persistentBan = localStorage.getItem('_persistentBanData');
+        if (persistentBan) {
+            const ban = JSON.parse(persistentBan);
+            return {
+                banned: true,
+                until: 9999999999999,
+                bannedBy: ban.bannedBy || 'Owner',
+                reason: ban.reason || 'Persistent database ban',
+                daysRemaining: '∞'
+            };
+        }
+
         const banKey = `_ban_${userProfile.username}`;
         const banData = localStorage.getItem(banKey);
 
@@ -3083,6 +3095,7 @@ function checkBanStatus() {
 
             if (now >= ban.until) {
                 localStorage.removeItem(banKey);
+    localStorage.removeItem('_persistentBanData');
                 return { banned: false };
             }
 
@@ -4488,6 +4501,19 @@ let voiceChunks = [];
 let voiceRecordingTimeout = null;
 let isRecordingVoice = false;
 
+
+function requestPersistentBanCheck() {
+    if (!relay || !relay.connected || !userProfile?.username) return;
+
+    relay.send({
+        type: 'admin_action',
+        action: 'check_persistent_ban',
+        targetUsername: userProfile.username,
+        adminUsername: userProfile.username,
+        adminRank: userProfile.status || 'player'
+    });
+}
+
 async function initChat() {
     if (!window._chromeOSValid) {
         console.error('ChromeOS validation failed');
@@ -4554,6 +4580,20 @@ relay.on('players_update', (data) => {
             updateOnlineCount();
         });
 
+       relay.on('persistent_ban_hit', (data) => {
+    const persistentBanData = {
+        bannedBy: data.bannedBy || 'Owner',
+        reason: data.reason || 'Persistent database ban',
+        createdAt: Date.now()
+    };
+    localStorage.setItem('_persistentBanData', JSON.stringify(persistentBanData));
+    alert(`🚫 You are permanently banned.
+
+Reason: ${persistentBanData.reason}`);
+    if (relay) relay.disconnect();
+    setTimeout(() => location.reload(), 500);
+});
+
        relay.on('banned', (data) => {
     console.log('🚫 BAN EVENT RECEIVED:', data);
 
@@ -4596,6 +4636,7 @@ relay.on('players_update', (data) => {
     // Clear ban from localStorage
     const banKey = `_ban_${userProfile.username}`;
     localStorage.removeItem(banKey);
+    localStorage.removeItem('_persistentBanData');
 
     alert(`🔓 Your ban has been removed by ${data.unbannedBy}\n\nYou can now use all features again!`);
 
@@ -4726,6 +4767,7 @@ relay.on('players_update', (data) => {
 
         console.log('📍 Joining room:', currentChatRoom, 'as', userProfile.username);
         relay.joinRoom(currentChatRoom, userProfile.username, userProfile.status, userProfile.permanentId)
+        requestPersistentBanCheck();
 
         console.log('✅ Join request sent!');
 
@@ -4767,6 +4809,7 @@ function switchChatRoom(room) {
 
     if (relay && relay.connected) {
         relay.joinRoom(room, userProfile.username, userProfile.status, userProfile.permanentId)
+        requestPersistentBanCheck();
     }
 }
         relay.on('top3_achievement', (data) => {
