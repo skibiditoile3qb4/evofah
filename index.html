@@ -692,6 +692,35 @@
     border-color: #ef4444;
     color: #ef4444;
 }
+
+#reportPanel {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: #111;
+    display: none;
+}
+#reportPanel.show {
+    display: block;
+}
+#reportTargetInput,
+#reportReasonInput {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #fff;
+}
+#reportReasonInput {
+    min-height: 72px;
+    resize: vertical;
+}
+#reportBtn {
+    min-width: 110px;
+}
 .voice-note-player {
     margin-top: 8px;
     width: 100%;
@@ -1649,6 +1678,12 @@
     <div class="chat-compose-row">
         <input type="text" id="chatInput" placeholder="Type a message..." maxlength="200">
         <button id="voiceNoteBtn" type="button" title="Hold to record voice note">🎙️</button>
+        <button id="reportBtn" type="button" title="Report a player">🚩 Report</button>
+    </div>
+    <div id="reportPanel">
+        <input type="text" id="reportTargetInput" placeholder="Username to report" maxlength="32">
+        <textarea id="reportReasonInput" placeholder="Reason" maxlength="500"></textarea>
+        <button id="submitReportBtn" class="danger" type="button">Submit Report</button>
     </div>
 </div>
 </div>
@@ -4663,6 +4698,11 @@ relay.on('players_update', (data) => {
         relay.on('incoming_airstrike', (data) => {
             showForcedAd(data.adType, data.from);
         });
+
+        relay.on('report_submit_result', (data) => {
+            alert(data.success ? '✅ Report submitted.' : `❌ ${data.message || 'Report failed'}`);
+        });
+
         relay.on('admin_reset', (data) => {
             console.log('🔄 RESET RECEIVED FROM:', data.resetBy);
 
@@ -5316,10 +5356,50 @@ function blobToBase64(blob) {
         reader.readAsDataURL(blob);
     });
 }
+function toggleReportPanel() {
+    const panel = document.getElementById('reportPanel');
+    if (!panel) return;
+    panel.classList.toggle('show');
+}
+
+function submitReport() {
+    const target = (document.getElementById('reportTargetInput')?.value || '').trim();
+    const reason = (document.getElementById('reportReasonInput')?.value || '').trim();
+
+    if (!target) {
+        alert('Enter username to report.');
+        return;
+    }
+    if (!reason) {
+        alert('Enter a reason.');
+        return;
+    }
+    if (!relay || !relay.connected) {
+        alert('Not connected to chat server.');
+        return;
+    }
+
+    relay.send({
+        type: 'submit_report',
+        reportedUsername: target,
+        reason,
+        reporterUsername: userProfile.username,
+        reporterStatus: userProfile.status,
+        reporterPermanentId: userProfile.permanentId || null,
+        room: currentChatRoom
+    });
+
+    document.getElementById('reportTargetInput').value = '';
+    document.getElementById('reportReasonInput').value = '';
+    document.getElementById('reportPanel')?.classList.remove('show');
+}
+
 // Event listeners
 document.getElementById('chatToggleBtn').addEventListener('click', toggleChat);
 document.getElementById('closeChat').addEventListener('click', toggleChat);
 document.getElementById('voiceNoteBtn').addEventListener('click', toggleVoiceRecording);
+document.getElementById('reportBtn').addEventListener('click', toggleReportPanel);
+document.getElementById('submitReportBtn').addEventListener('click', submitReport);
 
 document.getElementById('chatInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {

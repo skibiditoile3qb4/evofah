@@ -41,6 +41,9 @@ this.handlers = {
   admin_reset: [],
   airstrike_result: [],
   incoming_airstrike: [],
+  report_submit_result: [],
+  reports_data: [],
+  report_update_result: [],
   error: []
 };
   }

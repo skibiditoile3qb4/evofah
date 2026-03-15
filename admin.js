@@ -109,6 +109,14 @@ class AdminPanel {
                 console.log('📊 User lookup result:', data);
                 this.displayLookupResult(data);
             });
+
+            this.relay.on('reports_data', (data) => {
+                this.displayReports(data.reports || []);
+            });
+
+            this.relay.on('report_update_result', (data) => {
+                alert(data.success ? '✅ Report updated' : `❌ ${data.message || 'Failed to update report'}`);
+            });
             
             // Listen for connection events
             this.relay.on('connected', () => {
@@ -203,6 +211,12 @@ if (unmuteBtn) {
 if (unbanBtn) {
     unbanBtn.addEventListener('click', () => this.handleUnban());
     console.log('✅ Unban button listener added');
+}
+
+        const loadReportsBtn = document.getElementById('loadReportsBtn');
+if (loadReportsBtn) {
+    loadReportsBtn.addEventListener('click', () => this.handleLoadReports());
+    console.log('✅ Load reports button listener added');
 }
         
         console.log('✅ All event listeners set up');
@@ -510,6 +524,66 @@ handleUnban() {
         adminUsername: this.userProfile.username,
         adminRank: this.userProfile.status
     });
+}
+
+
+handleLoadReports() {
+    if (!this.relay || !this.relay.connected) {
+        alert('Not connected to server!');
+        return;
+    }
+
+    this.relay.send({
+        type: 'admin_action',
+        action: 'load_reports',
+        adminUsername: this.userProfile.username,
+        adminRank: this.userProfile.status
+    });
+}
+
+updateReportStatus(reportId, closed) {
+    if (!this.relay || !this.relay.connected) {
+        alert('Not connected to server!');
+        return;
+    }
+
+    this.relay.send({
+        type: 'admin_action',
+        action: 'update_report_status',
+        reportId,
+        closed,
+        adminUsername: this.userProfile.username,
+        adminRank: this.userProfile.status
+    });
+}
+
+displayReports(reports) {
+    const container = document.getElementById('reportsContainer');
+    if (!container) return;
+
+    if (!reports.length) {
+        container.innerHTML = '<div class="report-item">No reports found.</div>';
+        return;
+    }
+
+    container.innerHTML = reports.map((report) => {
+        const created = new Date(report.createdAt || Date.now()).toLocaleString();
+        const closedAt = report.closedAt ? new Date(report.closedAt).toLocaleString() : '—';
+        return `
+            <div class="report-item">
+                <strong>Reported:</strong> ${report.reportedUsername || 'Unknown'}<br>
+                <strong>Reason:</strong> ${report.reason || 'No reason'}<br>
+                <strong>Status:</strong> ${report.closed ? 'Closed' : 'Open'}<br>
+                <div class="report-meta">
+                    Reporter: ${report.reporterUsername || 'Unknown'} | Created: ${created} | Closed: ${closedAt}
+                </div>
+                <div class="report-actions">
+                    <button class="success" onclick="adminPanel.updateReportStatus('${report._id}', true)">Mark Closed</button>
+                    <button onclick="adminPanel.updateReportStatus('${report._id}', false)">Reopen</button>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
    displayLookupResult(data) {
     const resultDiv = document.getElementById('lookupResult');
