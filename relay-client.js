@@ -44,6 +44,8 @@ this.handlers = {
   report_submit_result: [],
   reports_data: [],
   report_update_result: [],
+  persistent_ban_result: [],
+  persistent_ban_hit: [],
   error: []
 };
   }
