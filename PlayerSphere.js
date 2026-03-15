@@ -370,65 +370,195 @@ switch(color) {
                 this.ctx.restore();
             }
 
-        } else if (effect === 'voidstorm-aura') {
-            const time = Date.now() / 1000;
-            const pulseSize = this.radius * (1.7 + Math.sin(time * 4) * 0.12);
-            const gradient = this.ctx.createRadialGradient(
-                this.centerX, this.centerY, this.radius * 0.65,
-                this.centerX, this.centerY, pulseSize
-            );
-            gradient.addColorStop(0, 'rgba(34, 211, 238, 0.35)');
-            gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.25)');
-            gradient.addColorStop(1, 'transparent');
-            this.ctx.fillStyle = gradient;
-            this.ctx.beginPath();
-            this.ctx.arc(this.centerX, this.centerY, pulseSize, 0, Math.PI * 2);
-            this.ctx.fill();
+       } else if (effect === 'voidstorm-aura') {
+    const t = Date.now() / 1000;
+    const cx = this.centerX, cy = this.centerY, r = this.radius;
 
-            for (let i = 0; i < 12; i++) {
-                const angle = (time * 2.8) + (i * Math.PI / 6);
-                const distance = this.radius * (1.25 + Math.sin(time * 2 + i) * 0.15);
-                const x = this.centerX + Math.cos(angle) * distance;
-                const y = this.centerY + Math.sin(angle) * distance;
-                this.ctx.save();
-                this.ctx.translate(x, y);
-                this.ctx.rotate(angle + time * 2);
-                this.ctx.fillStyle = i % 2 === 0 ? '#22d3ee' : '#a855f7';
-                this.ctx.fillRect(-this.radius * 0.05, -this.radius * 0.05, this.radius * 0.1, this.radius * 0.1);
-                this.ctx.restore();
-            }
+    // Void backdrop
+    const voidR = r * (2.0 + Math.sin(t * 1.8) * 0.15);
+    const voidG = this.ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, voidR);
+    voidG.addColorStop(0, 'rgba(10, 0, 30, 0.7)');
+    voidG.addColorStop(0.45, 'rgba(55, 0, 120, 0.25)');
+    voidG.addColorStop(0.75, 'rgba(0, 200, 255, 0.06)');
+    voidG.addColorStop(1, 'transparent');
+    this.ctx.fillStyle = voidG;
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cy, voidR, 0, Math.PI * 2);
+    this.ctx.fill();
 
-        } else if (effect === 'neon-crown-aura') {
-            const time = Date.now() / 1000;
-            const haloRadius = this.radius * (1.55 + Math.sin(time * 3.2) * 0.08);
-            const halo = this.ctx.createRadialGradient(
-                this.centerX, this.centerY, this.radius * 0.9,
-                this.centerX, this.centerY, haloRadius
-            );
-            halo.addColorStop(0, 'rgba(244, 114, 182, 0.35)');
-            halo.addColorStop(0.55, 'rgba(34, 211, 238, 0.22)');
-            halo.addColorStop(1, 'transparent');
-            this.ctx.fillStyle = halo;
+    // Rift crack lines
+    for (let i = 0; i < 7; i++) {
+        const baseAngle = (i / 7) * Math.PI * 2 + t * 0.3;
+        const len = r * (1.15 + Math.sin(t * 2.1 + i * 1.3) * 0.25);
+        this.ctx.save();
+        this.ctx.translate(cx, cy);
+        this.ctx.rotate(baseAngle);
+        const opacity = 0.5 + Math.sin(t * 3.5 + i) * 0.3;
+        this.ctx.strokeStyle = `rgba(180, 80, 255, ${opacity})`;
+        this.ctx.lineWidth = 1.2;
+        this.ctx.shadowColor = '#a855f7';
+        this.ctx.shadowBlur = 8;
+        this.ctx.beginPath();
+        this.ctx.moveTo(r * 0.85, 0);
+        for (let s = 0; s < 4; s++) {
+            const px = r * 0.85 + (len - r * 0.85) * (s + 1) / 4;
+            this.ctx.lineTo(px, Math.sin(t * 4 + i * 7 + s * 3) * r * 0.12);
+        }
+        this.ctx.stroke();
+        if (i % 2 === 0) {
+            this.ctx.strokeStyle = `rgba(0, 210, 255, ${0.4 + Math.sin(t * 4.2 + i) * 0.25})`;
+            this.ctx.lineWidth = 0.8;
+            this.ctx.shadowColor = '#22d3ee';
+            this.ctx.rotate(0.18);
             this.ctx.beginPath();
-            this.ctx.arc(this.centerX, this.centerY, haloRadius, 0, Math.PI * 2);
-            this.ctx.fill();
-
-            // Floating neon crown
-            const crownY = this.centerY - this.radius * 1.3 + Math.sin(time * 2.5) * this.radius * 0.05;
-            this.ctx.save();
-            this.ctx.lineWidth = this.radius * 0.07;
-            this.ctx.strokeStyle = '#22d3ee';
-            this.ctx.shadowColor = '#f472b6';
-            this.ctx.shadowBlur = this.radius * 0.4;
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.centerX - this.radius * 0.48, crownY + this.radius * 0.2);
-            this.ctx.lineTo(this.centerX - this.radius * 0.26, crownY - this.radius * 0.18);
-            this.ctx.lineTo(this.centerX, crownY + this.radius * 0.04);
-            this.ctx.lineTo(this.centerX + this.radius * 0.26, crownY - this.radius * 0.18);
-            this.ctx.lineTo(this.centerX + this.radius * 0.48, crownY + this.radius * 0.2);
+            this.ctx.moveTo(r * 0.9, 0);
+            const sl = r * (0.9 + Math.sin(t * 2.7 + i) * 0.2);
+            this.ctx.lineTo(sl, Math.sin(t * 5 + i * 4) * r * 0.08);
+            this.ctx.lineTo(sl + r * 0.18, Math.sin(t * 3 + i * 2) * r * 0.14);
             this.ctx.stroke();
-            this.ctx.restore();
+        }
+        this.ctx.restore();
+    }
 
+    // Orbiting diamond shards
+    for (let i = 0; i < 8; i++) {
+        const angle = t * (0.9 + (i % 3) * 0.4) + (i / 8) * Math.PI * 2;
+        const dist = r * (1.35 + Math.sin(t * 1.5 + i * 0.8) * 0.2);
+        const sx = cx + Math.cos(angle) * dist;
+        const sy = cy + Math.sin(angle) * dist;
+        const sz = r * (0.06 + Math.sin(t * 3 + i) * 0.025);
+        const col = i % 3 === 0 ? 'rgba(168,85,247,0.9)' : i % 3 === 1 ? 'rgba(0,210,255,0.85)' : 'rgba(80,0,180,0.7)';
+        this.ctx.save();
+        this.ctx.translate(sx, sy);
+        this.ctx.rotate(angle * 1.7 + t);
+        this.ctx.fillStyle = col;
+        this.ctx.shadowColor = i % 3 === 1 ? '#22d3ee' : '#a855f7';
+        this.ctx.shadowBlur = 10;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, -sz * 2.2);
+        this.ctx.lineTo(sz, 0);
+        this.ctx.lineTo(0, sz * 1.2);
+        this.ctx.lineTo(-sz, 0);
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+
+    // Vortex ring
+    for (let i = 0; i < 20; i++) {
+        const a1 = (i / 20) * Math.PI * 2 + t * 1.4;
+        const a2 = a1 + (Math.PI / 20) * 0.7;
+        this.ctx.strokeStyle = `rgba(139, 92, 246, ${0.3 + Math.sin(t * 4 + i * 0.8) * 0.3})`;
+        this.ctx.lineWidth = 2.5;
+        this.ctx.shadowColor = '#7c3aed';
+        this.ctx.shadowBlur = 12;
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, r * 1.18, a1, a2);
+        this.ctx.stroke();
+    }
+
+} else if (effect === 'neon-crown-aura') {
+    const t = Date.now() / 1000;
+    const cx = this.centerX, cy = this.centerY, r = this.radius;
+    const crownBaseY = cy - r * 1.05;
+    const crownR = r * 0.75;
+
+    // Bicolor aura
+    const auraR = r * (1.6 + Math.sin(t * 2.2) * 0.08);
+    const auraG = this.ctx.createRadialGradient(cx, cy, r * 0.85, cx, cy, auraR);
+    auraG.addColorStop(0, 'rgba(236, 72, 153, 0.28)');
+    auraG.addColorStop(0.5, 'rgba(34, 211, 238, 0.14)');
+    auraG.addColorStop(1, 'transparent');
+    this.ctx.fillStyle = auraG;
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Electric tines (5 spikes)
+    for (let i = 0; i < 5; i++) {
+        const spikeAngle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        const bx = cx + Math.cos(spikeAngle) * crownR;
+        const by = crownBaseY + Math.sin(spikeAngle) * crownR * 0.32;
+        const chargePhase = t * 2.8 + i * 1.3;
+        const spikeH = r * (0.55 + Math.sin(chargePhase) * 0.18);
+        const tipX = bx + Math.cos(spikeAngle - Math.PI / 2) * spikeH * 0.3;
+        const tipY = by - spikeH;
+        const charge = 0.5 + Math.sin(chargePhase * 1.1) * 0.35;
+        const midX = (bx + tipX) / 2 + Math.sin(t * 5 + i * 2) * r * 0.04;
+        const midY = (by + tipY) / 2;
+
+        // Outer glow
+        this.ctx.strokeStyle = `rgba(244,114,182,${charge * 0.5})`;
+        this.ctx.lineWidth = 5;
+        this.ctx.shadowColor = '#f472b6';
+        this.ctx.shadowBlur = 18;
+        this.ctx.lineCap = 'round';
+        this.ctx.beginPath();
+        this.ctx.moveTo(bx, by);
+        this.ctx.quadraticCurveTo(midX, midY, tipX, tipY);
+        this.ctx.stroke();
+
+        // Inner core
+        this.ctx.strokeStyle = `rgba(224,242,254,${0.7 + charge * 0.3})`;
+        this.ctx.lineWidth = 1.5;
+        this.ctx.shadowColor = '#38bdf8';
+        this.ctx.shadowBlur = 12;
+        this.ctx.beginPath();
+        this.ctx.moveTo(bx, by);
+        this.ctx.quadraticCurveTo(midX, midY, tipX, tipY);
+        this.ctx.stroke();
+
+        // Plasma tip
+        const ballR = r * (0.045 + Math.sin(chargePhase * 1.5) * 0.02);
+        const bg = this.ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, ballR * 3);
+        bg.addColorStop(0, `rgba(255,255,255,${charge})`);
+        bg.addColorStop(0.4, `rgba(34,211,238,${charge * 0.8})`);
+        bg.addColorStop(1, 'transparent');
+        this.ctx.fillStyle = bg;
+        this.ctx.beginPath();
+        this.ctx.arc(tipX, tipY, ballR * 3, 0, Math.PI * 2);
+        this.ctx.fill();
+    }
+
+    // Wobbling plasma base ring (two-pass)
+    for (let pass = 0; pass < 2; pass++) {
+        this.ctx.beginPath();
+        for (let i = 0; i <= 80; i++) {
+            const a = (i / 80) * Math.PI * 2 - Math.PI / 2;
+            const noise = Math.sin(t * 6 + i * 0.5) * r * 0.025;
+            const rx = cx + Math.cos(a) * (crownR + noise);
+            const ry = crownBaseY + Math.sin(a) * (crownR * 0.32 + noise * 0.3);
+            i === 0 ? this.ctx.moveTo(rx, ry) : this.ctx.lineTo(rx, ry);
+        }
+        this.ctx.closePath();
+        if (pass === 0) {
+            this.ctx.strokeStyle = 'rgba(244,114,182,0.55)';
+            this.ctx.lineWidth = 3.5;
+            this.ctx.shadowColor = '#f472b6';
+            this.ctx.shadowBlur = 14;
+        } else {
+            this.ctx.strokeStyle = 'rgba(224,242,254,0.9)';
+            this.ctx.lineWidth = 1;
+            this.ctx.shadowColor = '#38bdf8';
+            this.ctx.shadowBlur = 8;
+        }
+        this.ctx.stroke();
+    }
+
+    // Orbiting plasma sparks
+    for (let i = 0; i < 12; i++) {
+        const sa = t * 0.8 + (i / 12) * Math.PI * 2;
+        const orbit = crownR * (1.2 + Math.sin(t * 2 + i * 0.7) * 0.15);
+        const sx = cx + Math.cos(sa) * orbit;
+        const sy = crownBaseY + Math.sin(sa) * orbit * 0.35;
+        const alpha = 0.4 + Math.sin(t * 3.5 + i) * 0.4;
+        this.ctx.fillStyle = i % 2 === 0 ? `rgba(34,211,238,${alpha})` : `rgba(244,114,182,${alpha})`;
+        this.ctx.shadowColor = i % 2 === 0 ? '#22d3ee' : '#f472b6';
+        this.ctx.shadowBlur = 8;
+        this.ctx.beginPath();
+        this.ctx.arc(sx, sy, r * (0.025 + Math.sin(t * 4 + i * 1.3) * 0.015), 0, Math.PI * 2);
+        this.ctx.fill();
+    }
         } else if (effect === 'blackhole') {
             const time = Date.now() / 1000;
             const orbitRadius = this.radius * 1.8;
