@@ -346,6 +346,13 @@
             <div class="price" style="color: #f472b6;">180,000 Coins</div>
             <button id="buyNeonCrown" style="background: #f472b6; border-color: #ec4899; color: #000;">Purchase</button>
         </div>
+
+        <div class="shop-item" style="border: 2px solid #fb923c;">
+            <h2>☀️ Solar Flare Aura</h2>
+            <p>Blazing sunburst aura with rotating rays and ember sparks.</p>
+            <div class="price" style="color: #fb923c;">190,000 Coins</div>
+            <button id="buySolarFlare" style="background: #fb923c; border-color: #f97316; color: #000;">Purchase</button>
+        </div>
     </div>
 
     <!-- SWORDS SECTION -->
@@ -646,6 +653,7 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
     { type: 'effects', item: 'golden-aura', btn: 'buyGoldenAura' },
     { type: 'effects', item: 'voidstorm-aura', btn: 'buyVoidstorm' },
     { type: 'effects', item: 'neon-crown-aura', btn: 'buyNeonCrown' },
+    { type: 'effects', item: 'solar-flare-aura', btn: 'buySolarFlare' },
     { type: 'swords', item: 'stick', btn: 'buyStickSword' },
     { type: 'swords', item: 'stone', btn: 'buyStoneSword' },
     { type: 'swords', item: 'lightning', btn: 'buyLightningBlade' },
@@ -987,6 +995,7 @@ document.getElementById('buyWings').addEventListener('click', () => {
         document.getElementById('buyGoldenAura').addEventListener('click', () => buyCosmetic('effects', 'golden-aura', 150000, 'buyGoldenAura'));
         document.getElementById('buyVoidstorm').addEventListener('click', () => buyCosmetic('effects', 'voidstorm-aura', 170000, 'buyVoidstorm'));
         document.getElementById('buyNeonCrown').addEventListener('click', () => buyCosmetic('effects', 'neon-crown-aura', 180000, 'buyNeonCrown'));
+        document.getElementById('buySolarFlare').addEventListener('click', () => buyCosmetic('effects', 'solar-flare-aura', 190000, 'buySolarFlare'));
 
         // Swords
         document.getElementById('buyStickSword').addEventListener('click', () => buyCosmetic('swords', 'stick', 5000, 'buyStickSword'));

@@ -33,7 +33,7 @@ draw(cosmetics = {}) {
     const { color = 'default', hat = 'none', face = 'none', effect = 'none', sword = 'none' } = cosmetics;
         
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    if (effect === 'blackhole' || effect === 'wings' || effect === 'mystical-aura' || effect === 'golden-aura' || effect === 'champion-aura' || effect === 'voidstorm-aura' || effect === 'neon-crown-aura') {
+    if (effect === 'blackhole' || effect === 'wings' || effect === 'mystical-aura' || effect === 'golden-aura' || effect === 'champion-aura' || effect === 'voidstorm-aura' || effect === 'neon-crown-aura' || effect === 'solar-flare-aura') {
         this.drawEffect(effect);
     }
     
@@ -428,6 +428,52 @@ switch(color) {
             this.ctx.lineTo(this.centerX + this.radius * 0.48, crownY + this.radius * 0.2);
             this.ctx.stroke();
             this.ctx.restore();
+
+        } else if (effect === 'solar-flare-aura') {
+            const time = Date.now() / 1000;
+            const flareRadius = this.radius * (1.72 + Math.sin(time * 5) * 0.1);
+
+            const flare = this.ctx.createRadialGradient(
+                this.centerX, this.centerY, this.radius * 0.6,
+                this.centerX, this.centerY, flareRadius
+            );
+            flare.addColorStop(0, 'rgba(255, 220, 90, 0.38)');
+            flare.addColorStop(0.45, 'rgba(255, 120, 0, 0.28)');
+            flare.addColorStop(1, 'transparent');
+            this.ctx.fillStyle = flare;
+            this.ctx.beginPath();
+            this.ctx.arc(this.centerX, this.centerY, flareRadius, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Rotating sun rays
+            for (let i = 0; i < 10; i++) {
+                const angle = (time * 1.7) + (i * Math.PI / 5);
+                const inner = this.radius * 1.05;
+                const outer = this.radius * 1.75;
+                const x1 = this.centerX + Math.cos(angle) * inner;
+                const y1 = this.centerY + Math.sin(angle) * inner;
+                const x2 = this.centerX + Math.cos(angle) * outer;
+                const y2 = this.centerY + Math.sin(angle) * outer;
+
+                this.ctx.strokeStyle = i % 2 === 0 ? 'rgba(255, 230, 120, 0.9)' : 'rgba(255, 140, 40, 0.75)';
+                this.ctx.lineWidth = this.radius * 0.05;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.stroke();
+            }
+
+            // Orbiting sparks
+            for (let i = 0; i < 8; i++) {
+                const angle = (time * 3.4) + (i * Math.PI / 4);
+                const distance = this.radius * 1.45;
+                const x = this.centerX + Math.cos(angle) * distance;
+                const y = this.centerY + Math.sin(angle) * distance;
+                this.ctx.fillStyle = i % 2 === 0 ? '#fff3b0' : '#ff9a3c';
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, this.radius * 0.07, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
 
         } else if (effect === 'blackhole') {
             const time = Date.now() / 1000;

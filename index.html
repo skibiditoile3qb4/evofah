@@ -2568,7 +2568,7 @@ function updateUserDisplay() {
 
 function updateSphereAnimation() {
     const cosmetics = userProfile.equippedCosmetics || {};
-     const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura', 'champion-aura', 'voidstorm-aura', 'neon-crown-aura'];
+     const animatedEffects = ['blackhole', 'wings', 'glitch', 'mystical-aura', 'golden-aura', 'champion-aura', 'voidstorm-aura', 'neon-crown-aura', 'solar-flare-aura'];
     if (animatedEffects.includes(cosmetics.effect)) {
         if (playerSphereRenderer && !playerSphereRenderer.shouldAnimate) {
             playerSphereRenderer.startAnimation(cosmetics);
