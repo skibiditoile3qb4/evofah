@@ -91,10 +91,11 @@
             box-sizing: border-box;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background: #0a0a0a;
-            color: #fff;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 45%, #020617 100%);
+            color: #e2e8f0;
             overflow-x: hidden;
+            line-height: 1.4;
         }
         #passwordScreen {
             position: fixed;
@@ -156,7 +157,7 @@
         }
         #mainView {
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 28px 20px 40px;
             display: none;
             flex-direction: column;
             align-items: center;
@@ -173,49 +174,73 @@
             z-index: 100;
         }
         .container {
-            max-width: 800px;
+            max-width: 1120px;
             width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.35);
+            backdrop-filter: blur(6px);
         }
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 32px;
-            font-weight: 300;
-            letter-spacing: 2px;
+            margin-bottom: 8px;
+            font-size: 34px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #f8fafc;
+        }
+        .page-header {
+            margin-bottom: 20px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .page-header p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 15px;
         }
         .search-container {
             display: flex;
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 22px;
             flex-wrap: wrap;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
         #searchBox {
             flex: 1;
+            min-width: 240px;
             padding: 12px 16px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 6px;
-            color: #fff;
+            background: #0b1220;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
         #searchBox:focus {
-            border-color: #555;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
         }
         button {
-            padding: 12px 24px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 6px;
-            color: #fff;
+            padding: 10px 16px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
             transition: all 0.2s;
         }
         button:hover {
-            background: #252525;
-            border-color: #555;
+            background: #334155;
+            border-color: #64748b;
         }
         button:disabled {
             opacity: 0.5;
@@ -223,26 +248,27 @@
         }
         #gameList {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 12px;
         }
         .game-btn {
             padding: 16px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 6px;
-            color: #fff;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: #e2e8f0;
             cursor: pointer;
             font-size: 13px;
             text-align: left;
             transition: all 0.2s;
             width: 100%;
             position: relative;
+            font-weight: 500;
         }
         .game-btn:hover {
-            background: #252525;
-            border-color: #555;
-            transform: translateY(-2px);
+            background: #1e293b;
+            border-color: #64748b;
+            transform: translateY(-1px);
         }
         .game-btn.locked {
             opacity: 0.6;
@@ -431,9 +457,31 @@
     font-weight: bold;
     text-shadow: 0 0 12px rgba(255, 138, 0, 0.7), 0 0 20px rgba(255, 60, 0, 0.35);
 }
+
+#userDisplay > div {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 8px 24px rgba(2, 6, 23, 0.35);
+}
+.search-container button {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+.search-container button:hover {
+    background: #334155 !important;
+    border-color: #64748b !important;
+}
+#friendRequestPanel {
+    margin-top: 20px !important;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
 #userDisplay:hover > div {
-    background: #252525 !important;
-    border-color: #555 !important;
+    background: #1e293b !important;
+    border-color: #64748b !important;
     transform: translateY(-2px);
 }
 #playerSphere {
@@ -1584,7 +1632,10 @@
 </div>
         <div id="lightningIcon" title="Lightning Blade: Double Profit">⚡</div>
         <div class="container">
-            <h1>Evo?</h1>
+            <div class="page-header">
+                <h1>Evofah Portal</h1>
+                <p>Use search and quick actions to access your games, account tools, and community features.</p>
+            </div>
             <div class="search-container">
                 <input type="text" id="searchBox" placeholder="Search games...">
                 <button id="allBtn">ALL</button>
