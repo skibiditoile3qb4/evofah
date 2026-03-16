@@ -769,6 +769,18 @@
 #chatToggleBtn.has-unread {
     animation: bounceChat 0.5s ease infinite;
 }
+#chatToggleBtn.has-dm-unread::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    border: 2px solid #fff;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+}
 #settingsToggleBtn {
     position: fixed;
     bottom: 90px;
@@ -4666,7 +4678,7 @@ relay.on('dm_message', (data) => {
 
     localStorage.setItem(key, JSON.stringify(messages));
     localStorage.setItem('_dm_unread', '1');
-    document.getElementById('chatToggleBtn').classList.add('has-unread');
+    document.getElementById('chatToggleBtn').classList.add('has-dm-unread');
 });
 
 
@@ -5372,16 +5384,26 @@ function escapeHtml(text) {
 function toggleChat() {
     chatOpen = !chatOpen;
     const container = document.getElementById('chatContainer');
+    const chatToggleBtn = document.getElementById('chatToggleBtn');
 
     if (chatOpen) {
         container.classList.add('show');
         unreadMessages = 0;
-        document.getElementById('chatToggleBtn').classList.remove('has-unread');
+        chatToggleBtn.classList.remove('has-unread');
+        if (localStorage.getItem('_dm_unread') === '1') {
+            chatToggleBtn.classList.add('has-dm-unread');
+        } else {
+            chatToggleBtn.classList.remove('has-dm-unread');
+        }
         document.getElementById('chatInput').focus();
         document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
     } else {
         container.classList.remove('show');
     }
+}
+
+if (localStorage.getItem('_dm_unread') === '1') {
+    document.getElementById('chatToggleBtn').classList.add('has-dm-unread');
 }
 
 function sendChatMessage() {
