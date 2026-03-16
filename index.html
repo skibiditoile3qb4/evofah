@@ -5797,8 +5797,9 @@ function sendGlobalDonation() {
 
 
 function sendMassDonation() {
-    if (userProfile.status !== 'champion') {
-        alert('❌ This perk is for Champion rank only.');
+    const massDonationRanks = ['champion', 'admin', 'sr.admin', 'owner'];
+    if (!massDonationRanks.includes(userProfile.status)) {
+        alert('❌ This perk is for Champion or Admin+ ranks only.');
         return;
     }
 
@@ -5857,7 +5858,7 @@ Total cost: ${totalCost} ${type}`)) {
             });
         });
 
-        addSystemMessage(`🎁 Champion gift sent: ${amount} ${type} to ${recipients.length} players (total ${totalCost}).`);
+        addSystemMessage(`🎁 Mass donation sent: ${amount} ${type} to ${recipients.length} players (total ${totalCost}).`);
     }
 }
 function generateSaveId() {
