@@ -335,22 +335,22 @@
         </div>
         <div class="shop-item" style="border: 2px solid #22d3ee;">
             <h2>🌀 Voidstorm Aura</h2>
-            <p>Chaotic cyan-violet vortex with orbiting shards and crackling energy.</p>
-            <div class="price" style="color: #22d3ee;">170,000 Coins</div>
+            <p>Chaotic vortex with orbiting shardsy.</p>
+            <div class="price" style="color: #22d3ee;">50 💎</div>
             <button id="buyVoidstorm" style="background: #22d3ee; border-color: #06b6d4; color: #000;">Purchase</button>
         </div>
 
         <div class="shop-item" style="border: 2px solid #f472b6;">
             <h2>👑 Neon Crown Aura</h2>
-            <p>Radiant magenta/cyan halo with a floating neon crown over your sphere.</p>
-            <div class="price" style="color: #f472b6;">180,000 Coins</div>
+            <p>Be the King.</p>
+            <div class="price" style="color: #f472b6;">100 💎</div>
             <button id="buyNeonCrown" style="background: #f472b6; border-color: #ec4899; color: #000;">Purchase</button>
         </div>
 
         <div class="shop-item" style="border: 2px solid #fb923c;">
             <h2>☀️ Solar Flare Aura</h2>
-            <p>Blazing sunburst aura with rotating rays and ember sparks.</p>
-            <div class="price" style="color: #fb923c;">190,000 Coins</div>
+            <p>Blazing sunburst aura</p>
+            <div class="price" style="color: #fb923c;">100 💎</div>
             <button id="buySolarFlare" style="background: #fb923c; border-color: #f97316; color: #000;">Purchase</button>
         </div>
     </div>
@@ -581,7 +581,7 @@
             itemElement.classList.add('purchased');
         }
 document.getElementById('buyLightningPotion').addEventListener('click', () => {
-    if (coins >= 50000) {
+    if (coins >= 20000) {
         if (confirm('Purchase Lightning Potion for 20,000 coins?')) {
             coins -= 20000;
             setCoins(coins);
@@ -993,9 +993,68 @@ document.getElementById('buyWings').addEventListener('click', () => {
     }
 });
         document.getElementById('buyGoldenAura').addEventListener('click', () => buyCosmetic('effects', 'golden-aura', 150000, 'buyGoldenAura'));
-        document.getElementById('buyVoidstorm').addEventListener('click', () => buyCosmetic('effects', 'voidstorm-aura', 170000, 'buyVoidstorm'));
-        document.getElementById('buyNeonCrown').addEventListener('click', () => buyCosmetic('effects', 'neon-crown-aura', 180000, 'buyNeonCrown'));
-        document.getElementById('buySolarFlare').addEventListener('click', () => buyCosmetic('effects', 'solar-flare-aura', 190000, 'buySolarFlare'));
+        
+        document.getElementById('buyVoidstorm').addEventListener('click', () => {
+    if (userProfile.ownedCosmetics.effects.includes('voidstorm-aura')) {
+        alert('❌ You already own this!');
+        return;
+    }
+    const gemCost = 50;
+    if ((userProfile.gems || 0) >= gemCost) {
+        if (confirm(`Purchase Voidstorm Aura for ${gemCost} gems?`)) {
+            userProfile.gems -= gemCost;
+            userProfile.ownedCosmetics.effects.push('voidstorm-aura');
+            saveUserProfile(userProfile);
+            alert('✅ Successfully purchased Voidstorm Aura!');
+            document.getElementById('gemAmount').textContent = userProfile.gems;
+            const button = document.getElementById('buyVoidstorm');
+            button.textContent = 'Already Owned';
+            button.disabled = true;
+            button.parentElement.classList.add('purchased');
+        }
+    } else {
+        alert(`❌ Not enough gems! You need ${gemCost} gems.`);
+    }
+});
+        document.getElementById('buyNeonCrown').addEventListener('click', () => {
+    if (userProfile.ownedCosmetics.effects.includes('neon-crown-aura')) {
+        alert('❌ You already own this!'); return;
+    }
+    const gemCost = 100;
+    if ((userProfile.gems || 0) >= gemCost) {
+        if (confirm(`Purchase Neon Crown Aura for ${gemCost} gems?`)) {
+            userProfile.gems -= gemCost;
+            userProfile.ownedCosmetics.effects.push('neon-crown-aura');
+            saveUserProfile(userProfile);
+            alert('✅ Successfully purchased Neon Crown Aura!');
+            document.getElementById('gemAmount').textContent = userProfile.gems;
+            const button = document.getElementById('buyNeonCrown');
+            button.textContent = 'Already Owned';
+            button.disabled = true;
+            button.parentElement.classList.add('purchased');
+        }
+    } else { alert(`❌ Not enough gems! You need ${gemCost} gems.`); }
+});
+
+document.getElementById('buySolarFlare').addEventListener('click', () => {
+    if (userProfile.ownedCosmetics.effects.includes('solar-flare-aura')) {
+        alert('❌ You already own this!'); return;
+    }
+    const gemCost = 100;
+    if ((userProfile.gems || 0) >= gemCost) {
+        if (confirm(`Purchase Solar Flare Aura for ${gemCost} gems?`)) {
+            userProfile.gems -= gemCost;
+            userProfile.ownedCosmetics.effects.push('solar-flare-aura');
+            saveUserProfile(userProfile);
+            alert('✅ Successfully purchased Solar Flare Aura!');
+            document.getElementById('gemAmount').textContent = userProfile.gems;
+            const button = document.getElementById('buySolarFlare');
+            button.textContent = 'Already Owned';
+            button.disabled = true;
+            button.parentElement.classList.add('purchased');
+        }
+    } else { alert(`❌ Not enough gems! You need ${gemCost} gems.`); }
+});
 
         // Swords
         document.getElementById('buyStickSword').addEventListener('click', () => buyCosmetic('swords', 'stick', 5000, 'buyStickSword'));
