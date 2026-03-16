@@ -12,8 +12,8 @@
     .friend { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid #333; border-radius:8px; margin:8px 0; }
     .online { color:#22c55e; }
     .offline { color:#ef4444; }
-    #dmWindow { display:none; margin-top:16px; border:1px solid #333; border-radius:10px; padding:12px; max-width:520px; }
-    #dmMessages { height:220px; overflow:auto; background:#111; border-radius:8px; padding:10px; margin-bottom:8px; }
+    #pmWindow { display:none; margin-top:16px; border:1px solid #333; border-radius:10px; padding:12px; max-width:520px; }
+    #pmMessages { height:220px; overflow:auto; background:#111; border-radius:8px; padding:10px; margin-bottom:8px; }
     .msg { margin:6px 0; }
     .muted { color:#aaa; font-size:12px; }
     #mainBtn.has-dot::after { content:''; width:9px; height:9px; border-radius:50%; background:#ef4444; display:inline-block; margin-left:6px; }
@@ -21,24 +21,24 @@
 </head>
 <body>
   <div class="row" style="justify-content:space-between;max-width:800px;">
-    <h2 style="margin:0;">👥 Fr!ends</h2>
+    <h2 style="margin:0;">👥 Contacts</h2>
     <button id="mainBtn">⬅ Main</button>
   </div>
-  <p class="muted">Only work when players both online. M*ssages are stored in localStorage and can be lost if storage is cleared.</p>
+  <p class="muted">Only works when both players are online. Notes are stored locally and can be lost if storage is cleared.</p>
 
   <div class="row" style="max-width:800px; margin-bottom:8px;">
     <input id="addInput" placeholder="Username" maxlength="32" />
-    <button id="addBtn">Add local fr!end</button>
+    <button id="addBtn">Add Contact</button>
   </div>
 
-  <div id="friendsList" style="max-width:800px;"></div>
+  <div id="contactsList" style="max-width:800px;"></div>
 
-  <div id="dmWindow">
-    <h3 id="dmTitle" style="margin-top:0;">*M</h3>
-    <div id="dmMessages"></div>
+  <div id="pmWindow">
+    <h3 id="pmTitle" style="margin-top:0;">Notes</h3>
+    <div id="pmMessages"></div>
     <div class="row">
-      <input id="dmInput" placeholder="Type a *M..." maxlength="240" style="flex:1;" />
-      <button id="sendDmBtn">Send</button>
+      <input id="pmInput" placeholder="Type a note..." maxlength="240" style="flex:1;" />
+      <button id="sendPmBtn">Send</button>
     </div>
   </div>
 
@@ -47,90 +47,90 @@ const RELAY_SERVER = 'wss://relayfah.onrender.com';
 const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
 let relay = null;
 let onlineUsernames = new Set();
-let activeFriend = null;
+let activeContact = null;
 
 if (!userProfile.username) {
   alert('Log in first.');
   window.location.href = 'index.html';
 }
 
-function friendsKey() { return `_friends_${userProfile.username}`; }
-function getFriends() {
-  try { return JSON.parse(localStorage.getItem(friendsKey()) || '[]'); }
+function contactsKey() { return `_contacts_${userProfile.username}`; }
+function getContacts() {
+  try { return JSON.parse(localStorage.getItem(contactsKey()) || '[]'); }
   catch (e) { return []; }
 }
-function setFriends(list) { localStorage.setItem(friendsKey(), JSON.stringify(Array.from(new Set(list)))); }
-function convoKey(friend) { return `_dm_${userProfile.username}_${friend}`; }
-function inboundConvoKey(friend) { return `_dm_${friend}_${userProfile.username}`; }
+function setContacts(list) { localStorage.setItem(contactsKey(), JSON.stringify(Array.from(new Set(list)))); }
+function noteKey(contact) { return `_note_${userProfile.username}_${contact}`; }
+function inboundNoteKey(contact) { return `_note_${contact}_${userProfile.username}`; }
 
-function getConversation(friend) {
+function getConversation(contact) {
   let all = [];
-  try { all = all.concat(JSON.parse(localStorage.getItem(convoKey(friend)) || '[]')); } catch(e){}
-  try { all = all.concat(JSON.parse(localStorage.getItem(inboundConvoKey(friend)) || '[]')); } catch(e){}
+  try { all = all.concat(JSON.parse(localStorage.getItem(noteKey(contact)) || '[]')); } catch(e){}
+  try { all = all.concat(JSON.parse(localStorage.getItem(inboundNoteKey(contact)) || '[]')); } catch(e){}
   return all.sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
 }
 
-function renderFriends() {
-  const el = document.getElementById('friendsList');
-  const friends = getFriends();
-  if (!friends.length) {
-    el.innerHTML = '<div class="muted">No friends yet.</div>';
+function renderContacts() {
+  const el = document.getElementById('contactsList');
+  const contacts = getContacts();
+  if (!contacts.length) {
+    el.innerHTML = '<div class="muted">No contacts yet.</div>';
     return;
   }
 
-  el.innerHTML = friends.map(name => {
+  el.innerHTML = contacts.map(name => {
     const online = onlineUsernames.has(name);
     return `<div class="friend">
       <div><b>${escapeHtml(name)}</b> <span class="${online ? 'online' : 'offline'}">● ${online ? 'online' : 'offline'}</span></div>
       <div class="row">
-        <button onclick="openDM('${name.replace(/'/g, "\\'")}')">DM</button>
-        <button onclick="removeFriend('${name.replace(/'/g, "\\'")}')">Remove</button>
+        <button onclick="openPM('${name.replace(/'/g, "\\'")}')">Chat</button>
+        <button onclick="removeContact('${name.replace(/'/g, "\\'")}')">Remove</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function openDM(friend) {
-  activeFriend = friend;
-  document.getElementById('dmWindow').style.display = 'block';
-  document.getElementById('dmTitle').textContent = `DM with ${friend}`;
-  renderDM();
+function openPM(contact) {
+  activeContact = contact;
+  document.getElementById('pmWindow').style.display = 'block';
+  document.getElementById('pmTitle').textContent = `Chat with ${contact}`;
+  renderPM();
 }
 
-function renderDM() {
-  if (!activeFriend) return;
-  const msgs = getConversation(activeFriend);
-  const box = document.getElementById('dmMessages');
+function renderPM() {
+  if (!activeContact) return;
+  const msgs = getConversation(activeContact);
+  const box = document.getElementById('pmMessages');
   box.innerHTML = msgs.map(m => `<div class="msg"><b>${escapeHtml(m.from)}:</b> ${escapeHtml(m.message)}</div>`).join('');
   box.scrollTop = box.scrollHeight;
 }
 
-function removeFriend(name) {
-  const next = getFriends().filter(f => f !== name);
-  setFriends(next);
-  renderFriends();
+function removeContact(name) {
+  const next = getContacts().filter(f => f !== name);
+  setContacts(next);
+  renderContacts();
 }
 
-function saveOutgoingDM(to, text) {
+function saveOutgoingNote(to, text) {
   let msgs = [];
-  try { msgs = JSON.parse(localStorage.getItem(convoKey(to)) || '[]'); } catch(e){}
+  try { msgs = JSON.parse(localStorage.getItem(noteKey(to)) || '[]'); } catch(e){}
   msgs.push({ from: userProfile.username, to, message: text, timestamp: Date.now() });
-  localStorage.setItem(convoKey(to), JSON.stringify(msgs));
+  localStorage.setItem(noteKey(to), JSON.stringify(msgs));
 }
 
-function sendDM() {
-  const text = document.getElementById('dmInput').value.trim();
-  if (!text || !activeFriend) return;
+function sendPM() {
+  const text = document.getElementById('pmInput').value.trim();
+  if (!text || !activeContact) return;
 
-  if (!relay || !relay.connected || !onlineUsernames.has(activeFriend)) {
-    alert('Both players must be online to DM.');
+  if (!relay || !relay.connected || !onlineUsernames.has(activeContact)) {
+    alert('Both players must be online to chat.');
     return;
   }
 
-  relay.sendDM(activeFriend, text);
-  saveOutgoingDM(activeFriend, text);
-  document.getElementById('dmInput').value = '';
-  renderDM();
+  relay.sendDM(activeContact, text);
+  saveOutgoingNote(activeContact, text);
+  document.getElementById('pmInput').value = '';
+  renderPM();
 }
 
 function escapeHtml(text) {
@@ -144,23 +144,23 @@ async function initRelay() {
 
   relay.on('players_update', (data) => {
     onlineUsernames = new Set((data.players || []).map(p => p.username));
-    renderFriends();
+    renderContacts();
   });
 
   relay.on('joined', (data) => {
     onlineUsernames = new Set((data.players || []).map(p => p.username));
-    renderFriends();
+    renderContacts();
   });
 
   relay.on('dm_message', (data) => {
-    const key = convoKey(data.fromUsername);
+    const key = noteKey(data.fromUsername);
     let msgs = [];
     try { msgs = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
     msgs.push({ from: data.fromUsername, to: userProfile.username, message: data.message, timestamp: Date.now() });
     localStorage.setItem(key, JSON.stringify(msgs));
-    localStorage.setItem('_dm_unread', '1');
+    localStorage.setItem('_note_unread', '1');
     document.getElementById('mainBtn').classList.add('has-dot');
-    if (activeFriend === data.fromUsername) renderDM();
+    if (activeContact === data.fromUsername) renderPM();
   });
 
   await relay.connect();
@@ -168,36 +168,36 @@ async function initRelay() {
 }
 
 document.getElementById('mainBtn').addEventListener('click', () => {
-  localStorage.removeItem('_dm_unread');
+  localStorage.removeItem('_note_unread');
   window.location.href = 'index.html';
 });
 
-if (localStorage.getItem('_dm_unread') === '1') {
+if (localStorage.getItem('_note_unread') === '1') {
   document.getElementById('mainBtn').classList.add('has-dot');
 }
 
 document.getElementById('addBtn').addEventListener('click', () => {
   const v = document.getElementById('addInput').value.trim();
   if (!v) return;
-  const friends = getFriends();
-  if (!friends.includes(v) && v !== userProfile.username) {
-    friends.push(v);
-    setFriends(friends);
-    renderFriends();
+  const contacts = getContacts();
+  if (!contacts.includes(v) && v !== userProfile.username) {
+    contacts.push(v);
+    setContacts(contacts);
+    renderContacts();
   }
   document.getElementById('addInput').value = '';
 });
 
-document.getElementById('sendDmBtn').addEventListener('click', sendDM);
-document.getElementById('dmInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendDM(); });
+document.getElementById('sendPmBtn').addEventListener('click', sendPM);
+document.getElementById('pmInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendPM(); });
 
-renderFriends();
+renderContacts();
 initRelay().catch(() => {
-  alert('Could not connect to relay. Online indicators/DM sending disabled.');
+  alert('Could not connect. Online indicators and chat disabled.');
 });
 
-window.openDM = openDM;
-window.removeFriend = removeFriend;
+window.openPM = openPM;
+window.removeContact = removeContact;
 </script>
 </body>
 </html>
