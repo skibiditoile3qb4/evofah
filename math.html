@@ -103,7 +103,8 @@ function renderFriends() {
 function openDM(friend) {
   activeFriend = friend;
   const unreadFriends = getUnreadFriends();
-  if (unreadFriends.delete(friend)) setUnreadFriends(unreadFriends);
+  unreadFriends.delete(friend);
+  setUnreadFriends(unreadFriends);
   document.getElementById('dmWindow').style.display = 'block';
   document.getElementById('dmTitle').textContent = `DM with ${friend}`;
   renderFriends();
