@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fr!ends</title>
+  <title>Study Groups</title>
   <script src="relay-client.js"></script>
   <style>
     body { background:#0d0d0d; color:#fff; font-family:Arial,sans-serif; margin:0; padding:20px; }
@@ -22,78 +22,74 @@
 </head>
 <body>
   <div class="row" style="justify-content:space-between;max-width:800px;">
-    <h2 style="margin:0;">👥 Fr!ends</h2>
-    <button id="mainBtn">⬅ Main</button>
+    <h2 style="margin:0;">📚 Study Groups</h2>
+    <button id="mainBtn">⬅ Home</button>
   </div>
-  <p class="muted">Add fr!ends from the main page using fr!end requests. DMs only work when both players are online. Messages are stored in localStorage and can be lost if storage is cleared.</p>
+  <p class="muted">Add study partners from the home page. Notes only sync when both users are active. Messages are stored locally and may be cleared with browser data.</p>
 
   <div id="friendsList" style="max-width:800px;"></div>
 
   <div id="dmWindow">
-    <h3 id="dmTitle" style="margin-top:0;">DM</h3>
+    <h3 id="dmTitle" style="margin-top:0;">Notes</h3>
     <div id="dmMessages"></div>
     <div class="row">
-      <input id="dmInput" placeholder="Type a DM..." maxlength="240" style="flex:1;" />
+      <input id="dmInput" placeholder="Type a note..." maxlength="240" style="flex:1;" />
       <button id="sendDmBtn">Send</button>
     </div>
   </div>
 
 <script>
-const RELAY_SERVER = 'wss://relayfah.onrender.com';
-const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-let relay = null;
-let onlineUsernames = new Set();
-let activeFriend = null;
+const _r = atob('d3NzOi8vcmVsYXlmYWgub25yZW5kZXIuY29t');
+const _up = JSON.parse(localStorage.getItem('userProfile') || '{}');
+let _rl = null;
+let _ou = new Set();
+let _af = null;
 
-if (!userProfile.username) {
+if (!_up.username) {
   alert('Log in first.');
-  window.location.href = 'index.html';
+  window.location.href = atob('aW5kZXguaHRtbA==');
 }
 
-function friendsKey() { return `_friends_${userProfile.username}`; }
-function getFriends() {
-  try { return JSON.parse(localStorage.getItem(friendsKey()) || '[]'); }
+function _fk() { return '_friends_' + _up.username; }
+function _gf() {
+  try { return JSON.parse(localStorage.getItem(_fk()) || '[]'); }
   catch (e) { return []; }
 }
-function setFriends(list) { localStorage.setItem(friendsKey(), JSON.stringify(Array.from(new Set(list)))); }
-function unreadKey() { return `_dm_unread_friends_${userProfile.username}`; }
-function getUnreadFriends() {
-  try { return new Set(JSON.parse(localStorage.getItem(unreadKey()) || '[]')); }
+function _sf(list) { localStorage.setItem(_fk(), JSON.stringify(Array.from(new Set(list)))); }
+function _uk() { return '_dm_unread_friends_' + _up.username; }
+function _guf() {
+  try { return new Set(JSON.parse(localStorage.getItem(_uk()) || '[]')); }
   catch (e) { return new Set(); }
 }
-function setUnreadFriends(namesSet) {
-  localStorage.setItem(unreadKey(), JSON.stringify(Array.from(namesSet)));
-  if (namesSet.size > 0) {
-    localStorage.setItem('_dm_unread', '1');
-  } else {
-    localStorage.removeItem('_dm_unread');
-  }
+function _suf(s) {
+  localStorage.setItem(_uk(), JSON.stringify(Array.from(s)));
+  if (s.size > 0) { localStorage.setItem('_dm_unread', '1'); }
+  else { localStorage.removeItem('_dm_unread'); }
 }
-function convoKey(friend) { return `_dm_${userProfile.username}_${friend}`; }
-function inboundConvoKey(friend) { return `_dm_${friend}_${userProfile.username}`; }
+function _ck(f) { return '_dm_' + _up.username + '_' + f; }
+function _ick(f) { return '_dm_' + f + '_' + _up.username; }
 
-function getConversation(friend) {
+function _gc(f) {
   let all = [];
-  try { all = all.concat(JSON.parse(localStorage.getItem(convoKey(friend)) || '[]')); } catch(e){}
-  try { all = all.concat(JSON.parse(localStorage.getItem(inboundConvoKey(friend)) || '[]')); } catch(e){}
+  try { all = all.concat(JSON.parse(localStorage.getItem(_ck(f)) || '[]')); } catch(e){}
+  try { all = all.concat(JSON.parse(localStorage.getItem(_ick(f)) || '[]')); } catch(e){}
   return all.sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
 }
 
 function renderFriends() {
   const el = document.getElementById('friendsList');
-  const friends = getFriends();
+  const friends = _gf();
   if (!friends.length) {
-    el.innerHTML = '<div class="muted">No fr!ends yet.</div>';
+    el.innerHTML = '<div class="muted">No study partners yet.</div>';
     return;
   }
-
   el.innerHTML = friends.map(name => {
-    const online = onlineUsernames.has(name);
-    const hasUnread = getUnreadFriends().has(name);
+    const online = _ou.has(name);
+    const hasUnread = _guf().has(name);
     return `<div class="friend">
-      <div class="friend-name"><b>${escapeHtml(name)}</b>${hasUnread ? '<span class="friend-unread-dot" title="Unread DM"></span>' : ''} <span class="${online ? 'online' : 'offline'}">● ${online ? 'online' : 'offline'}</span></div>
+      <div class="friend-name"><b>${_eh(name)}</b>${hasUnread ? '<span class="friend-unread-dot" title="Unread"></span>' : ''} <span class="${online ? 'online' : 'offline'}">● ${online ? 'active' : 'away'}</span></div>
       <div class="row">
-        <button onclick="openDM('${name.replace(/'/g, "\\'")}')">@M</button>
+        <button onclick="openDM('${name.replace(/'/g, "\\'")}')">💬</button>
         <button onclick="removeFriend('${name.replace(/'/g, "\\'")}')">Remove</button>
       </div>
     </div>`;
@@ -101,98 +97,94 @@ function renderFriends() {
 }
 
 function openDM(friend) {
-  activeFriend = friend;
-  const unreadFriends = getUnreadFriends();
-  unreadFriends.delete(friend);
-  setUnreadFriends(unreadFriends);
+  _af = friend;
+  const u = _guf();
+  u.delete(friend);
+  _suf(u);
   document.getElementById('dmWindow').style.display = 'block';
-  document.getElementById('dmTitle').textContent = `DM with ${friend}`;
+  document.getElementById('dmTitle').textContent = 'Notes with ' + friend;
   renderFriends();
   renderDM();
 }
 
 function renderDM() {
-  if (!activeFriend) return;
-  const msgs = getConversation(activeFriend);
+  if (!_af) return;
+  const msgs = _gc(_af);
   const box = document.getElementById('dmMessages');
-  box.innerHTML = msgs.map(m => `<div class="msg"><b>${escapeHtml(m.from)}:</b> ${escapeHtml(m.message)}</div>`).join('');
+  box.innerHTML = msgs.map(m => `<div class="msg"><b>${_eh(m.from)}:</b> ${_eh(m.message)}</div>`).join('');
   box.scrollTop = box.scrollHeight;
 }
 
 function removeFriend(name) {
-  const next = getFriends().filter(f => f !== name);
-  setFriends(next);
+  _sf(_gf().filter(f => f !== name));
   renderFriends();
 }
 
-function saveOutgoingDM(to, text) {
+function _sod(to, text) {
   let msgs = [];
-  try { msgs = JSON.parse(localStorage.getItem(convoKey(to)) || '[]'); } catch(e){}
-  msgs.push({ from: userProfile.username, to, message: text, timestamp: Date.now() });
-  localStorage.setItem(convoKey(to), JSON.stringify(msgs));
+  try { msgs = JSON.parse(localStorage.getItem(_ck(to)) || '[]'); } catch(e){}
+  msgs.push({ from: _up.username, to, message: text, timestamp: Date.now() });
+  localStorage.setItem(_ck(to), JSON.stringify(msgs));
 }
 
 function sendDM() {
   const text = document.getElementById('dmInput').value.trim();
-  if (!text || !activeFriend) return;
-
-  if (!relay || !relay.connected || !onlineUsernames.has(activeFriend)) {
-    alert('Both players must be online to DM.');
+  if (!text || !_af) return;
+  if (!_rl || !_rl.connected || !_ou.has(_af)) {
+    alert('Both users must be active to send notes.');
     return;
   }
-
-  relay.sendDM(activeFriend, text);
-  saveOutgoingDM(activeFriend, text);
+  _rl.sendDM(_af, text);
+  _sod(_af, text);
   document.getElementById('dmInput').value = '';
   renderDM();
 }
 
-function escapeHtml(text) {
+function _eh(text) {
   const d = document.createElement('div');
   d.textContent = text || '';
   return d.innerHTML;
 }
 
-async function initRelay() {
-  relay = new RelayClient(RELAY_SERVER);
+async function _init() {
+  _rl = new RelayClient(_r);
 
-  relay.on('players_update', (data) => {
-    onlineUsernames = new Set((data.players || []).map(p => p.username));
+  _rl.on('players_update', (data) => {
+    _ou = new Set((data.players || []).map(p => p.username));
     renderFriends();
   });
 
-  relay.on('joined', (data) => {
-    onlineUsernames = new Set((data.players || []).map(p => p.username));
+  _rl.on('joined', (data) => {
+    _ou = new Set((data.players || []).map(p => p.username));
     renderFriends();
   });
 
-  relay.on('dm_message', (data) => {
-    const key = convoKey(data.fromUsername);
+  _rl.on('dm_message', (data) => {
+    const key = _ck(data.fromUsername);
     let msgs = [];
     try { msgs = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
-    msgs.push({ from: data.fromUsername, to: userProfile.username, message: data.message, timestamp: Date.now() });
+    msgs.push({ from: data.fromUsername, to: _up.username, message: data.message, timestamp: Date.now() });
     localStorage.setItem(key, JSON.stringify(msgs));
-    const unreadFriends = getUnreadFriends();
-    unreadFriends.add(data.fromUsername);
-    setUnreadFriends(unreadFriends);
+    const u = _guf();
+    u.add(data.fromUsername);
+    _suf(u);
     renderFriends();
-    if (activeFriend === data.fromUsername) renderDM();
+    if (_af === data.fromUsername) renderDM();
   });
 
-  await relay.connect();
-  relay.joinRoom('global_chat', userProfile.username, userProfile.status, userProfile.permanentId);
+  await _rl.connect();
+  _rl.joinRoom(atob('Z2xvYmFsX2NoYXQ='), _up.username, _up.status, _up.permanentId);
 }
 
 document.getElementById('mainBtn').addEventListener('click', () => {
-  window.location.href = 'index.html';
+  window.location.href = atob('aW5kZXguaHRtbA==');
 });
-
 document.getElementById('sendDmBtn').addEventListener('click', sendDM);
 document.getElementById('dmInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendDM(); });
 
 renderFriends();
-initRelay().catch(() => {
-  alert('Could not connect to relay. Online indicators/DM sending disabled.');
+_init().catch(() => {
+  alert('Could not connect. Online indicators and notes disabled.');
 });
 
 window.openDM = openDM;
