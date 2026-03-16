@@ -1672,11 +1672,7 @@
 </div>
 
     <script>
-        if (!window._chromeOSValid) {
-    document.getElementById('passwordScreen').style.display = 'none';
-    document.getElementById('mainView').style.display = 'none';
-    throw new Error('Platform check failed');
-}
+
 function checkOwnerValidity() {
     const profile = getUserProfile();
 
@@ -3670,10 +3666,7 @@ setInterval(() => {
 
 
 function loadGame(game) {
-    if (!window._chromeOSValid) {
-        alert('⚠️ Games only available on ChromeOS');
-        return;
-    }
+
     const settingsModal = document.getElementById('settingsModal');
     if (settingsModal) {
         settingsModal.classList.remove('show');
@@ -4501,10 +4494,7 @@ function requestPersistentBanCheck() {
 }
 
 async function initChat() {
-    if (!window._chromeOSValid) {
-        console.error('ChromeOS validation failed');
-        return;
-    }
+   
     if (!userProfile.permanentId) {
                 userProfile.permanentId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 localStorage.setItem('userProfile', JSON.stringify(userProfile));
