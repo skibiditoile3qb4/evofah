@@ -5,84 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hero</title>
      <script>
+  if (window.location.pathname === '/index.html') {
+    window.location.replace('/');
+  }
 
-(function() {
-    const chromebookCheck = () => {
-        // PRODUCTION CODE (currently commented out for testing):
-        // const ua = navigator.userAgent.toLowerCase();
-        // const platform = navigator.platform.toLowerCase();
-        //
-        // // Check for ChromeOS indicators
-        // const isChromeOS = ua.includes('cros') ||
-        //                    platform.includes('cros') ||
-        //                    ua.includes('chromebook');
-        //
-        // // Additional check for Chrome on ChromeOS
-        // const isChrome = ua.includes('chrome') && !ua.includes('edge');
-        //
-        // return isChromeOS && isChrome;
-
-        // DEBUG MODE - Remove this line in production:
-        return true;  // ⚠️ DEBUG: Allows all devices
-    };
-
-            if (!chromebookCheck()) {
-                document.addEventListener('DOMContentLoaded', () => {
-                    document.body.innerHTML = `
-                        <div style="
-                            position: fixed;
-                            top: 0; left: 0;
-                            width: 100vw; height: 100vh;
-                            background: #0a0a0a;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            flex-direction: column;
-                            z-index: 999999;
-                        ">
-                            <h1 style="color: #ff4444; font-size: 48px; margin-bottom: 20px;">⚠️ ACCESS DENIED</h1>
-                            <p style="color: #ccc; font-size: 18px;">This application is only accessible on ChromeOS devices.</p>
-                            <p style="color: #888; font-size: 14px; margin-top: 10px;">Detected: ${navigator.userAgent}</p>
-                        </div>
-                    `;
-                });
-                window._chromeOSValid = false;
-            } else {
-                window._chromeOSValid = true;
-            }
-        })();
-
-         (async function() {
-    const BANNED_IPS = ['1.2.3.4', '5.6.7.8']; // Replace with actual banned IPs
-
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        const userIP = data.ip;
-
-        if (BANNED_IPS.includes(userIP)) {
-            document.body.innerHTML = `
-                <div style="
-                    position: fixed;
-                    top: 0; left: 0;
-                    width: 100vw; height: 100vh;
-                    background: #0a0a0a;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    flex-direction: column;
-                    z-index: 999999;
-                ">
-                    <h1 style="color: #ff4444; font-size: 48px; margin-bottom: 20px;">🚫 ACCESS DENIED</h1>
-                    <p style="color: #ccc; font-size: 18px;">Your access has been permanently revoked.</p>
-                </div>
-            `;
-            throw new Error('Banned IP');
-        }
-    } catch(e) {
-        if (e.message === 'Banned IP') throw e;
-    }
-})();
     </script>
     <style>
         * {
