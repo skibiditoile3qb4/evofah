@@ -5389,11 +5389,9 @@ function toggleChat() {
     if (chatOpen) {
         container.classList.add('show');
         unreadMessages = 0;
-        chatToggleBtn.classList.remove('has-unread');
+        document.getElementById('chatToggleBtn').classList.remove('has-unread');
         if (localStorage.getItem('_dm_unread') === '1') {
-            chatToggleBtn.classList.add('has-dm-unread');
-        } else {
-            chatToggleBtn.classList.remove('has-dm-unread');
+            document.getElementById('chatToggleBtn').classList.add('has-unread');
         }
         document.getElementById('chatInput').focus();
         document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
@@ -5403,7 +5401,7 @@ function toggleChat() {
 }
 
 if (localStorage.getItem('_dm_unread') === '1') {
-    document.getElementById('chatToggleBtn').classList.add('has-dm-unread');
+    document.getElementById('chatToggleBtn').classList.add('has-unread');
 }
 
 function sendChatMessage() {
