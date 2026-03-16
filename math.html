@@ -3,134 +3,134 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Study Hub</title>
+  <title>Friends & DMs</title>
   <script src="relay-client.js"></script>
   <style>
     body { background:#0d0d0d; color:#fff; font-family:Arial,sans-serif; margin:0; padding:20px; }
     .row { display:flex; gap:10px; align-items:center; }
     button,input { border:1px solid #333; background:#1a1a1a; color:#fff; border-radius:8px; padding:10px; }
-    .partner { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid #333; border-radius:8px; margin:8px 0; }
-    .available { color:#22c55e; }
-    .busy { color:#ef4444; }
-    #sessionWindow { display:none; margin-top:16px; border:1px solid #333; border-radius:10px; padding:12px; max-width:520px; }
-    #sessionNotes { height:220px; overflow:auto; background:#111; border-radius:8px; padding:10px; margin-bottom:8px; }
-    .note { margin:6px 0; }
+    .friend { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid #333; border-radius:8px; margin:8px 0; }
+    .online { color:#22c55e; }
+    .offline { color:#ef4444; }
+    #dmWindow { display:none; margin-top:16px; border:1px solid #333; border-radius:10px; padding:12px; max-width:520px; }
+    #dmMessages { height:220px; overflow:auto; background:#111; border-radius:8px; padding:10px; margin-bottom:8px; }
+    .msg { margin:6px 0; }
     .muted { color:#aaa; font-size:12px; }
     #mainBtn.has-dot::after { content:''; width:9px; height:9px; border-radius:50%; background:#ef4444; display:inline-block; margin-left:6px; }
   </style>
 </head>
 <body>
   <div class="row" style="justify-content:space-between;max-width:800px;">
-    <h2 style="margin:0;">📚 Study Hub</h2>
-    <button id="mainBtn">⬅ Back</button>
+    <h2 style="margin:0;">👥 Friends</h2>
+    <button id="mainBtn">⬅ Main</button>
   </div>
-  <p class="muted">Share study notes with classmates in real time. Both partners must be available. Notes are stored locally.</p>
+  <p class="muted">DMs only work when both players are online. Messages are stored in localStorage and can be lost if storage is cleared.</p>
 
   <div class="row" style="max-width:800px; margin-bottom:8px;">
-    <input id="addInput" placeholder="Classmate username" maxlength="32" />
-    <button id="addBtn">Add Study Partner</button>
+    <input id="addInput" placeholder="Username" maxlength="32" />
+    <button id="addBtn">Add local friend</button>
   </div>
 
-  <div id="partnerList" style="max-width:800px;"></div>
+  <div id="friendsList" style="max-width:800px;"></div>
 
-  <div id="sessionWindow">
-    <h3 id="sessionTitle" style="margin-top:0;">Study Session</h3>
-    <div id="sessionNotes"></div>
+  <div id="dmWindow">
+    <h3 id="dmTitle" style="margin-top:0;">DM</h3>
+    <div id="dmMessages"></div>
     <div class="row">
-      <input id="noteInput" placeholder="Type a note to share..." maxlength="240" style="flex:1;" />
-      <button id="shareNoteBtn">Share Note</button>
+      <input id="dmInput" placeholder="Type a DM..." maxlength="240" style="flex:1;" />
+      <button id="sendDmBtn">Send</button>
     </div>
   </div>
 
 <script>
-const RELAY_SERVER = 'wss://relayfah.onrender.com';
+const RELAY_SERVER = 'wss://evofah-37d2b8d86539.herokuapp.com';
 const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
 let relay = null;
-let availableUsernames = new Set();
-let activePartner = null;
+let onlineUsernames = new Set();
+let activeFriend = null;
 
 if (!userProfile.username) {
   alert('Log in first.');
   window.location.href = 'index.html';
 }
 
-function partnersKey() { return `_studypartners_${userProfile.username}`; }
-function getPartners() {
-  try { return JSON.parse(localStorage.getItem(partnersKey()) || '[]'); }
+function friendsKey() { return `_friends_${userProfile.username}`; }
+function getFriends() {
+  try { return JSON.parse(localStorage.getItem(friendsKey()) || '[]'); }
   catch (e) { return []; }
 }
-function setPartners(list) { localStorage.setItem(partnersKey(), JSON.stringify(Array.from(new Set(list)))); }
-function outboundKey(partner) { return `_studynotes_${userProfile.username}_${partner}`; }
-function inboundKey(partner) { return `_studynotes_${partner}_${userProfile.username}`; }
+function setFriends(list) { localStorage.setItem(friendsKey(), JSON.stringify(Array.from(new Set(list)))); }
+function convoKey(friend) { return `_dm_${userProfile.username}_${friend}`; }
+function inboundConvoKey(friend) { return `_dm_${friend}_${userProfile.username}`; }
 
-function getSession(partner) {
+function getConversation(friend) {
   let all = [];
-  try { all = all.concat(JSON.parse(localStorage.getItem(outboundKey(partner)) || '[]')); } catch(e){}
-  try { all = all.concat(JSON.parse(localStorage.getItem(inboundKey(partner)) || '[]')); } catch(e){}
+  try { all = all.concat(JSON.parse(localStorage.getItem(convoKey(friend)) || '[]')); } catch(e){}
+  try { all = all.concat(JSON.parse(localStorage.getItem(inboundConvoKey(friend)) || '[]')); } catch(e){}
   return all.sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
 }
 
-function renderPartners() {
-  const el = document.getElementById('partnerList');
-  const partners = getPartners();
-  if (!partners.length) {
-    el.innerHTML = '<div class="muted">No study partners yet.</div>';
+function renderFriends() {
+  const el = document.getElementById('friendsList');
+  const friends = getFriends();
+  if (!friends.length) {
+    el.innerHTML = '<div class="muted">No friends yet.</div>';
     return;
   }
 
-  el.innerHTML = partners.map(name => {
-    const available = availableUsernames.has(name);
-    return `<div class="partner">
-      <div><b>${escapeHtml(name)}</b> <span class="${available ? 'available' : 'busy'}">● ${available ? 'Available' : 'Busy'}</span></div>
+  el.innerHTML = friends.map(name => {
+    const online = onlineUsernames.has(name);
+    return `<div class="friend">
+      <div><b>${escapeHtml(name)}</b> <span class="${online ? 'online' : 'offline'}">● ${online ? 'online' : 'offline'}</span></div>
       <div class="row">
-        <button onclick="openSession('${name.replace(/'/g, "\\'")}')">Collaborate</button>
-        <button onclick="removePartner('${name.replace(/'/g, "\\'")}')">Remove</button>
+        <button onclick="openDM('${name.replace(/'/g, "\\'")}')">DM</button>
+        <button onclick="removeFriend('${name.replace(/'/g, "\\'")}')">Remove</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function openSession(partner) {
-  activePartner = partner;
-  document.getElementById('sessionWindow').style.display = 'block';
-  document.getElementById('sessionTitle').textContent = `Study Session with ${partner}`;
-  renderSession();
+function openDM(friend) {
+  activeFriend = friend;
+  document.getElementById('dmWindow').style.display = 'block';
+  document.getElementById('dmTitle').textContent = `DM with ${friend}`;
+  renderDM();
 }
 
-function renderSession() {
-  if (!activePartner) return;
-  const notes = getSession(activePartner);
-  const box = document.getElementById('sessionNotes');
-  box.innerHTML = notes.map(n => `<div class="note"><b>${escapeHtml(n.from)}:</b> ${escapeHtml(n.message)}</div>`).join('');
+function renderDM() {
+  if (!activeFriend) return;
+  const msgs = getConversation(activeFriend);
+  const box = document.getElementById('dmMessages');
+  box.innerHTML = msgs.map(m => `<div class="msg"><b>${escapeHtml(m.from)}:</b> ${escapeHtml(m.message)}</div>`).join('');
   box.scrollTop = box.scrollHeight;
 }
 
-function removePartner(name) {
-  const next = getPartners().filter(p => p !== name);
-  setPartners(next);
-  renderPartners();
+function removeFriend(name) {
+  const next = getFriends().filter(f => f !== name);
+  setFriends(next);
+  renderFriends();
 }
 
-function saveOutgoingNote(to, text) {
-  let notes = [];
-  try { notes = JSON.parse(localStorage.getItem(outboundKey(to)) || '[]'); } catch(e){}
-  notes.push({ from: userProfile.username, to, message: text, timestamp: Date.now() });
-  localStorage.setItem(outboundKey(to), JSON.stringify(notes));
+function saveOutgoingDM(to, text) {
+  let msgs = [];
+  try { msgs = JSON.parse(localStorage.getItem(convoKey(to)) || '[]'); } catch(e){}
+  msgs.push({ from: userProfile.username, to, message: text, timestamp: Date.now() });
+  localStorage.setItem(convoKey(to), JSON.stringify(msgs));
 }
 
-function shareNote() {
-  const text = document.getElementById('noteInput').value.trim();
-  if (!text || !activePartner) return;
+function sendDM() {
+  const text = document.getElementById('dmInput').value.trim();
+  if (!text || !activeFriend) return;
 
-  if (!relay || !relay.connected || !availableUsernames.has(activePartner)) {
-    alert('Both partners must be available to collaborate.');
+  if (!relay || !relay.connected || !onlineUsernames.has(activeFriend)) {
+    alert('Both players must be online to DM.');
     return;
   }
 
-  relay.sendDM(activePartner, text);
-  saveOutgoingNote(activePartner, text);
-  document.getElementById('noteInput').value = '';
-  renderSession();
+  relay.sendDM(activeFriend, text);
+  saveOutgoingDM(activeFriend, text);
+  document.getElementById('dmInput').value = '';
+  renderDM();
 }
 
 function escapeHtml(text) {
@@ -143,24 +143,24 @@ async function initRelay() {
   relay = new RelayClient(RELAY_SERVER);
 
   relay.on('players_update', (data) => {
-    availableUsernames = new Set((data.players || []).map(p => p.username));
-    renderPartners();
+    onlineUsernames = new Set((data.players || []).map(p => p.username));
+    renderFriends();
   });
 
   relay.on('joined', (data) => {
-    availableUsernames = new Set((data.players || []).map(p => p.username));
-    renderPartners();
+    onlineUsernames = new Set((data.players || []).map(p => p.username));
+    renderFriends();
   });
 
   relay.on('dm_message', (data) => {
-    const key = outboundKey(data.fromUsername);
-    let notes = [];
-    try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
-    notes.push({ from: data.fromUsername, to: userProfile.username, message: data.message, timestamp: Date.now() });
-    localStorage.setItem(key, JSON.stringify(notes));
-    localStorage.setItem('_studynotes_unread', '1');
+    const key = convoKey(data.fromUsername);
+    let msgs = [];
+    try { msgs = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
+    msgs.push({ from: data.fromUsername, to: userProfile.username, message: data.message, timestamp: Date.now() });
+    localStorage.setItem(key, JSON.stringify(msgs));
+    localStorage.setItem('_dm_unread', '1');
     document.getElementById('mainBtn').classList.add('has-dot');
-    if (activePartner === data.fromUsername) renderSession();
+    if (activeFriend === data.fromUsername) renderDM();
   });
 
   await relay.connect();
@@ -168,36 +168,36 @@ async function initRelay() {
 }
 
 document.getElementById('mainBtn').addEventListener('click', () => {
-  localStorage.removeItem('_studynotes_unread');
+  localStorage.removeItem('_dm_unread');
   window.location.href = 'index.html';
 });
 
-if (localStorage.getItem('_studynotes_unread') === '1') {
+if (localStorage.getItem('_dm_unread') === '1') {
   document.getElementById('mainBtn').classList.add('has-dot');
 }
 
 document.getElementById('addBtn').addEventListener('click', () => {
   const v = document.getElementById('addInput').value.trim();
   if (!v) return;
-  const partners = getPartners();
-  if (!partners.includes(v) && v !== userProfile.username) {
-    partners.push(v);
-    setPartners(partners);
-    renderPartners();
+  const friends = getFriends();
+  if (!friends.includes(v) && v !== userProfile.username) {
+    friends.push(v);
+    setFriends(friends);
+    renderFriends();
   }
   document.getElementById('addInput').value = '';
 });
 
-document.getElementById('shareNoteBtn').addEventListener('click', shareNote);
-document.getElementById('noteInput').addEventListener('keypress', e => { if (e.key === 'Enter') shareNote(); });
+document.getElementById('sendDmBtn').addEventListener('click', sendDM);
+document.getElementById('dmInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendDM(); });
 
-renderPartners();
+renderFriends();
 initRelay().catch(() => {
-  alert('Could not connect. Live collaboration unavailable.');
+  alert('Could not connect to relay. Online indicators/DM sending disabled.');
 });
 
-window.openSession = openSession;
-window.removePartner = removePartner;
+window.openDM = openDM;
+window.removeFriend = removeFriend;
 </script>
 </body>
 </html>
