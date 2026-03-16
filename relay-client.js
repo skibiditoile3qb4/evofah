@@ -46,6 +46,10 @@ this.handlers = {
   report_update_result: [],
   persistent_ban_result: [],
   persistent_ban_hit: [],
+  friend_request: [],
+  friend_request_result: [],
+  friend_request_response: [],
+  dm_message: [],
   error: []
 };
   }
@@ -175,6 +179,29 @@ joinRoom(room, username, status, permanentId, gladiatorCosmetics) {
       type: 'player_action',
       action,
       data
+    });
+  }
+
+  sendFriendRequest(toUsername) {
+    this.send({
+      type: 'friend_request',
+      toUsername
+    });
+  }
+
+  respondToFriendRequest(fromUsername, accepted) {
+    this.send({
+      type: 'friend_request_response',
+      fromUsername,
+      accepted: !!accepted
+    });
+  }
+
+  sendDM(toUsername, message) {
+    this.send({
+      type: 'dm_message',
+      toUsername,
+      message
     });
   }
   
