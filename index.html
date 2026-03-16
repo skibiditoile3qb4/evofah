@@ -3284,20 +3284,24 @@ function deobfuscateSeedAdmin(obfuscated) {
             setCurrentSeed(newSeed);
         })();
 
-         function checkGreatReset() {
-            const resetFlag = localStorage.getItem('reset');
+       function checkGreatReset() {
+    const visited = localStorage.getItem('_visited');
+    const resetFlag = localStorage.getItem('reset');
 
-            if (resetFlag != '7') {
+    if (!visited) {
+        localStorage.setItem('_visited', '1');
+        window.location.href = 'setup.html';
+        return true;
+    }
 
+    if (resetFlag != '7') {
+        localStorage.setItem('reset', '7');
+        showResetNotification();
+        return true;
+    }
 
-                localStorage.setItem('reset', '7');
-                showResetNotification();
-
-                return true;
-            }
-            return false;
-        }
-
+    return false;
+}
         function showResetNotification() {
             const notification = document.createElement('div');
             notification.style.cssText = `
