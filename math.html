@@ -16,7 +16,8 @@
     #dmMessages { height:220px; overflow:auto; background:#111; border-radius:8px; padding:10px; margin-bottom:8px; }
     .msg { margin:6px 0; }
     .muted { color:#aaa; font-size:12px; }
-    #mainBtn.has-dot::after { content:''; width:9px; height:9px; border-radius:50%; background:#ef4444; display:inline-block; margin-left:6px; }
+    .friend-name { display:flex; align-items:center; gap:8px; }
+    .friend-unread-dot { width:9px; height:9px; border-radius:50%; background:#ef4444; display:inline-block; }
   </style>
 </head>
 <body>
@@ -24,12 +25,7 @@
     <h2 style="margin:0;">👥 Friends</h2>
     <button id="mainBtn">⬅ Main</button>
   </div>
-  <p class="muted">DMs only work when both players are online. Messages are stored in localStorage and can be lost if storage is cleared.</p>
-
-  <div class="row" style="max-width:800px; margin-bottom:8px;">
-    <input id="addInput" placeholder="Username" maxlength="32" />
-    <button id="addBtn">Add local friend</button>
-  </div>
+  <p class="muted">Add friends from the main page using friend requests. DMs only work when both players are online. Messages are stored in localStorage and can be lost if storage is cleared.</p>
 
   <div id="friendsList" style="max-width:800px;"></div>
 
@@ -60,6 +56,19 @@ function getFriends() {
   catch (e) { return []; }
 }
 function setFriends(list) { localStorage.setItem(friendsKey(), JSON.stringify(Array.from(new Set(list)))); }
+function unreadKey() { return `_dm_unread_friends_${userProfile.username}`; }
+function getUnreadFriends() {
+  try { return new Set(JSON.parse(localStorage.getItem(unreadKey()) || '[]')); }
+  catch (e) { return new Set(); }
+}
+function setUnreadFriends(namesSet) {
+  localStorage.setItem(unreadKey(), JSON.stringify(Array.from(namesSet)));
+  if (namesSet.size > 0) {
+    localStorage.setItem('_dm_unread', '1');
+  } else {
+    localStorage.removeItem('_dm_unread');
+  }
+}
 function convoKey(friend) { return `_dm_${userProfile.username}_${friend}`; }
 function inboundConvoKey(friend) { return `_dm_${friend}_${userProfile.username}`; }
 
@@ -80,8 +89,9 @@ function renderFriends() {
 
   el.innerHTML = friends.map(name => {
     const online = onlineUsernames.has(name);
+    const hasUnread = getUnreadFriends().has(name);
     return `<div class="friend">
-      <div><b>${escapeHtml(name)}</b> <span class="${online ? 'online' : 'offline'}">● ${online ? 'online' : 'offline'}</span></div>
+      <div class="friend-name"><b>${escapeHtml(name)}</b>${hasUnread ? '<span class="friend-unread-dot" title="Unread DM"></span>' : ''} <span class="${online ? 'online' : 'offline'}">● ${online ? 'online' : 'offline'}</span></div>
       <div class="row">
         <button onclick="openDM('${name.replace(/'/g, "\\'")}')">DM</button>
         <button onclick="removeFriend('${name.replace(/'/g, "\\'")}')">Remove</button>
@@ -92,8 +102,11 @@ function renderFriends() {
 
 function openDM(friend) {
   activeFriend = friend;
+  const unreadFriends = getUnreadFriends();
+  if (unreadFriends.delete(friend)) setUnreadFriends(unreadFriends);
   document.getElementById('dmWindow').style.display = 'block';
   document.getElementById('dmTitle').textContent = `DM with ${friend}`;
+  renderFriends();
   renderDM();
 }
 
@@ -158,8 +171,10 @@ async function initRelay() {
     try { msgs = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
     msgs.push({ from: data.fromUsername, to: userProfile.username, message: data.message, timestamp: Date.now() });
     localStorage.setItem(key, JSON.stringify(msgs));
-    localStorage.setItem('_dm_unread', '1');
-    document.getElementById('mainBtn').classList.add('has-dot');
+    const unreadFriends = getUnreadFriends();
+    unreadFriends.add(data.fromUsername);
+    setUnreadFriends(unreadFriends);
+    renderFriends();
     if (activeFriend === data.fromUsername) renderDM();
   });
 
@@ -168,24 +183,7 @@ async function initRelay() {
 }
 
 document.getElementById('mainBtn').addEventListener('click', () => {
-  localStorage.removeItem('_dm_unread');
   window.location.href = 'index.html';
-});
-
-if (localStorage.getItem('_dm_unread') === '1') {
-  document.getElementById('mainBtn').classList.add('has-dot');
-}
-
-document.getElementById('addBtn').addEventListener('click', () => {
-  const v = document.getElementById('addInput').value.trim();
-  if (!v) return;
-  const friends = getFriends();
-  if (!friends.includes(v) && v !== userProfile.username) {
-    friends.push(v);
-    setFriends(friends);
-    renderFriends();
-  }
-  document.getElementById('addInput').value = '';
 });
 
 document.getElementById('sendDmBtn').addEventListener('click', sendDM);
