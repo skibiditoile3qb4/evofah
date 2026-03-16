@@ -5377,11 +5377,18 @@ function toggleChat() {
         container.classList.add('show');
         unreadMessages = 0;
         document.getElementById('chatToggleBtn').classList.remove('has-unread');
+        if (localStorage.getItem('_dm_unread') === '1') {
+            document.getElementById('chatToggleBtn').classList.add('has-unread');
+        }
         document.getElementById('chatInput').focus();
         document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
     } else {
         container.classList.remove('show');
     }
+}
+
+if (localStorage.getItem('_dm_unread') === '1') {
+    document.getElementById('chatToggleBtn').classList.add('has-unread');
 }
 
 function sendChatMessage() {
