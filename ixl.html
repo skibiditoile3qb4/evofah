@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Study Groups</title>
+  <script>
+  if (window.location.pathname.endsWith('.html')) {
+    window.location.replace(window.location.pathname.slice(0, -5));
+  }
+</script>
   <script src="relay-client.js"></script>
   <style>
     body { background:#0d0d0d; color:#fff; font-family:Arial,sans-serif; margin:0; padding:20px; }
