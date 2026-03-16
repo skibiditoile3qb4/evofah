@@ -555,7 +555,9 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    background: radial-gradient(circle at top, rgba(255,255,255,0.03), transparent 45%), #090909;
 }
+
 #chatMessages::-webkit-scrollbar {
     width: 8px;
 }
@@ -571,12 +573,14 @@
     background: #555;
 }
 .chat-message {
-    padding: 8px 12px;
-    background: #0a0a0a;
-    border-radius: 8px;
+    padding: 9px 12px;
+    background: linear-gradient(135deg, #0b0b0b 0%, #121212 100%);
+    border-radius: 10px;
     border-left: 3px solid #333;
     animation: slideInChat 0.2s ease-out;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
 }
+
 @keyframes slideInChat {
     from {
         opacity: 0;
@@ -591,6 +595,21 @@
     font-weight: bold;
     margin-right: 5px;
     font-size: 13px;
+}
+
+.chat-username.champion-animated {
+    background: linear-gradient(90deg, #ff8a00 0%, #ff2d55 35%, #a855f7 70%, #00d4ff 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 12px rgba(255, 119, 0, 0.45);
+    animation: championNameFlow 2.4s linear infinite;
+}
+
+@keyframes championNameFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
 }
 .chat-status-badge {
     font-size: 11px;
@@ -893,6 +912,11 @@
 .donate-form select {
     width: 70px;
 }
+
+#globalDonateUsername {
+    min-width: 120px;
+}
+
 .donate-btn {
     padding: 6px 12px;
     background: #ffd700;
@@ -1671,6 +1695,7 @@
                 <option value="gems">Gems</option>
             </select>
             <button class="donate-btn" onclick="sendGlobalDonation()">Send</button>
+            <button class="donate-btn" onclick="sendMassDonation()" title="Champion perk">Send to all online</button>
         </div>
     </div>
     <div class="chat-compose-row">
@@ -2508,7 +2533,7 @@ document.addEventListener('keydown', (e) => {
         let userProfile = getUserProfile();
         processChampionRenewal();
 
-const hiddenModeRanks = ['owner', 'sr.admin'];
+const hiddenModeRanks = ['owner', 'sr.admin', 'champion'];
 
 function canUseHiddenMode(status) {
     return hiddenModeRanks.includes(status);
@@ -2926,15 +2951,15 @@ function processChampionRenewal() {
         return;
     }
 
-    if ((userProfile.gems || 0) >= 100) {
-        userProfile.gems -= 20;
+    if ((userProfile.gems || 0) >= 50) {
+        userProfile.gems -= 50;
         renewalData.nextChargeAt += dayMs;
         while (renewalData.nextChargeAt <= now) {
             renewalData.nextChargeAt += dayMs;
         }
         userProfile.championRenewal = renewalData;
         saveUserProfile(userProfile);
-        alert('🔥 Champion rank renewed for 20 gems. Keep p2w');
+        alert('🔥 Champion rank renewed for 50 gems. Keep p2w');
     } else {
         userProfile.status = 'mystical';
         userProfile.championRenewal = null;
@@ -2945,7 +2970,7 @@ function processChampionRenewal() {
             userProfile.nametag.equipped = 'none';
         }
         saveUserProfile(userProfile);
-        alert('⚠️ Champion rank expired (20 gems required). You have been moved back to Mystical.');
+        alert('⚠️ Champion rank expired (50 gems required). You have been moved back to Mystical.');
     }
 }
 
@@ -4495,6 +4520,7 @@ let relay = null;
 let chatOpen = false;
 let unreadMessages = 0;
 let onlineCount = 0;
+let onlinePlayers = [];
 let currentChatRoom = 'global_chat';
 let mediaRecorder = null;
 let voiceChunks = [];
@@ -4544,7 +4570,8 @@ async function initChat() {
 relay.on('joined', (data) => {
             console.log('🎉 JOINED EVENT RECEIVED!', data);
             addSystemMessage('Welcome to global chat!');
-            onlineCount = data.players ? data.players.length : 1;
+            onlinePlayers = Array.isArray(data.players) ? data.players : [];
+            onlineCount = onlinePlayers.length || 1;
             updateOnlineCount();
 
             console.log('Chat history:', data.chatHistory);
@@ -4569,7 +4596,8 @@ relay.on('joined', (data) => {
 
 
 relay.on('players_update', (data) => {
-    onlineCount = data.players.length;
+    onlinePlayers = Array.isArray(data.players) ? data.players : [];
+    onlineCount = onlinePlayers.length;
     updateOnlineCount();
 });
 
@@ -4726,7 +4754,7 @@ Reason: ${persistentBanData.reason}`);
         relay.on('airstrike_result', (data) => {
             if (data.success) {
                 alert('✅ ' + data.message);
-                airstrikeCooldownEnd = Date.now() + (10 * 60 * 1000);
+                airstrikeCooldownEnd = Date.now() + (5 * 60 * 1000);
                 localStorage.setItem('_airstrikeCooldown', airstrikeCooldownEnd.toString());
                 startCooldownTimer();
             } else {
@@ -4894,7 +4922,11 @@ function switchChatRoom(room) {
         });
 
         relay.on('player_joined', (data) => {
+    if (data.player?.status === 'champion') {
+    addSystemMessage(`🏆 CHAMPION ${data.player.username} just joined!`);
+} else {
     addSystemMessage(`${data.player.username} joined the chat`);
+}
     // Player count updated via heartbeat/players_update
 });
 
@@ -5230,7 +5262,7 @@ function displayChatMessage(message, shouldScroll = true) {
 
     // Create status badge HTML (always show)
     const statusHtml = `<span class="chat-status-badge ${statusClass}">${statusClass.toUpperCase()}</span>`;
-    ;
+    const usernameClass = message.status === 'champion' ? 'chat-username champion-animated' : 'chat-username';
 
     const voiceNoteHtml = message.voiceNote
         ? `<audio class="voice-note-player" controls preload="none" src="data:${message.voiceMimeType || 'audio/webm'};base64,${message.voiceNote}"></audio>`
@@ -5238,7 +5270,7 @@ function displayChatMessage(message, shouldScroll = true) {
 
     msgDiv.innerHTML = `
         <div>
-            <span class="chat-username">${escapeHtml(message.username)}</span>
+            <span class="${usernameClass}">${escapeHtml(message.username)}</span>
             ${statusHtml}
             ${nametagHtml}
         </div>
@@ -5621,6 +5653,72 @@ function sendGlobalDonation() {
 
     document.getElementById('globalDonateUsername').value = '';
     document.getElementById('globalDonateAmount').value = '';
+}
+
+
+function sendMassDonation() {
+    if (userProfile.status !== 'champion') {
+        alert('❌ This perk is for Champion rank only.');
+        return;
+    }
+
+    const amount = parseInt(document.getElementById('globalDonateAmount').value);
+    const type = document.getElementById('globalDonateType').value;
+
+    if (!amount || amount <= 0) {
+        alert('Please enter a valid amount to send to everyone online.');
+        return;
+    }
+
+    const recipients = (onlinePlayers || [])
+        .map(p => p.username)
+        .filter(name => name && name !== userProfile.username);
+
+    if (recipients.length === 0) {
+        alert('No other online players found right now.');
+        return;
+    }
+
+    const totalCost = recipients.length * amount;
+    const balance = type === 'coins' ? coins : (userProfile.gems || 0);
+
+    if (balance < totalCost) {
+        alert(`Not enough ${type}! Need ${totalCost} (${recipients.length} players × ${amount}). You have ${balance}.`);
+        return;
+    }
+
+    if (!confirm(`Send ${amount} ${type} to ${recipients.length} online players?
+Total cost: ${totalCost} ${type}`)) {
+        return;
+    }
+
+    if (type === 'coins') {
+        coins -= totalCost;
+        setCoins(coins);
+    } else {
+        userProfile.gems = (userProfile.gems || 0) - totalCost;
+    }
+
+    userProfile.totalDonated = (userProfile.totalDonated || 0) + totalCost;
+    saveUserProfile(userProfile);
+    checkNametags();
+    updateCoinDisplay();
+
+    if (relay && relay.connected) {
+        recipients.forEach((username) => {
+            relay.send({
+                type: 'donation',
+                targetUsername: username,
+                amount: amount,
+                donationType: type,
+                from: userProfile.username,
+                senderStatus: userProfile.status,
+                senderPermanentId: userProfile.permanentId
+            });
+        });
+
+        addSystemMessage(`🎁 Champion gift sent: ${amount} ${type} to ${recipients.length} players (total ${totalCost}).`);
+    }
 }
 function generateSaveId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
