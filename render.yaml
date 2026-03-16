@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: human
-    env: static
-    routes:
-      - type: redirect
-        source: /index.html
-        destination: /
-        permanent: true
