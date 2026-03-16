@@ -146,8 +146,8 @@
 
 <div class="shop-item" id="championRankItem" style="border: 2px solid #ff6a00;">
     <h2>🏆 Champion Rank</h2>
-    <p>Everything Mystical has, plus a blazing Champion effect, CHAMPION nametag, and 2x MORE passive coin profit than Mystical. Auto-renews daily for 100 gems.</p>
-    <div class="price" style="color: #ff8a00;">20 💎 / day</div>
+    <p>Requires Mystical rank first. Everything Mystical has, plus a blazing Champion effect, CHAMPION nametag, and 2x MORE passive coin profit than Mystical. Auto-renews daily for 50 gems.</p>
+    <div class="price" style="color: #ff8a00;">50 💎 / day</div>
     <button id="buyChampionRank">Purchase</button>
 </div>
     </div>
@@ -740,7 +740,7 @@ document.getElementById('buyLightningPotion').addEventListener('click', () => {
                 return;
             }
             if (coins >= 1000000000000) {
-                if (confirm('Purchase Airstrike for 1,000,000,000,000 coins?\n\n💣 FEATURES:\n• Force any online player to watch an ad\n• Works even if they bought ad removal\n• Video ads are UNSKIPPABLE\n• Text ads last 15 seconds (unskippable)\n• 10-minute cooldown\n• Choose which ad to show')) {
+                if (confirm('Purchase Airstrike for 1,000,000,000,000 coins?\n\n💣 FEATURES:\n• Force any online player to watch an ad\n• Works even if they bought ad removal\n• Video ads are UNSKIPPABLE\n• Text ads last 15 seconds (unskippable)\n• 5-minute cooldown\n• Choose which ad to show')) {
                     coins -= 1000000000000;
                     setCoins(coins);
                     userProfile.hasAirstrike = true;
@@ -859,7 +859,12 @@ document.getElementById('buyChampionRank').addEventListener('click', () => {
         return;
     }
 
-    const gemCost = 20;
+    if (userProfile.status !== 'mystical') {
+        alert('❌ Champion requires Mystical rank first!');
+        return;
+    }
+
+    const gemCost = 50;
     if ((userProfile.gems || 0) < gemCost) {
         alert(`❌ Not enough gems! You need ${gemCost} gems.`);
         return;
@@ -873,7 +878,7 @@ document.getElementById('buyChampionRank').addEventListener('click', () => {
 • Exclusive Champion aura effect
 • CHAMPION nametag
 
-⚠️ Auto-renews daily for 20 gems. If you can't pay one day, it expires.`)) {
+⚠️ Auto-renews daily for 50 gems. If you can't pay one day, it expires.`)) {
         return;
     }
 
@@ -911,7 +916,7 @@ document.getElementById('buyChampionRank').addEventListener('click', () => {
     }
 
     saveUserProfile(userProfile);
-    alert('✅ Success! You are now CHAMPION rank! 🔥 Champion Aura equipped💰 Massive passive coin gains enabled 🛡️ Mystical loss protection included 💎 100 gems/day auto-renew started');
+    alert('✅ Success! You are now CHAMPION rank! 🔥 Champion Aura equipped 💰 Massive passive coin gains enabled 🛡️ Mystical loss protection included 💎 50 gems/day auto-renew started');
     document.getElementById('gemAmount').textContent = userProfile.gems;
     markAsOwned('buyChampionRank', document.getElementById('championRankItem'));
     markAsOwned('buyMysticalRank', document.getElementById('mysticalRankItem'));
