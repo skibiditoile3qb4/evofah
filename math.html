@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Friends & DMs</title>
+  <title>Fr!ends</title>
   <script src="relay-client.js"></script>
   <style>
     body { background:#0d0d0d; color:#fff; font-family:Arial,sans-serif; margin:0; padding:20px; }
@@ -22,10 +22,10 @@
 </head>
 <body>
   <div class="row" style="justify-content:space-between;max-width:800px;">
-    <h2 style="margin:0;">👥 Friends</h2>
+    <h2 style="margin:0;">👥 Fr!ends</h2>
     <button id="mainBtn">⬅ Main</button>
   </div>
-  <p class="muted">Add friends from the main page using friend requests. DMs only work when both players are online. Messages are stored in localStorage and can be lost if storage is cleared.</p>
+  <p class="muted">Add fr!ends from the main page using friend requests. DMs only work when both players are online. Messages are stored in localStorage and can be lost if storage is cleared.</p>
 
   <div id="friendsList" style="max-width:800px;"></div>
 
@@ -83,7 +83,7 @@ function renderFriends() {
   const el = document.getElementById('friendsList');
   const friends = getFriends();
   if (!friends.length) {
-    el.innerHTML = '<div class="muted">No friends yet.</div>';
+    el.innerHTML = '<div class="muted">No fr!ends yet.</div>';
     return;
   }
 
@@ -93,7 +93,7 @@ function renderFriends() {
     return `<div class="friend">
       <div class="friend-name"><b>${escapeHtml(name)}</b>${hasUnread ? '<span class="friend-unread-dot" title="Unread DM"></span>' : ''} <span class="${online ? 'online' : 'offline'}">● ${online ? 'online' : 'offline'}</span></div>
       <div class="row">
-        <button onclick="openDM('${name.replace(/'/g, "\\'")}')">DM</button>
+        <button onclick="openDM('${name.replace(/'/g, "\\'")}')">@M</button>
         <button onclick="removeFriend('${name.replace(/'/g, "\\'")}')">Remove</button>
       </div>
     </div>`;
