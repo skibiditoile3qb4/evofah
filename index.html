@@ -1591,6 +1591,7 @@
                 <button id="shopBtn">SHOP 🛒</button>
                 <button id="hofBtn">HALL OF FAME 🏆</button>
                 <button id="supportBtn">SUPPORT 📧</button>
+                <button id="friendsBtn" style="background:#2563eb;border:1px solid #1d4ed8;">FRIENDS 👥</button>
                 <button id="adminPanelBtn" style="display: none;">ADMIN PANEL</button>
                 <button id="minesBtn" style="background: #d69e2e; border: 1px solid #b7791f;">MINES 💎</button>
                 <button id="blackjackBtn" style="background: #c53030; border: 1px solid #9b2c2c;">BLACKJACK ♠️</button>
@@ -1628,6 +1629,10 @@
 
             </div>
             <div id="gameList"></div>
+            <div id="friendRequestPanel" style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
+                <input type="text" id="friendRequestUsername" placeholder="Send friend request to username" maxlength="32" style="padding:10px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;min-width:260px;">
+                <button id="sendFriendRequestBtn" style="background:#16a34a;border:1px solid #15803d;">ADD FRIEND</button>
+            </div>
             <div class="dev-section">
 
 
@@ -1719,6 +1724,15 @@
         <button id="skipAdBtn">Continue</button>
     </div>
 </div>
+
+<div id="friendRequestPopup" style="display:none;position:fixed;right:20px;bottom:90px;z-index:10002;background:#1a1a1a;border:1px solid #444;border-radius:10px;padding:12px;max-width:320px;box-shadow:0 6px 20px rgba(0,0,0,.45);">
+    <div id="friendRequestText" style="margin-bottom:10px;font-size:14px;"></div>
+    <div style="display:flex;gap:8px;">
+        <button id="acceptFriendRequestBtn" style="background:#16a34a;border:1px solid #15803d;">Accept</button>
+        <button id="declineFriendRequestBtn" style="background:#dc2626;border:1px solid #b91c1c;">Decline</button>
+    </div>
+</div>
+
     <script>
         if (!window._chromeOSValid) {
     document.getElementById('passwordScreen').style.display = 'none';
@@ -4378,6 +4392,9 @@ document.head.appendChild(swordStyle);
         document.getElementById('supportBtn').addEventListener('click', () => {
     window.location.href = 'support.html';
 });
+        document.getElementById('friendsBtn').addEventListener('click', () => {
+    window.location.href = 'friends.html';
+});
         document.getElementById('adminPanelBtn').addEventListener('click', () => {
     window.location.href = 'adminpanel.html';
 });
@@ -4525,6 +4542,7 @@ let currentChatRoom = 'global_chat';
 let mediaRecorder = null;
 let voiceChunks = [];
 let voiceRecordingTimeout = null;
+let pendingFriendRequestFrom = null;
 let isRecordingVoice = false;
 
 
@@ -4599,6 +4617,52 @@ relay.on('players_update', (data) => {
     onlinePlayers = Array.isArray(data.players) ? data.players : [];
     onlineCount = onlinePlayers.length;
     updateOnlineCount();
+});
+
+relay.on('friend_request', (data) => {
+    pendingFriendRequestFrom = data.fromUsername;
+    document.getElementById('friendRequestText').textContent = `${data.fromUsername} sent you a friend request`;
+    document.getElementById('friendRequestPopup').style.display = 'block';
+
+    if (!chatOpen) {
+        document.getElementById('chatToggleBtn').classList.add('has-unread');
+    }
+});
+
+relay.on('friend_request_result', (data) => {
+    if (data.success) {
+        addSystemMessage(data.message || 'Friend request sent.');
+    } else {
+        alert(data.message || 'Friend request failed. Player must be online to receive friend requests.');
+    }
+});
+
+relay.on('friend_request_response', (data) => {
+    if (data.accepted) {
+        addFriendLocal(data.username);
+        addSystemMessage(`${data.username} accepted your friend request.`);
+    } else {
+        addSystemMessage(`${data.username} declined your friend request.`);
+    }
+});
+
+relay.on('dm_message', (data) => {
+    const key = `_dm_${userProfile.username}_${data.fromUsername}`;
+    let messages = [];
+    try {
+        messages = JSON.parse(localStorage.getItem(key) || '[]');
+    } catch (e) {}
+
+    messages.push({
+        from: data.fromUsername,
+        to: userProfile.username,
+        message: data.message,
+        timestamp: Date.now()
+    });
+
+    localStorage.setItem(key, JSON.stringify(messages));
+    localStorage.setItem('_dm_unread', '1');
+    document.getElementById('chatToggleBtn').classList.add('has-unread');
 });
 
 
@@ -5469,6 +5533,23 @@ function submitReport() {
 
 // Event listeners
 document.getElementById('chatToggleBtn').addEventListener('click', toggleChat);
+document.getElementById('sendFriendRequestBtn')?.addEventListener('click', sendFriendRequestFromMain);
+document.getElementById('friendRequestUsername')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendFriendRequestFromMain();
+});
+document.getElementById('acceptFriendRequestBtn')?.addEventListener('click', () => {
+    if (!pendingFriendRequestFrom || !relay || !relay.connected) return;
+    relay.respondToFriendRequest(pendingFriendRequestFrom, true);
+    addFriendLocal(pendingFriendRequestFrom);
+    document.getElementById('friendRequestPopup').style.display = 'none';
+    pendingFriendRequestFrom = null;
+});
+document.getElementById('declineFriendRequestBtn')?.addEventListener('click', () => {
+    if (!pendingFriendRequestFrom || !relay || !relay.connected) return;
+    relay.respondToFriendRequest(pendingFriendRequestFrom, false);
+    document.getElementById('friendRequestPopup').style.display = 'none';
+    pendingFriendRequestFrom = null;
+});
 document.getElementById('closeChat').addEventListener('click', toggleChat);
 document.getElementById('voiceNoteBtn').addEventListener('click', toggleVoiceRecording);
 document.getElementById('reportBtn').addEventListener('click', toggleReportPanel);
@@ -5597,6 +5678,54 @@ if (localStorage.getItem('good') === '1') {
         }
     }, 1000);
 }
+function getFriendsKey() {
+    return `_friends_${userProfile.username}`;
+}
+
+function getStoredFriends() {
+    try {
+        return JSON.parse(localStorage.getItem(getFriendsKey()) || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveStoredFriends(friends) {
+    localStorage.setItem(getFriendsKey(), JSON.stringify(friends));
+}
+
+function addFriendLocal(username) {
+    const clean = (username || '').trim();
+    if (!clean) return;
+    const friends = getStoredFriends();
+    if (!friends.includes(clean)) {
+        friends.push(clean);
+        saveStoredFriends(friends);
+    }
+}
+
+function sendFriendRequestFromMain() {
+    const input = document.getElementById('friendRequestUsername');
+    const targetUsername = (input?.value || '').trim();
+
+    if (!targetUsername) {
+        alert('Enter a username first.');
+        return;
+    }
+
+    if (targetUsername === userProfile.username) {
+        alert('You cannot friend yourself.');
+        return;
+    }
+
+    if (!relay || !relay.connected) {
+        alert('Connect to chat first so the player can be detected online.');
+        return;
+    }
+
+    relay.sendFriendRequest(targetUsername);
+}
+
 function sendGlobalDonation() {
     const username = document.getElementById('globalDonateUsername').value.trim();
     const amount = parseInt(document.getElementById('globalDonateAmount').value);
