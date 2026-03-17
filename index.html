@@ -803,6 +803,30 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
 }
+#megaDonationOverlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 120000;
+    background: radial-gradient(circle, rgba(255,215,0,0.2), rgba(0,0,0,0.75));
+}
+#megaDonationOverlay.show { display: flex; animation: megaDonationFlash 1.8s ease; }
+#megaDonationOverlay .mega-text {
+    font-size: clamp(26px, 5vw, 54px);
+    font-weight: 900;
+    text-align: center;
+    color: #ffd700;
+    text-shadow: 0 0 16px rgba(255, 215, 0, 0.8), 0 0 36px rgba(239, 68, 68, 0.65);
+}
+@keyframes megaDonationFlash {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { opacity: 0; }
+}
 .connection-status {
     font-size: 11px;
     padding: 4px 8px;
@@ -1529,8 +1553,8 @@
                 <button id="shopBtn">SHOP 🛒</button>
                 <button id="hofBtn">HALL OF FAME 🏆</button>
                 <button id="supportBtn">SUPPORT 📧</button>
-                <button id="friendsBtn" style="background:#2563eb;border:1px solid #1d4ed8;">FRIENDS 👥</button>
                 <button id="adminPanelBtn" style="display: none;">ADMIN PANEL</button>
+                <button id="friendsBtn" style="background:#2563eb;border:1px solid #1d4ed8;">FRIENDS 👥</button>
                 <button id="minesBtn" style="background: #d69e2e; border: 1px solid #b7791f;">MINES 💎</button>
                 <button id="blackjackBtn" style="background: #c53030; border: 1px solid #9b2c2c;">BLACKJACK ♠️</button>
                 <button id="pokerBtn" style="background: #38a169; border: 1px solid #2f855a;">POKER 🃏</button>
@@ -1566,12 +1590,12 @@
 
 
             </div>
-            <div id="gameList"></div>
-            <div id="friendRequestPanel" style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
+            <div id="friendRequestPanel" style="margin-bottom:18px;display:flex;gap:8px;justify-content:center;">
                 <input type="text" id="friendRequestUsername" placeholder="Send friend request to username" maxlength="32" style="padding:10px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;min-width:260px;">
                 <button id="sendFriendRequestBtn" style="background:#16a34a;border:1px solid #15803d;">ADD FR!END</button>
                 <button id="blockUserBtn" style="background:#dc2626;border:1px solid #b91c1c;">BLOCK</button>
             </div>
+            <div id="gameList"></div>
             <div class="dev-section">
 
 
@@ -1610,7 +1634,7 @@
         </div>
         <div class="settings-row">
             <label for="chatButtonSizeInput">Chat button size</label>
-            <input type="range" id="chatButtonSizeInput" class="settings-input" min="44" max="88" step="2">
+            <input type="range" id="chatButtonSizeInput" class="settings-input" min="32" max="88" step="2">
         </div>
         <div class="settings-helper" id="chatButtonSizeLabel">Chat button size: 60px</div>
         <div class="settings-helper">Click a key field, then press the key you want to use.</div>
@@ -1644,7 +1668,7 @@
                 <option value="gems">Gems</option>
             </select>
             <button class="donate-btn" onclick="sendGlobalDonation()">Send</button>
-            <button class="donate-btn" onclick="sendMassDonation()" title="Admin+ perk">Send to all online</button>
+            <button class="donate-btn" id="massDonateBtn" onclick="sendMassDonation()" title="Admin+/Champion perk" style="display:none;">Send to all online</button>
         </div>
     </div>
     <div class="chat-compose-row">
@@ -1659,6 +1683,8 @@
     </div>
 </div>
 </div>
+
+<div id="megaDonationOverlay"><div class="mega-text" id="megaDonationText"></div></div>
 
 <div id="adOverlay">
     <div class="ad-content">
@@ -1940,6 +1966,7 @@ async function loadCdnGames() {
         });
 
         games = Object.keys(gamesList);
+        updateCoinLockedGames();
         displayGames(games);
     } catch (error) {
         console.warn('Failed to load CDN games:', error);
@@ -1947,6 +1974,8 @@ async function loadCdnGames() {
 }
 
         const lockedGames = ['poker', 'plinko'];
+        const COIN_LOCK_COUNT = 35;
+        let coinLockedGames = [];
 const gemLockedGames = {
     'hollow-knight': 50,
     'soundboard': 20,
@@ -1977,6 +2006,20 @@ const gemLockedGames = {
     "gladihoppers":10,
     "epstein": 5
 };
+
+function updateCoinLockedGames() {
+    const gemLockedSet = new Set(Object.keys(gemLockedGames));
+    const coinCandidates = Object.keys(gamesList)
+        .filter((game) => gamesList[game]?.s === 'cdn')
+        .filter((game) => !gemLockedSet.has(game))
+        .sort();
+    coinLockedGames = coinCandidates.slice(0, COIN_LOCK_COUNT);
+    try {
+        localStorage.setItem('_coinLockedGames', JSON.stringify(coinLockedGames));
+        localStorage.setItem('_unlockableGameLimit', String(coinLockedGames.length + Object.keys(gemLockedGames).length + lockedGames.length));
+    } catch (e) {}
+}
+updateCoinLockedGames();
         const _0x4a2b = (s) => btoa(s).split('').reverse().join('');
         const _0x2b4a = (s) => atob(s.split('').reverse().join(''));
         const _0x9c3d = 'X2NvaW5EYXRh';
@@ -2531,6 +2574,13 @@ function drawPlayerSphere() {
     playerSphereRenderer.draw(cosmetics);
 }
 
+function updateMassDonateButtonVisibility() {
+    const massBtn = document.getElementById('massDonateBtn');
+    if (!massBtn) return;
+    const allowedRanks = ['champion', 'admin', 'sr.admin', 'owner'];
+    massBtn.style.display = allowedRanks.includes(userProfile.status) ? 'inline-flex' : 'none';
+}
+
 function updateUserDisplay() {
     document.getElementById('userName').textContent = userProfile.username;
     const statusEl = document.getElementById('userStatus');
@@ -2539,8 +2589,11 @@ function updateUserDisplay() {
     const staffRanks = ['owner', 'sr.admin', 'admin', 'moderator'];
     if (staffRanks.includes(userProfile.status)) {
         document.getElementById('adminPanelBtn').style.display = 'block';
+    } else {
+        document.getElementById('adminPanelBtn').style.display = 'none';
     }
 
+    updateMassDonateButtonVisibility();
     drawPlayerSphere();
     updateSphereAnimation();
 }
@@ -3593,6 +3646,9 @@ setInterval(() => {
     if (gemLockedGames[game]) {
         return !userProfile.unlockedGames.includes(game);
     }
+    if (coinLockedGames.includes(game)) {
+        return !userProfile.unlockedGames.includes(game);
+    }
     return lockedGames.includes(game) && !userProfile.unlockedGames.includes(game);
 }
 
@@ -3605,11 +3661,14 @@ setInterval(() => {
 
         const isLocked = isGameLocked(game);
         const gemCost = gemLockedGames[game];
+        const coinCost = coinLockedGames.includes(game) ? 50 : null;
 
         if (isLocked) {
             btn.classList.add('locked');
             if (gemCost) {
                 btn.style.setProperty('--lock-text', `"💎 ${gemCost} gems"`);
+            } else if (coinCost) {
+                btn.style.setProperty('--lock-text', `"🔒 ${coinCost} coins"`);
             }
         }
 
@@ -4984,7 +5043,18 @@ relay.on('player_left', (data) => {
 
 
 
-        relay.on('donation', (data) => {
+        function triggerMegaDonationAnimation(from, amount, donationType) {
+    const overlay = document.getElementById('megaDonationOverlay');
+    const text = document.getElementById('megaDonationText');
+    if (!overlay || !text) return;
+    text.textContent = `🌟 ${from} just sent ${amount.toLocaleString()} ${donationType} to all online!`;
+    overlay.classList.remove('show');
+    void overlay.offsetWidth;
+    overlay.classList.add('show');
+    setTimeout(() => overlay.classList.remove('show'), 1900);
+}
+
+relay.on('donation', (data) => {
     if (data.targetUsername === userProfile.username) {
         if (isBlockedUser(data.from)) {
             return;
@@ -5008,6 +5078,10 @@ relay.on('player_left', (data) => {
         if (data.senderStatus === 'owner') {
             localStorage.setItem('_receivedOwnerDonation_' + userProfile.username, '1');
             checkNametags();
+        }
+
+        if (data.megaDonationBlast && data.amount >= 1000000000) {
+            triggerMegaDonationAnimation(data.from, data.amount, data.donationType);
         }
 
         // Show notification
@@ -5361,7 +5435,7 @@ function toggleChat() {
         unreadMessages = 0;
         document.getElementById('chatToggleBtn').classList.remove('has-unread');
         if (localStorage.getItem('_dm_unread') === '1') {
-            document.getElementById('chatToggleBtn').classList.add('has-unread');
+            document.getElementById('chatToggleBtn').classList.add('has-dm-unread');
         }
         document.getElementById('chatInput').focus();
         document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
@@ -5371,7 +5445,7 @@ function toggleChat() {
 }
 
 if (localStorage.getItem('_dm_unread') === '1') {
-    document.getElementById('chatToggleBtn').classList.add('has-unread');
+    document.getElementById('chatToggleBtn').classList.add('has-dm-unread');
 }
 
 function sendChatMessage() {
@@ -5576,7 +5650,7 @@ function applySettingsToUI() {
     visualizerKeyInput.value = formatKeyLabel(userProfile.settings.visualizerKey || ']');
     panicKeyInput.value = formatKeyLabel(userProfile.settings.panicKey || '[');
 
-    const chatButtonSize = Math.min(88, Math.max(44, Number(userProfile.settings.chatButtonSize) || 60));
+    const chatButtonSize = Math.min(88, Math.max(32, Number(userProfile.settings.chatButtonSize) || 60));
     userProfile.settings.chatButtonSize = chatButtonSize;
     chatButtonSizeInput.value = String(chatButtonSize);
     chatButtonSizeLabel.textContent = `Chat button size: ${chatButtonSize}px`;
@@ -5626,7 +5700,7 @@ hiddenModeToggle.addEventListener('change', () => {
 });
 
 function applyChatButtonSize(size) {
-    const bounded = Math.min(88, Math.max(44, Number(size) || 60));
+    const bounded = Math.min(88, Math.max(32, Number(size) || 60));
     document.documentElement.style.setProperty('--chat-toggle-size', `${bounded}px`);
     document.documentElement.style.setProperty('--chat-toggle-font-size', `${Math.round(bounded * 0.46)}px`);
 }
@@ -5640,6 +5714,7 @@ chatButtonSizeInput.addEventListener('input', () => {
 });
 
 applyChatButtonSize(userProfile.settings?.chatButtonSize || 60);
+updateMassDonateButtonVisibility();
 
 function bindKeyInput(inputEl, settingKey) {
     inputEl.addEventListener('keydown', (event) => {
@@ -5838,9 +5913,9 @@ function sendGlobalDonation() {
 
 
 function sendMassDonation() {
-    const massDonateRanks = ['admin', 'sr.admin', 'owner'];
+    const massDonateRanks = ['champion', 'admin', 'sr.admin', 'owner'];
     if (!massDonateRanks.includes(userProfile.status)) {
-        alert('❌ This perk is for Admin+ ranks only.');
+        alert('❌ This perk is for Champion/Admin+ ranks only.');
         return;
     }
 
@@ -5887,6 +5962,7 @@ Total cost: ${totalCost} ${type}`)) {
     updateCoinDisplay();
 
     if (relay && relay.connected) {
+        const megaDonationBlast = amount >= 1000000000;
         recipients.forEach((username) => {
             relay.send({
                 type: 'donation',
@@ -5895,11 +5971,15 @@ Total cost: ${totalCost} ${type}`)) {
                 donationType: type,
                 from: userProfile.username,
                 senderStatus: userProfile.status,
-                senderPermanentId: userProfile.permanentId
+                senderPermanentId: userProfile.permanentId,
+                megaDonationBlast
             });
         });
 
         addSystemMessage(`🎁 Admin+ gift sent: ${amount} ${type} to ${recipients.length} players (total ${totalCost}).`);
+        if (megaDonationBlast) {
+            triggerMegaDonationAnimation(userProfile.username, amount, type);
+        }
     }
 }
 function generateSaveId() {

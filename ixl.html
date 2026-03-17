@@ -18,6 +18,7 @@
     .online { color:#22c55e; }
     .offline { color:#ef4444; }
     #dmWindow { display:none; margin-top:16px; border:1px solid #333; border-radius:10px; padding:12px; max-width:520px; }
+    .dm-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
     #dmMessages { height:220px; overflow:auto; background:#111; border-radius:8px; padding:10px; margin-bottom:8px; }
     .msg { margin:6px 0; }
     .muted { color:#aaa; font-size:12px; }
@@ -36,7 +37,7 @@
   <div id="blockedList" style="max-width:800px;margin-top:18px;"></div>
 
   <div id="dmWindow">
-    <h3 id="dmTitle" style="margin-top:0;">Notes</h3>
+    <div class="dm-header"><h3 id="dmTitle" style="margin:0;">Notes</h3><button id="closeDmBtn" title="Close notes">✕</button></div>
     <div id="dmMessages"></div>
     <div class="row">
       <input id="dmInput" placeholder="Type a note..." maxlength="240" style="flex:1;" />
@@ -212,6 +213,10 @@ document.getElementById('mainBtn').addEventListener('click', () => {
   window.location.href = atob('aW5kZXguaHRtbA==');
 });
 document.getElementById('sendDmBtn').addEventListener('click', sendDM);
+document.getElementById('closeDmBtn').addEventListener('click', () => {
+  document.getElementById('dmWindow').style.display = 'none';
+  _af = null;
+});
 document.getElementById('dmInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendDM(); });
 
 renderFriends();
