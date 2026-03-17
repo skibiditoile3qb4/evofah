@@ -410,6 +410,20 @@
         let userProfile = getUserProfile();
         let coins = getCoins();
 
+        const GEM_LOCKED_GAME_KEYS = [
+            'hollow-knight','soundboard','schoolboy-runaway','undertale','eagler-2','bendy-and-the-ink-machine','buckshot-roulette','kindergarten','raft','terraria','bloons-td-4','gorilla-tag','cuphead','pizza-tower','omori','the-man-from-the-window','getting-over-it','people-playground','slenderman','solar-smash','ultrakill','pokemon-emerald','skibidi-toilet-arena','pokemon-sapphire','pokemon-ruby','ovo-dimensions','gladihoppers','epstein'
+        ];
+        const BASE_COIN_LOCKED = ['poker','plinko'];
+
+        function getUnlockableGameLimit() {
+            const cached = Number(localStorage.getItem('_unlockableGameLimit'));
+            if (Number.isFinite(cached) && cached > 0) {
+                return cached;
+            }
+            const cachedCoinLocked = JSON.parse(localStorage.getItem('_coinLockedGames') || '[]');
+            return BASE_COIN_LOCKED.length + GEM_LOCKED_GAME_KEYS.length + (Array.isArray(cachedCoinLocked) ? cachedCoinLocked.length : 0);
+        }
+
         // Calculate rebirth requirements
         // Calculate rebirth requirements
 function getRebirthRequirements(tier) {
@@ -420,16 +434,18 @@ function getRebirthRequirements(tier) {
         4: { coins: 1000000, cosmetics: 20, games: 12, swords: 3, gems: 15 },
         5: { coins: 2500000, cosmetics: 21, games: 15, swords: 3, gems: 25 }
     };
-    
+
     if (tier <= 5) return requirements[tier];
-    
-    // Tier 6+ formulas - exponential scaling for coins
+
     const excess = tier - 5;
+    const unlockableLimit = Math.max(15, getUnlockableGameLimit());
+    const scaledGameRequirement = Math.floor(15 * Math.pow(1.22, excess));
+
     return {
-        coins: Math.floor(2500000 * Math.pow(3, excess)), // Much faster exponential growth
-        cosmetics: 21, // Maxed out
-        games: 15, // Maxed out
-        swords: 3, // Maxed out
+        coins: Math.floor(2500000 * Math.pow(3, excess)),
+        cosmetics: 21,
+        games: Math.min(unlockableLimit, scaledGameRequirement),
+        swords: 3,
         gems: Math.floor(25 * Math.pow(1.5, excess))
     };
 }
@@ -467,6 +483,7 @@ function getRebirthRequirements(tier) {
             document.getElementById('currentTier').textContent = userProfile.rebirthData.tier;
             document.getElementById('totalRebirths').textContent = userProfile.rebirthData.totalRebirths;
             document.getElementById('lifetimeGems').textContent = userProfile.rebirthData.totalGemsEarned;
+            const unlockLimit = getUnlockableGameLimit();
             
             // Requirements
             const totalCosmetics = getTotalCosmetics();
@@ -491,7 +508,7 @@ function getRebirthRequirements(tier) {
                     <span class="requirement-status ${status.cosmetics ? 'met' : 'not-met'}">${status.cosmetics ? '✅' : '❌'}</span>
                 </div>
                 <div class="requirement-item">
-                    <span class="requirement-label">🎮 Unlocked Games</span>
+                    <span class="requirement-label">🎮 Unlocked Games (cap: ${unlockLimit})</span>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: ${Math.min(100, (userProfile.unlockedGames.length / req.games) * 100)}%"></div>
                         <div class="progress-text">${userProfile.unlockedGames.length} / ${req.games}</div>
