@@ -36,7 +36,10 @@
   <div id="blockedList" style="max-width:800px;margin-top:18px;"></div>
 
   <div id="dmWindow">
-    <h3 id="dmTitle" style="margin-top:0;">Notes</h3>
+    <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+    <h3 id="dmTitle" style="margin:0;">Notes</h3>
+    <button id="closeDmBtn" type="button">✕ Close</button>
+  </div>
     <div id="dmMessages"></div>
     <div class="row">
       <input id="dmInput" placeholder="Type a note..." maxlength="240" style="flex:1;" />
@@ -131,6 +134,12 @@ function openDM(friend) {
   renderDM();
 }
 
+
+function closeDM() {
+  _af = null;
+  document.getElementById('dmWindow').style.display = 'none';
+}
+
 function renderDM() {
   if (!_af) return;
   const blocked = new Set(_gb());
@@ -212,6 +221,7 @@ document.getElementById('mainBtn').addEventListener('click', () => {
   window.location.href = atob('aW5kZXguaHRtbA==');
 });
 document.getElementById('sendDmBtn').addEventListener('click', sendDM);
+document.getElementById('closeDmBtn').addEventListener('click', closeDM);
 document.getElementById('dmInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendDM(); });
 
 renderFriends();
