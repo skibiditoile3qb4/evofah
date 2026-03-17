@@ -33,6 +33,7 @@
   <p class="muted">Add study partners from the home page. Notes only sync when both users are active. Messages are stored locally and may be cleared with browser data.</p>
 
   <div id="friendsList" style="max-width:800px;"></div>
+  <div id="blockedList" style="max-width:800px;margin-top:18px;"></div>
 
   <div id="dmWindow">
     <h3 id="dmTitle" style="margin-top:0;">Notes</h3>
@@ -56,11 +57,17 @@ if (!_up.username) {
 }
 
 function _fk() { return '_friends_' + _up.username; }
+function _bk() { return '_blocked_' + _up.username; }
 function _gf() {
   try { return JSON.parse(localStorage.getItem(_fk()) || '[]'); }
   catch (e) { return []; }
 }
 function _sf(list) { localStorage.setItem(_fk(), JSON.stringify(Array.from(new Set(list)))); }
+function _gb() {
+  try { return JSON.parse(localStorage.getItem(_bk()) || '[]'); }
+  catch (e) { return []; }
+}
+function _sb(list) { localStorage.setItem(_bk(), JSON.stringify(Array.from(new Set(list)))); }
 function _uk() { return '_dm_unread_friends_' + _up.username; }
 function _guf() {
   try { return new Set(JSON.parse(localStorage.getItem(_uk()) || '[]')); }
@@ -83,22 +90,34 @@ function _gc(f) {
 
 function renderFriends() {
   const el = document.getElementById('friendsList');
-  const friends = _gf();
+  const blockedEl = document.getElementById('blockedList');
+  const blocked = _gb();
+  const friends = _gf().filter(name => !blocked.includes(name));
+
   if (!friends.length) {
-    el.innerHTML = '<div class="muted">No study partners yet.</div>';
-    return;
+    el.innerHTML = '<h3 style="margin:0 0 8px;">Study Partners</h3><div class="muted">No study partners yet.</div>';
+  } else {
+    el.innerHTML = '<h3 style="margin:0 0 8px;">Study Partners</h3>' + friends.map(name => {
+      const online = _ou.has(name);
+      const hasUnread = _guf().has(name);
+      return `<div class="friend">
+        <div class="friend-name"><b>${_eh(name)}</b>${hasUnread ? '<span class="friend-unread-dot" title="Unread"></span>' : ''} <span class="${online ? 'online' : 'offline'}">● ${online ? 'active' : 'away'}</span></div>
+        <div class="row">
+          <button onclick="openDM('${name.replace(/'/g, "\'")}')">💬</button>
+          <button onclick="removeFriend('${name.replace(/'/g, "\'")}')">Remove</button>
+        </div>
+      </div>`;
+    }).join('');
   }
-  el.innerHTML = friends.map(name => {
-    const online = _ou.has(name);
-    const hasUnread = _guf().has(name);
-    return `<div class="friend">
-      <div class="friend-name"><b>${_eh(name)}</b>${hasUnread ? '<span class="friend-unread-dot" title="Unread"></span>' : ''} <span class="${online ? 'online' : 'offline'}">● ${online ? 'active' : 'away'}</span></div>
-      <div class="row">
-        <button onclick="openDM('${name.replace(/'/g, "\\'")}')">💬</button>
-        <button onclick="removeFriend('${name.replace(/'/g, "\\'")}')">Remove</button>
-      </div>
-    </div>`;
-  }).join('');
+
+  if (!blocked.length) {
+    blockedEl.innerHTML = '<h3 style="margin:0 0 8px;">Blocked Users</h3><div class="muted">No blocked users.</div>';
+  } else {
+    blockedEl.innerHTML = '<h3 style="margin:0 0 8px;">Blocked Users</h3>' + blocked.map(name => `<div class="friend">
+      <div class="friend-name"><b>${_eh(name)}</b> <span class="offline">● blocked</span></div>
+      <div class="row"><button onclick="unblockUser('${name.replace(/'/g, "\'")}')">Unblock</button></div>
+    </div>`).join('');
+  }
 }
 
 function openDM(friend) {
@@ -114,7 +133,8 @@ function openDM(friend) {
 
 function renderDM() {
   if (!_af) return;
-  const msgs = _gc(_af);
+  const blocked = new Set(_gb());
+  const msgs = _gc(_af).filter(m => !blocked.has(m.from));
   const box = document.getElementById('dmMessages');
   box.innerHTML = msgs.map(m => `<div class="msg"><b>${_eh(m.from)}:</b> ${_eh(m.message)}</div>`).join('');
   box.scrollTop = box.scrollHeight;
@@ -123,6 +143,12 @@ function renderDM() {
 function removeFriend(name) {
   _sf(_gf().filter(f => f !== name));
   renderFriends();
+}
+
+function unblockUser(name) {
+  _sb(_gb().filter(u => u !== name));
+  renderFriends();
+  if (_af === name) renderDM();
 }
 
 function _sod(to, text) {
@@ -165,6 +191,7 @@ async function _init() {
   });
 
   _rl.on('dm_message', (data) => {
+    if (_gb().includes(data.fromUsername)) return;
     const key = _ck(data.fromUsername);
     let msgs = [];
     try { msgs = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){}
@@ -194,6 +221,7 @@ _init().catch(() => {
 
 window.openDM = openDM;
 window.removeFriend = removeFriend;
+window.unblockUser = unblockUser;
 </script>
 </body>
 </html>
