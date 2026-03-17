@@ -5921,6 +5921,25 @@ function getSaveId() {
   return saveId;
 }
 
+function saveGame() {
+  if (!relay || !relay.connected) {
+    return;
+  }
+
+  const saveId = getSaveId();
+  const saveData = {};
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    saveData[key] = localStorage.getItem(key);
+  }
+
+  relay.send({
+    type: 'save_game',
+    saveId,
+    saveData
+  });
+}
 
 const IMPORTANT_LOCALSTORAGE_KEYS = new Set([
   'userProfile',
