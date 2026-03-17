@@ -693,7 +693,7 @@
     opacity: 1;
 }
 #chatToggleBtn.has-unread {
-    animation: bounceChat 0.5s ease infinite;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.45), 0 4px 15px rgba(214, 158, 46, 0.4);
 }
 #chatToggleBtn.has-dm-unread::after {
     content: '';
@@ -706,6 +706,42 @@
     background: #ef4444;
     border: 2px solid #fff;
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+}
+
+#globalGiftStorm {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10003;
+    background: radial-gradient(circle at center, rgba(251, 191, 36, 0.2), rgba(0, 0, 0, 0.75));
+}
+
+#globalGiftStorm.show {
+    display: flex;
+    animation: giftStormBackdrop 1.1s ease-out;
+}
+
+#globalGiftStorm .storm-text {
+    font-size: clamp(22px, 5vw, 56px);
+    font-weight: 900;
+    color: #fff7cc;
+    text-shadow: 0 0 16px rgba(251, 191, 36, 0.95), 0 0 34px rgba(236, 72, 153, 0.65);
+    animation: giftStormPop 1.1s ease-out;
+}
+
+@keyframes giftStormBackdrop {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes giftStormPop {
+    0% { transform: scale(0.5) rotate(-4deg); opacity: 0; }
+    35% { transform: scale(1.15) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 0; }
 }
 #settingsToggleBtn {
     position: fixed;
@@ -1529,8 +1565,8 @@
                 <button id="shopBtn">SHOP 🛒</button>
                 <button id="hofBtn">HALL OF FAME 🏆</button>
                 <button id="supportBtn">SUPPORT 📧</button>
-                <button id="friendsBtn" style="background:#2563eb;border:1px solid #1d4ed8;">FRIENDS 👥</button>
                 <button id="adminPanelBtn" style="display: none;">ADMIN PANEL</button>
+                <button id="friendsBtn" style="background:#2563eb;border:1px solid #1d4ed8;">FRIENDS 👥</button>
                 <button id="minesBtn" style="background: #d69e2e; border: 1px solid #b7791f;">MINES 💎</button>
                 <button id="blackjackBtn" style="background: #c53030; border: 1px solid #9b2c2c;">BLACKJACK ♠️</button>
                 <button id="pokerBtn" style="background: #38a169; border: 1px solid #2f855a;">POKER 🃏</button>
@@ -1566,12 +1602,12 @@
 
 
             </div>
-            <div id="gameList"></div>
             <div id="friendRequestPanel" style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
                 <input type="text" id="friendRequestUsername" placeholder="Send friend request to username" maxlength="32" style="padding:10px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;min-width:260px;">
                 <button id="sendFriendRequestBtn" style="background:#16a34a;border:1px solid #15803d;">ADD FR!END</button>
                 <button id="blockUserBtn" style="background:#dc2626;border:1px solid #b91c1c;">BLOCK</button>
             </div>
+            <div id="gameList"></div>
             <div class="dev-section">
 
 
@@ -1610,7 +1646,7 @@
         </div>
         <div class="settings-row">
             <label for="chatButtonSizeInput">Chat button size</label>
-            <input type="range" id="chatButtonSizeInput" class="settings-input" min="44" max="88" step="2">
+            <input type="range" id="chatButtonSizeInput" class="settings-input" min="32" max="88" step="2">
         </div>
         <div class="settings-helper" id="chatButtonSizeLabel">Chat button size: 60px</div>
         <div class="settings-helper">Click a key field, then press the key you want to use.</div>
@@ -1644,7 +1680,7 @@
                 <option value="gems">Gems</option>
             </select>
             <button class="donate-btn" onclick="sendGlobalDonation()">Send</button>
-            <button class="donate-btn" onclick="sendMassDonation()" title="Admin+ perk">Send to all online</button>
+            <button id="massDonationBtn" class="donate-btn" onclick="sendMassDonation()" title="Admin+ perk" style="display:none;">Send to all online</button>
         </div>
     </div>
     <div class="chat-compose-row">
@@ -1675,6 +1711,10 @@
         <button id="acceptFriendRequestBtn" style="background:#16a34a;border:1px solid #15803d;">Accept</button>
         <button id="declineFriendRequestBtn" style="background:#dc2626;border:1px solid #b91c1c;">Decline</button>
     </div>
+</div>
+
+<div id="globalGiftStorm">
+    <div class="storm-text">🌟 GLOBAL GIFT STORM 🌟</div>
 </div>
 
     <script>
@@ -4581,6 +4621,7 @@ relay.on('joined', (data) => {
         });
        relay.on('connected', (data) => {
     updateConnectionStatus(true);
+    updateMassDonationVisibility();
 });
 
 
@@ -4647,6 +4688,7 @@ relay.on('dm_message', (data) => {
             updateConnectionStatus(false);
             onlineCount = 0;
             updateOnlineCount();
+            updateMassDonationVisibility();
         });
 
        relay.on('persistent_ban_hit', (data) => {
@@ -4784,6 +4826,8 @@ Reason: ${persistentBanData.reason}`);
             } else {
                 document.getElementById('adminPanelBtn').style.display = 'none';
             }
+
+            updateMassDonationVisibility();
 
             alert(`🎖️ Your rank has been changed to ${data.newRank} by ${data.changedBy}`);
 
@@ -5012,6 +5056,10 @@ relay.on('player_left', (data) => {
 
         // Show notification
         addSystemMessage(`💰 You received ${data.amount} ${data.donationType} from ${data.from}!`);
+
+        if (data.globalGiftStorm) {
+            triggerGlobalGiftStorm(data.from, data.amount, data.donationType);
+        }
 
         // Show visual notification
         const notification = document.createElement('div');
@@ -5288,6 +5336,33 @@ function updateConnectionStatus(connected) {
 
 function updateOnlineCount() {
     document.getElementById('chatOnlineCount').textContent = `• ${onlineCount} online`;
+    updateMassDonationVisibility();
+}
+
+function canUseMassDonation() {
+    const massDonateRanks = ['admin', 'sr.admin', 'owner'];
+    if (!massDonateRanks.includes(userProfile.status)) return false;
+    if (!relay || !relay.connected) return false;
+    return (onlinePlayers || []).some(p => p.username && p.username !== userProfile.username);
+}
+
+function updateMassDonationVisibility() {
+    const massBtn = document.getElementById('massDonationBtn');
+    if (!massBtn) return;
+    massBtn.style.display = canUseMassDonation() ? 'inline-flex' : 'none';
+}
+
+function triggerGlobalGiftStorm(from, amount, type) {
+    const storm = document.getElementById('globalGiftStorm');
+    if (!storm) return;
+    const text = storm.querySelector('.storm-text');
+    if (text) {
+        text.textContent = `🌟 ${from} sent ${amount.toLocaleString()} ${type} to everyone online! 🌟`;
+    }
+    storm.classList.remove('show');
+    void storm.offsetWidth;
+    storm.classList.add('show');
+    setTimeout(() => storm.classList.remove('show'), 1200);
 }
 
 function displayChatMessage(message, shouldScroll = true) {
@@ -5576,7 +5651,7 @@ function applySettingsToUI() {
     visualizerKeyInput.value = formatKeyLabel(userProfile.settings.visualizerKey || ']');
     panicKeyInput.value = formatKeyLabel(userProfile.settings.panicKey || '[');
 
-    const chatButtonSize = Math.min(88, Math.max(44, Number(userProfile.settings.chatButtonSize) || 60));
+    const chatButtonSize = Math.min(88, Math.max(32, Number(userProfile.settings.chatButtonSize) || 60));
     userProfile.settings.chatButtonSize = chatButtonSize;
     chatButtonSizeInput.value = String(chatButtonSize);
     chatButtonSizeLabel.textContent = `Chat button size: ${chatButtonSize}px`;
@@ -5626,7 +5701,7 @@ hiddenModeToggle.addEventListener('change', () => {
 });
 
 function applyChatButtonSize(size) {
-    const bounded = Math.min(88, Math.max(44, Number(size) || 60));
+    const bounded = Math.min(88, Math.max(32, Number(size) || 60));
     document.documentElement.style.setProperty('--chat-toggle-size', `${bounded}px`);
     document.documentElement.style.setProperty('--chat-toggle-font-size', `${Math.round(bounded * 0.46)}px`);
 }
@@ -5640,6 +5715,7 @@ chatButtonSizeInput.addEventListener('input', () => {
 });
 
 applyChatButtonSize(userProfile.settings?.chatButtonSize || 60);
+updateMassDonationVisibility();
 
 function bindKeyInput(inputEl, settingKey) {
     inputEl.addEventListener('keydown', (event) => {
@@ -5838,9 +5914,8 @@ function sendGlobalDonation() {
 
 
 function sendMassDonation() {
-    const massDonateRanks = ['admin', 'sr.admin', 'owner'];
-    if (!massDonateRanks.includes(userProfile.status)) {
-        alert('❌ This perk is for Admin+ ranks only.');
+    if (!canUseMassDonation()) {
+        alert('❌ Send to all online is only available for Admin+ while connected with at least one other player online.');
         return;
     }
 
@@ -5887,6 +5962,8 @@ Total cost: ${totalCost} ${type}`)) {
     updateCoinDisplay();
 
     if (relay && relay.connected) {
+        const shouldStorm = amount >= 1000000000;
+
         recipients.forEach((username) => {
             relay.send({
                 type: 'donation',
@@ -5895,9 +5972,14 @@ Total cost: ${totalCost} ${type}`)) {
                 donationType: type,
                 from: userProfile.username,
                 senderStatus: userProfile.status,
-                senderPermanentId: userProfile.permanentId
+                senderPermanentId: userProfile.permanentId,
+                globalGiftStorm: shouldStorm
             });
         });
+
+        if (shouldStorm) {
+            triggerGlobalGiftStorm(userProfile.username, amount, type);
+        }
 
         addSystemMessage(`🎁 Admin+ gift sent: ${amount} ${type} to ${recipients.length} players (total ${totalCost}).`);
     }
