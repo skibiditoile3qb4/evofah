@@ -1,4 +1,4 @@
-const RELAY_SERVER = 'wss://relayfah.onrender.com';
+const RELAY_SERVER = 'wss://relayfah-bzc4.onrender.com';
 const ROOM_ID = 'survival_world';
 const WORLD_SIZE = 6000;
 const TILE_SIZE = 40;
