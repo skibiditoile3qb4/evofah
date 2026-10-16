@@ -75,7 +75,7 @@ class AdminPanel {
         console.log('🌐 Initializing relay connection...');
         
         try {
-            const RELAY_SERVER = 'wss://relayfah.onrender.com';
+            const RELAY_SERVER = 'wss://relayfah-bzc4.onrender.com';
             console.log('🔌 Connecting to:', RELAY_SERVER);
             
             if (typeof RelayClient === 'undefined') {
